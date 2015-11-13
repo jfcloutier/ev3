@@ -1,4 +1,4 @@
-#Ev3ex: Lego Robotics in Elixir
+#Ev3: Lego Robotics in Elixir
 
 ## Licensing
 
