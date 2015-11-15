@@ -18,7 +18,7 @@ defmodule Ev3.EventManager do
 
 	@doc "Handle notification of a new perception"
 	def notify_perceived(percept) do
-		Logger.debug("#{inspect percept.sense} = #{inspect percept.value}")
+		# Logger.debug("#{inspect percept.sense} = #{inspect percept.value}")
 		GenEvent.notify(@name, {:perceived, percept})
 	end
 

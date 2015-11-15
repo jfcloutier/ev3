@@ -15,7 +15,7 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Get the currently connected lego sensors"
   def sensors() do
-		File.ls!(@sys_path)
+	 	File.ls!(@sys_path)
    |> Enum.filter(&(String.starts_with?(&1, @prefix)))
    |> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
   end

@@ -13,14 +13,12 @@ defmodule Ev3.Perceptor do
 
 	@doc "A perceptor analyzes a percept and returns either nil or a new percept"
 	def analyze_percept(name, percept) do
-		Logger.debug("#{name} analyzing #{inspect percept}")
 		Agent.get_and_update(
 			name,
 			fn(state) ->
 				config = state.perceptor_config
 				analysis = if percept.sense in config.senses do
 										 window = Memory.recall(config.senses, config.span)
-									#	 Logger.debug("Testing #{config.name} with #{inspect percept} vs #{inspect window}")
 										 config.logic.(percept, window)  # a percept or nil
 									 else
 										 nil

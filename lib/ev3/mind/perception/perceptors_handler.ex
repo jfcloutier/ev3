@@ -29,14 +29,16 @@ defmodule Ev3.PerceptorsHandler do
 	### Private
 
 	defp process_percept(percept, %{perceptor_configs: perceptor_configs}) do
-		Enum.map(perceptor_configs,
+		perceptor_configs
+		|> Enum.filter(&(percept.sense in &1.senses))
+		|> Enum.each(
 			fn(perceptor_config) ->
 				case Perceptor.analyze_percept(perceptor_config.name, percept) do
 					nil -> :ok
 					new_percept ->
 						EventManager.notify_perceived(%{new_percept |
-																					retain: perceptor_config.retain,
-																					source: perceptor_config.name} )
+																						retain: perceptor_config.retain,
+																						source: perceptor_config.name} )
 				end
 			end)
 	end
