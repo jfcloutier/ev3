@@ -2,7 +2,6 @@ defmodule Ev3.ExecutiveHandler do
 
 	require Logger
 	use GenEvent
-
 	alias Ev3.Executive
 
 	def init(_) do
@@ -15,9 +14,9 @@ defmodule Ev3.ExecutiveHandler do
 		{:ok, state}
 	end
 
-	def handle_event(event, state) do
+	def handle_event(_event, state) do
 #		Logger.debug("#{__MODULE__} ignored #{inspect event}")
 		{:ok, state}
 	end
-	
+
 end

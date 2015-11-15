@@ -23,10 +23,9 @@ defmodule Ev3.Perception do
 
 	@doc "Is a collision soon, imminent or now?"
 	def collision() do
-		fn(percept, window) ->
-			case {percept, window} do
-				{_percept, []} -> nil
-				{%Percept{sense: :proximity, value: n}, history} when n < 10 ->
+		fn
+				(_percept, []) -> nil
+				(%Percept{sense: :proximity, value: n}, history) when n < 10 ->
 					if not any_percept?(
 								history, :proximity,
 								1000,
@@ -35,7 +34,7 @@ defmodule Ev3.Perception do
 					else
 						nil
 					end
-				{%Percept{sense: :proximity, value: val}, history} ->
+				(%Percept{sense: :proximity, value: val}, history) ->
 					approaching? = latest_percept?(
 						history,
 						:proximity,
@@ -50,7 +49,7 @@ defmodule Ev3.Perception do
 					else
 		    		nil
 	    		end
-				{%Percept{sense: :touch, value: :pressed}, history} ->
+				(%Percept{sense: :touch, value: :pressed}, history) ->
 						if any_percept?(
 									history,
 									:collision,
@@ -60,9 +59,7 @@ defmodule Ev3.Perception do
 						else
 							nil
 						end
-					_ ->
-						nil
-			end
+				(_, _) -> nil
 		end
 	end
 		

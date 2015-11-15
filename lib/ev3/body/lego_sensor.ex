@@ -20,6 +20,7 @@ defmodule Ev3.LegoSensor do
    |> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
   end
 
+	@doc "Get the list of senses from a sensor"
 	def senses(sensor) do
 		case sensor.type do
 			:touch -> TouchSensor.senses(sensor)
@@ -28,6 +29,7 @@ defmodule Ev3.LegoSensor do
 		end	
 	end
 
+	@doc "Read the value of a sense from a sensor"
 	def read(sensor, sense) do # {value, updated_sensor} - value can be nil
 		try do
 			case sensor.type do
@@ -42,6 +44,7 @@ defmodule Ev3.LegoSensor do
 		end
 	end
 
+	@doc "Get how long to pause between reading a sense from a sensor. In msecs"
 	def pause(sensor) do
 		case sensor.type do
 			:touch -> TouchSensor.pause(sensor)
@@ -50,6 +53,7 @@ defmodule Ev3.LegoSensor do
 		end	
 	end
 
+	@doc "Get the resolution of a sensor (the delta between essentially identical readings). Nil or an integer."
 	def sensitivity(sensor) do
 		case sensor.type do
 			:touch -> TouchSensor.sensitivity(sensor)

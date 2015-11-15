@@ -3,7 +3,7 @@ defmodule Ev3.Executive do
 
 	require Logger
 
-	def react_to(memorization, percept) do
+	def react_to(_memorization, _percept) do
 #		Logger.debug("#{__MODULE__} ignored #{memorization} #{inspect percept}")
 		# TODO
 	end
