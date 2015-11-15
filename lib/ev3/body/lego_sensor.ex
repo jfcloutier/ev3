@@ -1,6 +1,7 @@
 defmodule Ev3.LegoSensor do
 	@moduledoc "Lego sensor access"
 
+	require Logger
 	import Ev3.Sysfs
 	alias Ev3.Device
 	alias Ev3.TouchSensor
@@ -10,13 +11,13 @@ defmodule Ev3.LegoSensor do
 	@sys_path "/sys/class/lego-sensor"
   @prefix "sensor"
 	@driver_regex ~r/lego-ev3-(\w+)/i
+	@mode_switch_delay 100
 
 	@doc "Get the currently connected lego sensors"
   def sensors() do
-		[]
-	#	File.ls!(@sys_path)
-  #  |> Enum.filter(&(String.starts_with?(&1, @prefix)))
-  #  |> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
+		File.ls!(@sys_path)
+   |> Enum.filter(&(String.starts_with?(&1, @prefix)))
+   |> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
   end
 
 	def senses(sensor) do
@@ -27,12 +28,18 @@ defmodule Ev3.LegoSensor do
 		end	
 	end
 
-	def read(sensor, sense) do # returns nil or a value
-		case sensor.type do
-			:touch -> TouchSensor.read(sense)
-			:color -> ColorSensor.read(sense)
-			:infrared -> InfraredSensor.read(sense)
-		end	
+	def read(sensor, sense) do # {value, updated_sensor} - value can be nil
+		try do
+			case sensor.type do
+				:touch -> TouchSensor.read(sensor, sense)
+				:color -> ColorSensor.read(sensor, sense)
+				:infrared -> InfraredSensor.read(sensor, sense)
+			end
+		rescue
+			error ->
+				Logger.warn("#{inspect error} when reading #{inspect sense} from #{inspect sensor}")
+				{nil, sensor}
+		end
 	end
 
 	def pause(sensor) do
@@ -40,6 +47,14 @@ defmodule Ev3.LegoSensor do
 			:touch -> TouchSensor.pause(sensor)
 			:color -> ColorSensor.pause(sensor)
 			:infrared -> InfraredSensor.pause(sensor)
+		end	
+	end
+
+	def sensitivity(sensor) do
+		case sensor.type do
+			:touch -> TouchSensor.sensitivity(sensor)
+			:color -> ColorSensor.sensitivity(sensor)
+			:infrared -> InfraredSensor.sensitivity(sensor)
 		end	
 	end
 
@@ -70,8 +85,14 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Set the sensor's mode"
   def set_mode(sensor, mode) do
-		set_attribute(sensor, "mode", mode)
-		%Device{sensor | props: %{sensor.props | mode: mode}}
+		if mode(sensor) != mode do
+			set_attribute(sensor, "mode", mode)
+			# Logger.debug("Switched #{sensor.path} mode to #{mode}")
+			:timer.sleep(@mode_switch_delay) # Give time for the mode switch
+			%Device{sensor | props: %{sensor.props | mode: mode}}
+		else
+			sensor
+		end
   end
 
   @doc "Get the sensor mode"

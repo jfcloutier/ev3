@@ -1,8 +1,9 @@
 defmodule Ev3.EventManager do
-	@moduledoc "An event manager acting as the central nervous system"
+	@moduledoc "An event manager that acts as the robot's central nervous system"
 
 	alias Ev3.PerceptorsHandler
 	alias Ev3.MemoryHandler
+  alias Ev3.ExecutiveHandler
 	require Logger
 
   @name __MODULE__
@@ -15,10 +16,16 @@ defmodule Ev3.EventManager do
     {:ok, pid}
   end
 
-	@doc "Handle notification of a percept"
-	def notify_percept(percept) do
-		Logger.debug("Notified of #{inspect percept}")
-		GenEvent.notify(@name, {:percept, percept})
+	@doc "Handle notification of a new perception"
+	def notify_perceived(percept) do
+		Logger.debug("#{inspect percept.sense} = #{inspect percept.value}")
+		GenEvent.notify(@name, {:perceived, percept})
+	end
+
+	@doc "Handle notification of an new or extended memory change"
+	def notify_memorized(memorization, percept) do
+		Logger.info("===> #{memorization}: #{inspect percept.sense} = #{inspect percept.value}")
+    GenEvent.notify(@name, {:memorized, memorization, percept})
 	end
 
 	### Private
@@ -26,7 +33,7 @@ defmodule Ev3.EventManager do
 	defp register_handlers() do
 		GenEvent.add_handler(@name, MemoryHandler, [])
 		GenEvent.add_handler(@name, PerceptorsHandler, [])
-		# GenEvent.addHandler(@name, ExecutorHandler, [])
+	  GenEvent.add_handler(@name, ExecutiveHandler, [])
 	end
 
 end

@@ -29,8 +29,7 @@ defmodule Ev3.Mixfile do
   #
   # Type `mix help deps` for examples and options
   defp deps do
-    [{:timex, "~> 0.19.3"}, 
-     {:phoenix, "~> 0.16"},
+    [{:phoenix, "~> 0.16"},
      # {:phoenix_ecto, "~> 0.9"},
      # {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 2.0"},
