@@ -13,7 +13,7 @@ defmodule Ev3.Perceptor do
 
 	@doc "A perceptor analyzes a percept and returns either nil or a new percept"
 	def analyze_percept(name, percept) do
-		# Logger.debug("#{name} analyzing #{inspect percept}")
+		Logger.debug("#{name} analyzing #{inspect percept}")
 		Agent.get_and_update(
 			name,
 			fn(state) ->
