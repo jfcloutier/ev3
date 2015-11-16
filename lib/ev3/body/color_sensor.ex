@@ -10,6 +10,34 @@ defmodule Ev3.ColorSensor do
 	@ambient "COL-AMBIENT"
   @color "COL-COLOR"
 
+	### Ev3.Sensing behaviour
+	
+	def senses(_) do
+		[:color, :ambient, :reflected]
+	end
+
+	def read(sensor, sense) do
+		case sense do
+			:color -> color(sensor)
+			:ambient -> ambient_light(sensor)
+			:reflected -> reflected_light(sensor)
+		end
+	end
+
+	def pause(_) do
+		500
+	end
+
+	def sensitivity(sensor) do
+		case mode(sensor) do
+			:color -> nil
+			:ambient -> 2
+			:reflect -> 2
+		end
+	end
+
+	####
+
 	@doc "Get the reflected light intensity as percentage"
 	def reflected_light(sensor) do
 		updated_sensor = set_reflect_mode(sensor)
@@ -41,32 +69,6 @@ defmodule Ev3.ColorSensor do
 		updated_sensor = set_ambient_mode(sensor) 
 		value = get_attribute(updated_sensor, "value0", :integer)
 		{value, updated_sensor}
-	end
-
-	### Ev3.Sensing behaviour
-	
-	def senses(_) do
-		[:color, :ambient, :reflected]
-	end
-
-	def read(sensor, sense) do
-		case sense do
-			:color -> color(sensor)
-			:ambient -> ambient_light(sensor)
-			:reflected -> reflected_light(sensor)
-		end
-	end
-
-	def pause(_) do
-		500
-	end
-
-	def sensitivity(sensor) do
-		case mode(sensor) do
-			:color -> nil
-			:ambient -> 2
-			:reflect -> 2
-		end
 	end
 
  ### PRIVATE

@@ -3,7 +3,7 @@ defmodule Ev3.Memory do
 
 	use GenServer
 	alias Ev3.Percept
-	alias Ev3.EventManager
+	alias Ev3.CNS
 	import Ev3.PerceptionUtils
   require Logger
 
@@ -32,7 +32,8 @@ defmodule Ev3.Memory do
 
 	def init(_) do
     Logger.debug("Init #{@name}")
-    spawn_link(fn() -> forget()	end)
+    pid = spawn_link(fn() -> forget()	end)
+		Process.register(pid, :forget)
 		{:ok, %{}}
 	end
 
@@ -75,17 +76,17 @@ defmodule Ev3.Memory do
 	### PRIVATE
 
 	defp update_percepts(percept, []) do
-		EventManager.notify_memorized(:new, percept)
+		CNS.notify_memorized(:new, percept)
 		[percept]
 	end
 
 	defp update_percepts(percept, [previous | others]) do
 		if not change_felt?(percept, previous) do
 			extended_percept = %Percept{previous | until: percept.since}
-			EventManager.notify_memorized(:extended, extended_percept)
+			CNS.notify_memorized(:extended, extended_percept)
 			[extended_percept | others]
 		else
-			EventManager.notify_memorized(:new, percept)
+			CNS.notify_memorized(:new, percept)
 			[percept, previous | others]
 		end
 	end

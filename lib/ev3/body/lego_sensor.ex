@@ -4,9 +4,6 @@ defmodule Ev3.LegoSensor do
 	require Logger
 	import Ev3.Sysfs
 	alias Ev3.Device
-	alias Ev3.TouchSensor
-	alias Ev3.ColorSensor
-	alias Ev3.InfraredSensor
 
 	@sys_path "/sys/class/lego-sensor"
   @prefix "sensor"
@@ -15,28 +12,45 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Get the currently connected lego sensors"
   def sensors() do
-	 	File.ls!(@sys_path)
-   |> Enum.filter(&(String.starts_with?(&1, @prefix)))
-   |> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
+		if !testing?() do
+	 		File.ls!(@sys_path)
+			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
+			|> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
+		else
+			[Ev3.Mock.TouchSensor.new(), Ev3.Mock.ColorSensor.new(), Ev3.Mock.InfraredSensor.new()]
+		end
   end
+
+	defp testing?() do
+		Application.get_env(:ev3, :mock)
+	end
+
+	defp dispatch(sensor) do
+		if !testing?() do
+			case sensor.type do
+				:touch -> Ev3.TouchSensor
+				:color -> Ev3.ColorSensor
+				:infrared -> Ev3.InfraredSensor
+			end
+		else
+			case sensor.type do
+				:touch -> Ev3.Mock.TouchSensor
+				:color -> Ev3.Mock.ColorSensor
+				:infrared -> Ev3.Mock.InfraredSensor
+			end
+		end
+	end
 
 	@doc "Get the list of senses from a sensor"
 	def senses(sensor) do
-		case sensor.type do
-			:touch -> TouchSensor.senses(sensor)
-			:color -> ColorSensor.senses(sensor)
-			:infrared -> InfraredSensor.senses(sensor)
-		end	
+		apply(dispatch(sensor), :senses, [sensor])
 	end
+
 
 	@doc "Read the value of a sense from a sensor"
 	def read(sensor, sense) do # {value, updated_sensor} - value can be nil
 		try do
-			case sensor.type do
-				:touch -> TouchSensor.read(sensor, sense)
-				:color -> ColorSensor.read(sensor, sense)
-				:infrared -> InfraredSensor.read(sensor, sense)
-			end
+			apply(dispatch(sensor), :read, [sensor, sense])
 		rescue
 			error ->
 				Logger.warn("#{inspect error} when reading #{inspect sense} from #{inspect sensor}")
@@ -46,20 +60,12 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Get how long to pause between reading a sense from a sensor. In msecs"
 	def pause(sensor) do
-		case sensor.type do
-			:touch -> TouchSensor.pause(sensor)
-			:color -> ColorSensor.pause(sensor)
-			:infrared -> InfraredSensor.pause(sensor)
-		end	
+			apply(dispatch(sensor), :pause, [sensor])
 	end
 
 	@doc "Get the resolution of a sensor (the delta between essentially identical readings). Nil or an integer."
 	def sensitivity(sensor) do
-		case sensor.type do
-			:touch -> TouchSensor.sensitivity(sensor)
-			:color -> ColorSensor.sensitivity(sensor)
-			:infrared -> InfraredSensor.sensitivity(sensor)
-		end	
+			apply(dispatch(sensor), :sensitivity, [sensor])
 	end
 
 	@doc "Is this the ultrasonic sensor?"

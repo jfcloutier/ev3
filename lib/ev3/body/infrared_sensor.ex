@@ -10,7 +10,43 @@ defmodule Ev3.InfraredSensor do
   @remote "IR-REMOTE"
   @max_beacon_channels 4
 	
-	@doc "Get proximity as a percent - 70+cm ~> 100, 0cm ~> 1"
+	### Ev3.Sensing behaviour
+	
+	def senses(_) do
+		# beacon_senses = Enum.map(1.. @max_beacon_channels, 
+		# 					 &([{:beacon_heading, &1}, {:beacon_distance, &1}, {:beacon_on, &1}]))
+		# |> List.flatten()
+		# [:proximity | beacon_senses]
+		[:proximity]
+	end
+
+	def read(sensor, :proximity) do
+		proximity(sensor)			
+	end
+
+	def read(sensor, {beacon_sense, channel}) do
+		case beacon_sense do
+			:beacon_heading -> seek_heading(sensor, channel)
+			:beacon_distance -> seek_distance(sensor, channel)
+			:beacon_on -> seek_beacon_on?(sensor, channel)
+		end
+	end
+
+	def pause(_) do
+	 500
+	end
+
+	def sensitivity(sensor) do
+		case mode(sensor) do
+			:proximity -> 2
+			:seek -> 2
+			:remote -> nil
+		end
+	end
+
+  ####
+	
+@doc "Get proximity as a percent - 70+cm ~> 100, 0cm ~> 1"
   def proximity(sensor) do
 		updated_sensor = set_proximity_mode(sensor)
 		value = get_attribute(updated_sensor, "value0", :integer)
@@ -73,41 +109,7 @@ defmodule Ev3.InfraredSensor do
 		{value, updated_sensor}
   end
 
-	### Ev3.Sensing behaviour
-	
-	def senses(_) do
-		# beacon_senses = Enum.map(1.. @max_beacon_channels, 
-		# 					 &([{:beacon_heading, &1}, {:beacon_distance, &1}, {:beacon_on, &1}]))
-		# |> List.flatten()
-		# [:proximity | beacon_senses]
-		[:proximity]
-	end
-
-	def read(sensor, :proximity) do
-		proximity(sensor)			
-	end
-
-	def read(sensor, {beacon_sense, channel}) do
-		case beacon_sense do
-			:beacon_heading -> seek_heading(sensor, channel)
-			:beacon_distance -> seek_distance(sensor, channel)
-			:beacon_on -> seek_beacon_on?(sensor, channel)
-		end
-	end
-
-	def pause(_) do
-	 500
-	end
-
-	def sensitivity(sensor) do
-		case mode(sensor) do
-			:proximity -> 2
-			:seek -> 2
-			:remote -> nil
-		end
-	end
-
-  ### PRIVATE
+	  ### PRIVATE
 
   defp set_proximity_mode(sensor) do
 		LegoSensor.set_mode(sensor, @proximity)

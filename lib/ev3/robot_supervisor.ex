@@ -3,7 +3,7 @@ defmodule Ev3.RobotSupervisor do
 	@name __MODULE__
 	use Supervisor
 	require Logger
-	alias Ev3.EventManager
+	alias Ev3.CNS
 	alias Ev3.Memory
 	alias Ev3.PerceptorsSupervisor
   alias Ev3.DetectorsSupervisor
@@ -24,7 +24,7 @@ defmodule Ev3.RobotSupervisor do
 	@spec init(any) :: {:ok, tuple}
 	def init(_) do
 		children = [	
-			worker(EventManager, []),
+			worker(CNS, []),
 			worker(Memory, []),
 			supervisor(PerceptorsSupervisor, []),
 			supervisor(DetectorsSupervisor, [])

@@ -17,8 +17,9 @@ defmodule Ev3.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [mod: {Ev3, []},
-     applications: [:phoenix, :phoenix_html, :cowboy, :logger]]
-  #                  :phoenix_ecto, :postgrex]]
+     applications: [:phoenix, :phoenix_html, :cowboy, :logger],
+		 env: [{:mock, true}]
+		]
   end
 
   # Specifies which paths to compile per environment

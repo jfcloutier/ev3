@@ -4,24 +4,6 @@ defmodule Ev3.TouchSensor do
 
   import Ev3.Sysfs
 
-	@doc "Get the state of the touch sensor (:pressed or :released)"
-  def state(sensor) do
-		case get_attribute(sensor, "value0", :integer) do
-			0 -> :released
-			1 -> :pressed
-    end
-  end
-
-	@doc "Is the touch sensor pressed"
-  def pressed?(sensor) do
-		{state(sensor) == :pressed, sensor}
-  end
-
-	@doc "Is the touch sensor released?"
-  def released?(sensor) do
-		{state(sensor) == :released, sensor}
-  end
-
 	### Ev3.Sensing behaviour
 	
 	def senses(_) do
@@ -39,5 +21,25 @@ defmodule Ev3.TouchSensor do
 	def sensitivity(_) do
 		nil
 	end
+
+	####
+	
+	@doc "Get the state of the touch sensor (:pressed or :released)"
+  def state(sensor) do
+		case get_attribute(sensor, "value0", :integer) do
+			0 -> :released
+			1 -> :pressed
+    end
+  end
+
+	@doc "Is the touch sensor pressed"
+  def pressed?(sensor) do
+		{state(sensor) == :pressed, sensor}
+  end
+
+	@doc "Is the touch sensor released?"
+  def released?(sensor) do
+		{state(sensor) == :released, sensor}
+  end
 
 end

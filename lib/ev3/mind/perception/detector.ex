@@ -4,7 +4,7 @@ defmodule Ev3.Detector do
 	require Logger
 	alias Ev3.LegoSensor
   alias Ev3.Percept
-	alias Ev3.EventManager
+	alias Ev3.CNS
 
 	@retain 30000 # detected percept is retained for 30 secs
 
@@ -17,7 +17,8 @@ defmodule Ev3.Detector do
 			[name: name])
 		Logger.info("#{__MODULE__} started on #{inspect sensor.type} sensor")
 		pause = LegoSensor.pause(sensor)
-	  spawn_link(fn() -> poll(name, senses, pause) end)
+	  pid = spawn_link(fn() -> poll(name, senses, pause) end)
+		Process.register(pid, String.to_atom("polling #{sensor.path}"))
 		{:ok, pid}
 	end
 
@@ -43,7 +44,7 @@ defmodule Ev3.Detector do
 				{value, updated_sensor} = LegoSensor.read(state.sensor, sense)
 				if value != nil do
 					percept = Percept.new(sense: sense, value: value)
-					EventManager.notify_perceived(%Percept{percept |
+					CNS.notify_perceived(%Percept{percept |
 																								 source: name,
 																								 retain: @retain,
 																								 resolution: LegoSensor.sensitivity(updated_sensor)})

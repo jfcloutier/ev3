@@ -5,7 +5,7 @@ defmodule Ev3.PerceptorsHandler do
 	require Logger
 
 	alias Ev3.Perceptor
-	alias Ev3.EventManager
+	alias Ev3.CNS
 	alias Ev3.Perception
 
 	### Callbacks
@@ -36,7 +36,7 @@ defmodule Ev3.PerceptorsHandler do
 				case Perceptor.analyze_percept(perceptor_config.name, percept) do
 					nil -> :ok
 					new_percept ->
-						EventManager.notify_perceived(%{new_percept |
+						CNS.notify_perceived(%{new_percept |
 																						retain: perceptor_config.retain,
 																						source: perceptor_config.name} )
 				end

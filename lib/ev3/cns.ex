@@ -1,4 +1,4 @@
-defmodule Ev3.EventManager do
+defmodule Ev3.CNS do
 	@moduledoc "An event manager that acts as the robot's central nervous system"
 
 	alias Ev3.PerceptorsHandler
