@@ -1,5 +1,5 @@
 defmodule Ev3.Mixfile do
-  use Mix.Project
+	use Mix.Project
 
   def project do
     [app: :ev3,

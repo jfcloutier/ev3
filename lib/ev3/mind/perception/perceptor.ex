@@ -1,5 +1,5 @@
 defmodule Ev3.Perceptor do
-	@docmodule "An analyzer and producer of percepts"
+	@moduledoc "An analyzer and producer of percepts"
 
 	alias Ev3.Memory
 	require Logger

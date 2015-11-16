@@ -1,5 +1,5 @@
 defmodule Ev3 do
-	@docmodule "The Ev3 command and control application"
+	@moduledoc "The Ev3 command and control application"
 	
   use Application
   require Logger

@@ -1,5 +1,5 @@
 defmodule Ev3.Detector do
-	@docmodule "A detector polling a sensor for the value of a sense it implements"
+	@moduledoc "A detector polling a sensor for the value of a sense it implements"
 
 	require Logger
 	alias Ev3.LegoSensor

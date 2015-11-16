@@ -1,5 +1,5 @@
 defmodule Ev3.PerceptionUtils do
-	@docmodule "Perception utility functions"
+	@moduledoc "Perception utility functions"
 
 	@doc "The time now in msecs"
 	def now() do

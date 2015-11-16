@@ -1,5 +1,5 @@
 defmodule Ev3.Memory do
-	@docmodule "The memory of percepts"
+	@moduledoc "The memory of percepts"
 
 	use GenServer
 	alias Ev3.Percept

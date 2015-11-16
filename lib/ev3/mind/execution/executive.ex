@@ -1,5 +1,5 @@
 defmodule Ev3.Executive do
-	@docmodule "The robot's executive"
+	@moduledoc "The robot's executive"
 
 	require Logger
 

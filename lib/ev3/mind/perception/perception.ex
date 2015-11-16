@@ -1,5 +1,5 @@
 defmodule Ev3.Perception do
-	@docmodule "Provides the configurations of all perceptors to be activated"
+	@moduledoc "Provides the configurations of all perceptors to be activated"
 
 	import Ev3.PerceptionUtils
 	require Logger

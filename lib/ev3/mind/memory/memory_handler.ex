@@ -1,5 +1,5 @@
 defmodule Ev3.MemoryHandler do
-	@docmodule "The memory of percepts"
+	@moduledoc "The memory of percepts"
 
 	use GenEvent
 	require Logger

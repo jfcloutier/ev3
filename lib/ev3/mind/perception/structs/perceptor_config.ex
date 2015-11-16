@@ -1,5 +1,5 @@
 defmodule Ev3.PerceptorConfig do
-	@docmodule "A perceptor configuration"
+	@moduledoc "A perceptor configuration"
 
 	@units [:msecs, :secs, :mins, :hours]
 

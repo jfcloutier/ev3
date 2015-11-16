@@ -1,5 +1,5 @@
 defmodule Ev3.PerceptorsSupervisor do
-	@docmodule "Supervisor of dynamically started perceptors"
+	@moduledoc "Supervisor of dynamically started perceptors"
 
 	@name __MODULE__
 	use Supervisor

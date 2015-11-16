@@ -1,5 +1,6 @@
 defmodule Ev3.ExecutiveHandler do
-
+  @moduledoc "The executive's event handle"
+	
 	require Logger
 	use GenEvent
 	alias Ev3.Executive

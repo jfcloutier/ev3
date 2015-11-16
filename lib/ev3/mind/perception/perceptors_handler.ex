@@ -1,5 +1,5 @@
 defmodule Ev3.PerceptorsHandler do
-	@docmodule "Perceptors handler"
+	@moduledoc "Perceptors handler"
 
 	use GenEvent
 	require Logger

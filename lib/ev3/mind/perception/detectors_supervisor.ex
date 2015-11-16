@@ -1,5 +1,5 @@
 defmodule Ev3.DetectorsSupervisor do
-	@docmodule "Supervisor of dynamically started detectors"
+	@moduledoc "Supervisor of dynamically started detectors"
 
 	@name __MODULE__
 	use Supervisor

@@ -1,5 +1,5 @@
 defmodule Ev3.Percept do
-  @docmodule "A struct for a percept (a unit of perception)"
+  @moduledoc "A struct for a percept (a unit of perception)"
 	
 	import Ev3.PerceptionUtils
 
