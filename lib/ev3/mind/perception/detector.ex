@@ -61,8 +61,8 @@ defmodule Ev3.Detector do
 		Enum.each(senses,
 			fn(sense) ->
 				detect_change(name, sense)
-				:timer.sleep(pause)
 			end)
+		:timer.sleep(pause)
 		poll(name, senses, pause)
 	end
 
