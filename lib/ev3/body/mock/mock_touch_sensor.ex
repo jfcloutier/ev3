@@ -27,7 +27,7 @@ defmodule Ev3.Mock.TouchSensor do
 		500
 	end
 
-	def sensitivity(sensor) do
+	def sensitivity(_sensor, _sense) do
 	  nil
 	end
 

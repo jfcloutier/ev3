@@ -28,11 +28,11 @@ defmodule Ev3.ColorSensor do
 		500
 	end
 
-	def sensitivity(sensor) do
-		case mode(sensor) do
+	def sensitivity(_sensor, sense) do
+		case sense do
 			:color -> nil
 			:ambient -> 2
-			:reflect -> 2
+			:reflected -> 2
 		end
 	end
 

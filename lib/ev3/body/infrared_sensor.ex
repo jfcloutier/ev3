@@ -13,18 +13,26 @@ defmodule Ev3.InfraredSensor do
 	### Ev3.Sensing behaviour
 	
 	def senses(_) do
-		# beacon_senses = Enum.map(1.. @max_beacon_channels, 
-		# 					 &([{:beacon_heading, &1}, {:beacon_distance, &1}, {:beacon_on, &1}]))
-		# |> List.flatten()
-		# [:proximity | beacon_senses]
-		[:proximity]
+		beacon_senses = Enum.map(1.. @max_beacon_channels, 
+														 &([{:beacon_heading, &1}, {:beacon_distance, &1}, {:beacon_on, &1}, {:remote_buttons, &1}]))
+		|> List.flatten()
+		[:proximity | beacon_senses]
 	end
 
-	def read(sensor, :proximity) do
+	def read(sensor, sense) do
+		{_, updated_sensor} = do_read(sensor, sense)
+		do_read(updated_sensor, sense) # double read seems necessary after a mode change
+	end
+
+	defp do_read(sensor, :proximity) do
 		proximity(sensor)			
 	end
 
-	def read(sensor, {beacon_sense, channel}) do
+	defp do_read(sensor, {:remote_buttons, channel}) do
+		remote_buttons(sensor, channel)
+	end
+
+	defp do_read(sensor, {beacon_sense, channel}) do
 		case beacon_sense do
 			:beacon_heading -> seek_heading(sensor, channel)
 			:beacon_distance -> seek_distance(sensor, channel)
@@ -36,11 +44,13 @@ defmodule Ev3.InfraredSensor do
 	 500
 	end
 
-	def sensitivity(sensor) do
-		case mode(sensor) do
+	def sensitivity(_sensor, sense) do
+		case (sense) do
 			:proximity -> 2
-			:seek -> 2
-			:remote -> nil
+			{:beacon_heading, _} -> 2
+			{:beacon_distance, _} -> 2
+			{:beacon_on, _} -> nil
+			{:remote_buttons, _} -> nil
 		end
 	end
 

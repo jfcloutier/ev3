@@ -18,7 +18,7 @@ defmodule Ev3.TouchSensor do
 		500
 	end
 
-	def sensitivity(_) do
+	def sensitivity(_, _) do
 		nil
 	end
 

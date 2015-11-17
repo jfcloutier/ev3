@@ -1,20 +1,43 @@
 defmodule Ev3.Tachomotor do
-	@moduledoc "Tachomotor access"
+	@moduledoc "A tacho motor"
 
+	@behaviour Ev3.Sensing
+
+	alias Ev3.Device
+	alias Ev3.LegoMotor
   import Ev3.Sysfs
-  alias Ev3.Device
 
-	@sys_path "/sys/class/tacho-motor"
-  @prefix "motor" 
-  @driver_regex ~r/lego-ev3-(\w)-motor/i
+	### Sensing
 
-	@doc "Generates a list of all plugged in motor devices"
-	def motors() do
-		File.ls!(@sys_path)
-    |> Enum.filter(&(String.starts_with?(&1, @prefix)))
-    |> Enum.map(&(init_motor("#{@sys_path}/#{&1}")))
-  end
+	def senses(_) do
+		[:speed, :position, :duty_cycle, :run_status]
+	end
 
+	def read(motor, sense) do
+		value = case sense do
+							:speed -> current_speed(motor, :rps)
+							:position -> current_position(motor)
+							:duty_cycle -> current_duty_cycle(motor)
+							:run_status -> current_run_status(motor)
+						end
+		{value, motor}
+	end
+
+	def pause(_) do
+		500
+	end
+
+	def sensitivity(_motor, sense) do
+		case sense do
+			:speed -> nil
+			:position -> 2
+			:duty_cycle -> 2
+		  :run_status -> nil
+		end
+	end
+
+	####
+	
 	@doc "Reset a motor to defaul control values"
   def reset(motor) do
 		execute_command(motor, "reset")
@@ -184,16 +207,6 @@ defmodule Ev3.Tachomotor do
     round(position * count_per_rot(motor) / 360)
   end
 
-  @doc "Is this a large motor?"
-  def large?(motor) do
-		motor.type == :large
-  end
-
-  @doc "Is this a medium motor?"
-  def medium?(motor) do
-		motor.type == :medium
-  end
-
 	@doc "Is the motor running?"
 	## BUG - The running flag stays on after the motor is stopped. Cleared only by reset.
   def running?(motor) do
@@ -216,6 +229,16 @@ defmodule Ev3.Tachomotor do
   end
 
   ## PRIVATE
+
+	defp current_run_status(motor) do
+		cond do
+			stalled?(motor) -> :stalled
+			holding?(motor) -> :holding
+			ramping?(motor) -> :ramping
+			running?(motor) -> :running
+			true -> :stopped
+		end
+	end
 
   defp run_to_position(motor, rel_or_abs, degrees) when rel_or_abs in [:relative, :absolute] do
 		motor1 = set_control(motor, :position, round(degrees * count_per_rot(motor) / 360))
@@ -244,48 +267,14 @@ defmodule Ev3.Tachomotor do
 		state in String.split(states, " ")
   end 
 
-  defp init_motor(path) do
-		port_name = read_sys(path, "port_name")
-    driver_name = read_sys(path, "driver_name")
-    [_, type_letter] = Regex.run(@driver_regex, driver_name)
-    type = case type_letter do
-						 "l" -> :large
-						 "m" -> :medium
-           end
-    motor = %Device{class: :tacho_motor,
-										path: path, 
-										port: port_name, 
-										type: type}
-    count_per_rot = get_attribute(motor, "count_per_rot", :integer)
-    commands = get_attribute(motor, "commands", :list)
-		stop_commands = get_attribute(motor, "stop_commands", :list)
-    %Device{motor | props: %{count_per_rot: count_per_rot, 
-														 commands: commands,
-														 stop_commands: stop_commands,
-														 controls: Map.put_new(get_sys_controls(motor), 
-																									 :speed_mode, 
-																									 nil)}}  
-  end
-
-  defp refresh_controls(motor) do
+	defp refresh_controls(motor) do
 		speed_mode = get_control(motor, :speed_mode)
 		%Device{motor | 
 						  props: %{motor.props |
-												  controls: Map.put_new(get_sys_controls(motor), :speed_mode, speed_mode)}}
+												  controls: Map.put_new(LegoMotor.get_sys_controls(motor), :speed_mode, speed_mode)}}
 	end
 
-  defp get_sys_controls(motor) do
-		%{polarity: get_attribute(motor, "polarity", :atom),
-			speed:  get_attribute(motor, "speed_sp", :integer), # in counts/sec,
-			duty_cycle:  get_attribute(motor, "duty_cycle_sp", :integer),
-			ramp_up: get_attribute(motor, "ramp_up_sp", :integer),
-			ramp_down: get_attribute(motor, "ramp_down_sp", :integer),
-			position: get_attribute(motor, "position_sp", :integer), # in counts,
-	 	  time: get_attribute(motor, "time_sp", :integer),
-		  speed_regulation: get_attribute(motor, "speed_regulation", :atom)}
-  end
-
-  defp apply_motor_controls(motor) do
+	defp apply_motor_controls(motor) do
 		set_attribute(motor, "speed_regulation", get_control(motor, :speed_regulation))
 		speed = case motor.type do
 							:large -> min(get_control(motor, :speed), 900)
@@ -302,4 +291,3 @@ defmodule Ev3.Tachomotor do
 	end
 
 end
-

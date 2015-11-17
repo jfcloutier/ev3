@@ -32,5 +32,10 @@ defmodule Ev3 do
     Endpoint.config_change(changed, removed)
     :ok
   end
+
+	@doc "Whether in test mode"
+	def testing?() do
+		Application.get_env(:ev3, :mock)
+	end
 	
 end

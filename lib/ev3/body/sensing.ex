@@ -11,7 +11,7 @@ defmodule Ev3.Sensing do
 	defcallback pause(sensor :: %Ev3.Device{}) :: integer
 
 	@doc "Get the sensitivity of the device; the change in value to be noticed"
-	defcallback sensitivity(sensor :: %Ev3.Device{}) :: integer | nil
+	defcallback sensitivity(sensor :: %Ev3.Device{}, sense :: any) :: integer | nil
 
 end
 

@@ -27,6 +27,8 @@ defmodule Ev3.Perception do
 
 	### Private
 
+	# TODO Rewrite with macro(s)
+
 	@doc "Is a collision soon, imminent or now?"
 	def collision() do
 		fn

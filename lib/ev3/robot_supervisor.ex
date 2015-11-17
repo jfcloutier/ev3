@@ -8,6 +8,7 @@ defmodule Ev3.RobotSupervisor do
 	alias Ev3.PerceptorsSupervisor
   alias Ev3.DetectorsSupervisor
 	alias Ev3.LegoSensor
+	alias Ev3.LegoMotor
 	alias Ev3.Perception
 #	alias Ev3.ActuatorsSupervisor
 #	alias Ev3.Executive
@@ -54,8 +55,8 @@ defmodule Ev3.RobotSupervisor do
 	end
 
 	defp start_detectors() do
-		LegoSensor.sensors()
-		|> Enum.each(&(DetectorsSupervisor.start_detector(&1)))		
+		devices = LegoSensor.sensors() ++ LegoMotor.motors()
+		Enum.each(devices, &(DetectorsSupervisor.start_detector(&1)))		
 	end
 
 end

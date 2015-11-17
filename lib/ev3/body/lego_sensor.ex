@@ -12,7 +12,7 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Get the currently connected lego sensors"
   def sensors() do
-		if !testing?() do
+		if !Ev3.testing?() do
 	 		File.ls!(@sys_path)
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
@@ -21,12 +21,8 @@ defmodule Ev3.LegoSensor do
 		end
   end
 
-	defp testing?() do
-		Application.get_env(:ev3, :mock)
-	end
-
 	defp dispatch(sensor) do
-		if !testing?() do
+		if !Ev3.testing?() do
 			case sensor.type do
 				:touch -> Ev3.TouchSensor
 				:color -> Ev3.ColorSensor
@@ -64,8 +60,8 @@ defmodule Ev3.LegoSensor do
 	end
 
 	@doc "Get the resolution of a sensor (the delta between essentially identical readings). Nil or an integer."
-	def sensitivity(sensor) do
-			apply(dispatch(sensor), :sensitivity, [sensor])
+	def sensitivity(sensor, sense) do
+			apply(dispatch(sensor), :sensitivity, [sensor, sense])
 	end
 
 	@doc "Is this the ultrasonic sensor?"
