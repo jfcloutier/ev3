@@ -23,7 +23,14 @@ defmodule Ev3.Motivation do
 					name: :feeding_motivator,
 					focus: %{senses: [:hungry, :sated], motives: [], intents: []},
 					span: nil, # for as long as we can remember
-					logic: hunger()
+					logic: hunger(),
+				),
+				# A panic motivator
+				MotivatorConfig.new(
+					name: :panic_motivator,
+					focus: %{senses: [:scared], motives: [], intents: []},
+					span: nil, # for as long as we can remember
+					logic: panic()
 				)
 		]
 	end
@@ -52,6 +59,18 @@ defmodule Ev3.Motivation do
 	  (%Percept{about: :hungry, value: :not}, __) ->
 				Motive.off(:hunger)
 	  (_,_) ->
+				nil
+		end
+	end
+
+	@doc "Panic motivation"
+	def panic() do
+		fn
+		(%Percept{about: :scared, value: :very}, _) ->
+				Motive.on(:panic) |> Motive.inhibit_all()
+		(%Percept{about: :scared, value: :not}, _) ->
+				Motive.off(:panic)
+		(_,_) ->
 				nil
 		end
 	end

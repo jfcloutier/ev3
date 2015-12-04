@@ -312,7 +312,7 @@ defmodule Ev3.Memory do
 	end
 
 	defp any_inhibits?([other|rest], motive_name, inhibitor_names, on_motives) do
-		if motive_name in other.inhibits do
+		if Motive.inhibits_all?(other) or motive_name in other.inhibits do
 			other.about in inhibitor_names # deadly embrace
 			or not any_inhibits?(on_motives, other.about, [other.about | inhibitor_names], on_motives)
 		else

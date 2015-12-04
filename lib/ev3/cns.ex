@@ -42,7 +42,7 @@ defmodule Ev3.CNS do
 
 	@doc "Handle notification of an new or extended memory change"
 	def notify_memorized(memorization, %Percept{} = percept) do
-		Logger.info("Memorized ===> #{memorization} percept #{inspect percept.about} = #{inspect percept.value}")
+		#Logger.info("Memorized ===> #{memorization} percept #{inspect percept.about} = #{inspect percept.value}")
 		GenServer.cast(@name, {:notify_memorized, memorization, percept})
 	end
 

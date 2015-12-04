@@ -29,8 +29,22 @@ defmodule Ev3.Motive do
 	end
 	
 	@doc "Add an inhibition"
-	def inhibit(motive, other) do
-		%Ev3.Motive{motive | inhibits: [other | motive.inhibits]}
+	def inhibit(motive, other_name) do
+		if :all in motive.inhibits do
+			motive
+		else
+			%Ev3.Motive{motive | inhibits: [other_name | motive.inhibits]}
+		end
 	end
-	
+
+	@doc "Add blanket inhibition"
+	def inhibit_all(motive) do
+		%Ev3.Motive{motive | inhibits: [:all]}
+	end
+
+	@doc "Whether a motive inhibits all others"
+	def inhibits_all?(motive) do
+		:all in motive.inhibits
+	end
+			
 end							

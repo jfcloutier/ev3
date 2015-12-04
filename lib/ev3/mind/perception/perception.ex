@@ -26,13 +26,13 @@ defmodule Ev3.Perception do
 				# A collision perceptor based on proximity sensing
 				PerceptorConfig.new(
 					name: :collision_perceptor,
-					focus: %{senses: [:proximity, :touch, :collision], motives: [], intents: []},
+					focus: %{senses: [:proximity, :touch, :collision, :time_elapsed], motives: [], intents: []},
 					span: nil, # no windowing
 					ttl: {30, :secs}, # remember for 30 seconds
 					logic: collision()),
 				PerceptorConfig.new(
 					name: :fear_perceptor,
-					focus: %{senses: [:ambient, :collision, :scared], motives: [], intents: []},
+					focus: %{senses: [:ambient, :collision, :scared, :time_elapsed], motives: [], intents: []},
 					span: {10, :secs}, # only react to what happened in the last 10 seconds
 					ttl: {2, :mins}, # remember for 2 minutes
 					logic: scared()),
@@ -147,13 +147,23 @@ defmodule Ev3.Perception do
 				if all_memories?(
 							percepts,
 							:ambient,
-							3000,
-							fn(value) -> value < 5 end) do
+							2000,
+							fn(value) -> value < 10 end) do
 					Percept.new(about: :scared, value: :very)
 				else
 					Percept.new(about: :scared, value: :a_little)
 				end
-				(_,_) -> nil
+		(%Percept{about: :time_elapsed}, %{percepts: percepts}) ->
+				if not any_memory?(
+							percepts,
+							:scared,
+							3000,
+							fn(value) -> value in [:very, :a_little] end) do
+					Percept.new(about: :scared, value: :not)
+				else
+					nil
+				end
+		(_,_) -> nil
 		end
 	end
 
