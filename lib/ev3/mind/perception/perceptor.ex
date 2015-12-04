@@ -17,9 +17,9 @@ defmodule Ev3.Perceptor do
 			name,
 			fn(state) ->
 				config = state.perceptor_config
-				analysis = if percept.sense in config.senses do
-										 window = Memory.recall(config.senses, config.span)
-										 config.logic.(percept, window)  # a percept or nil
+				analysis = if percept.about in config.focus.senses do
+										 memories = Memory.since(config.span, senses: config.focus.senses, motives: config.focus.motives, intents: config.focus.intents)
+										 config.logic.(percept, memories)  # a percept or nil
 									 else
 										 nil
 									 end

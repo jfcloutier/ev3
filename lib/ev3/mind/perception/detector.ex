@@ -7,19 +7,20 @@ defmodule Ev3.Detector do
   alias Ev3.Percept
 	alias Ev3.CNS
 
-	@retain 30000 # detected percept is retained for 30 secs
+	@ttl 30000 # detected percept is retained for 30 secs
 
 	@doc "Start a detector for all senses of a device, to be linked to its supervisor"
 	def start_link(device) do
 		senses = senses(device)
 		name = name(device)
 		{:ok, pid} = Agent.start_link(
-			fn() -> %{device: device} end,
+			fn() ->
+				poll_pid = spawn_link(fn() -> poll(name, senses, pause(device)) end)
+				Process.register(poll_pid, String.to_atom("polling #{device.path}"))
+				%{device: device}
+			end,
 			[name: name])
 		Logger.info("#{__MODULE__} started on #{inspect device.type} device")
-		pause = pause(device)
-	  pid = spawn_link(fn() -> poll(name, senses, pause) end)
-		Process.register(pid, String.to_atom("polling #{device.path}"))
 		{:ok, pid}
 	end
 
@@ -72,10 +73,10 @@ defmodule Ev3.Detector do
 			fn(state) ->
 				{value, updated_device} = read(state.device, sense)
 				if value != nil do
-					percept = Percept.new(sense: sense, value: value)
+					percept = Percept.new(about: sense, value: value)
 					CNS.notify_perceived(%Percept{percept |
 																								 source: name,
-																								 retain: @retain,
+																								 ttl: @ttl,
 																								 resolution: sensitivity(updated_device, sense)})
 					{:ok, %{state |
 									device: updated_device}}

@@ -21,8 +21,8 @@ defmodule Ev3 do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: :root_supervisor]
     result = Supervisor.start_link(children, opts)
+		RobotSupervisor.start_execution()
 		RobotSupervisor.start_perception()
-		# RobotSupervisor.start_execution()
 		result
   end
 

@@ -13,7 +13,19 @@ defmodule Ev3.MemoryHandler do
 	end
 
 	def handle_event({:perceived, percept}, state) do
-		Memory.store(percept)
+		if not percept.transient do
+			Memory.store(percept)
+		end
+		{:ok, state}
+	end
+
+	def handle_event({:motivated, motive}, state) do
+		Memory.store(motive)
+		{:ok, state}
+	end
+
+	def handle_event({:intended, intent}, state) do
+		Memory.store(intent)
 		{:ok, state}
 	end
 

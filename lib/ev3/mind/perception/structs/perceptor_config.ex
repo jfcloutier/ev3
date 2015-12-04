@@ -1,33 +1,21 @@
 defmodule Ev3.PerceptorConfig do
-	@moduledoc "A perceptor configuration"
+	@moduledoc "A perceptor's configuration"
 
-	@units [:msecs, :secs, :mins, :hours]
+	import Ev3.Utils
 
-	defstruct name: nil, senses: nil, retain: nil, span: nil, logic: nil
+	defstruct name: nil, focus: nil, ttl: nil, span: nil, logic: nil
 
 	@doc "Make a new perceptor configuration"
 	def new(name: name,
-					senses: senses,
+					focus: %{senses: _senses, motives: _motives, intents: _intents} = focus,
 					span: span,
-					retain: retain,
+					ttl: ttl,
 					logic: logic) do
 		%Ev3.PerceptorConfig{name: name,
-											senses: senses,
+												 focus: focus,
 											span: convert_to_msecs(span),
-											retain: convert_to_msecs(retain) ,
+											ttl: convert_to_msecs(ttl) ,
 											logic: logic}
 	end
 
-	### Private
-
-	defp convert_to_msecs(nil), do: nil
-	defp convert_to_msecs({count, unit}) do
-		case unit do
-			:msecs -> count
-			:secs -> count * 1000
-			:mins -> count * 1000 * 60
-			:hours -> count * 1000 * 60 * 60
-		end
-	end
-	
 end

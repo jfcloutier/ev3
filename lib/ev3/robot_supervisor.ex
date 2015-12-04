@@ -10,8 +10,12 @@ defmodule Ev3.RobotSupervisor do
 	alias Ev3.LegoSensor
 	alias Ev3.LegoMotor
 	alias Ev3.Perception
-#	alias Ev3.ActuatorsSupervisor
-#	alias Ev3.Executive
+	alias Ev3.MotivatorsSupervisor
+	alias Ev3.BehaviorsSupervisor
+	alias Ev3.ActuatorsSupervisor
+	alias Ev3.Motivation
+	alias Ev3.Behaviors
+	alias Ev3.Actuation
 
 	### Supervisor Callbacks
 
@@ -28,9 +32,10 @@ defmodule Ev3.RobotSupervisor do
 			worker(CNS, []),
 			worker(Memory, []),
 			supervisor(PerceptorsSupervisor, []),
-			supervisor(DetectorsSupervisor, [])
-#			supervisor(ActuatorsSupervisor, []),
-#			worker(Executive, [])
+			supervisor(DetectorsSupervisor, []),
+			supervisor(MotivatorsSupervisor, []),
+			supervisor(BehaviorsSupervisor, []),
+			supervisor(ActuatorsSupervisor, [])
 					   ]
 		opts = [strategy: :one_for_one]
 		supervise(children, opts)
@@ -38,13 +43,17 @@ defmodule Ev3.RobotSupervisor do
 
 	@doc "Start the robot's perception"
 	def start_perception() do
+		Logger.info("Starting perception")
 		start_perceptors()
 		start_detectors()
 	end
 
-	@doc "STart the robot's execution"
+	@doc "Start the robot's execution"
 	def start_execution() do
-		# TODO
+		Logger.info("Starting execution")
+		start_actuators()
+		start_behaviors()
+		start_motivators()
 	end
 
 	### Private
@@ -57,6 +66,21 @@ defmodule Ev3.RobotSupervisor do
 	defp start_detectors() do
 		devices = LegoSensor.sensors() ++ LegoMotor.motors()
 		Enum.each(devices, &(DetectorsSupervisor.start_detector(&1)))		
+	end
+
+  defp start_motivators() do
+		Motivation.motivator_configs()
+		|> Enum.each(&(MotivatorsSupervisor.start_motivator(&1)))
+	end
+
+  defp start_behaviors() do
+		Behaviors.behavior_configs()
+		|> Enum.each(&(BehaviorsSupervisor.start_behavior(&1)))
+	end
+
+  defp start_actuators() do
+		Actuation.actuator_configs()
+		|> Enum.each(&(ActuatorsSupervisor.start_actuator(&1)))
 	end
 
 end
