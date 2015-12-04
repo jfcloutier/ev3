@@ -48,8 +48,8 @@ defmodule Ev3.Memory do
 	end
 
 	@doc "Whether a motive is inhibited by others"
-	def inhibited?(motive) do
-		GenServer.call(@name, {:inhibited, motive})
+	def inhibited?(motive_name) do
+		GenServer.call(@name, {:inhibited, motive_name})
 	end
 
 	@doc "Recall the history of a named intent, within a time window until now"
@@ -115,11 +115,8 @@ defmodule Ev3.Memory do
 	end
 
 
-	def handle_call({:inhibited, %Motive{about: name, value: :on} = motive}, _from, state) do
-		answer = case Map.get(state.motives, name, []) do
-							 [] -> false
-							 motives -> inhibited_by?(motive, state.motives)
-						 end
+	def handle_call({:inhibited,  motive_name}, _from, state) do
+		answer = inhibited_by?(motive_name, state.motives)
 		{:reply, answer, state}
 	end
 
@@ -170,6 +167,11 @@ defmodule Ev3.Memory do
 		end
 	end
 
+
+	defp update_intents(intent, []) do
+		CNS.notify_memorized(:new, intent)
+		[intent]
+	end
 
 	defp update_intents(intent, intents) do
 		CNS.notify_memorized(:new, intent)
@@ -285,36 +287,36 @@ defmodule Ev3.Memory do
 					intents ->
 						expired = Enum.filter(intents, &((&1.since + @intent_ttl) < msecs))
 						Logger.debug("Forgot #{name} intents #{inspect expired}")
-						Map.put(acc, name, [intents -- expired])
+						Map.put(acc, name, intents -- expired)
 				end
 			end)
 		%{state | intents: remembered}
 	end
 
-	defp inhibited_by?(motive, motives) do
+	defp inhibited_by?(motive_name, motives) do
 		find_on_motives(motives)
-		|> any_inhibits?(motive)				
+		|> any_inhibits?(motive_name)				
 	end
 
-	defp any_inhibits?(on_motives, motive) do
-		any_inhibits?(on_motives, motive, [], on_motives)
+	defp any_inhibits?(on_motives, motive_name) do
+		any_inhibits?(on_motives, motive_name, [], on_motives)
 	end
 
-	defp any_inhibits?([], _motive, _inhibitor_names, _on_motives) do
+	defp any_inhibits?([], _motive_name, _inhibitor_names, _on_motives) do
 		false
 	end
 
 	# a motive can't inhibit itself
-	defp any_inhibits?([%Motive{about: name} | rest], %Motive{about: name} = motive, inhibitor_names, on_motives) do 
-		any_inhibits?(rest, motive, inhibitor_names, on_motives)
+	defp any_inhibits?([%Motive{about: motive_name} | rest],  motive_name, inhibitor_names, on_motives) do 
+		any_inhibits?(rest, motive_name, inhibitor_names, on_motives)
 	end
 
-	defp any_inhibits?([other|rest], motive, inhibitor_names, on_motives) do
-		if motive.about in other.inhibits do
+	defp any_inhibits?([other|rest], motive_name, inhibitor_names, on_motives) do
+		if motive_name in other.inhibits do
 			other.about in inhibitor_names # deadly embrace
-			or not any_inhibits?(on_motives, other, [other.about | inhibitor_names], on_motives)
+			or not any_inhibits?(on_motives, other.about, [other.about | inhibitor_names], on_motives)
 		else
-			any_inhibits?(rest, motive, inhibitor_names, on_motives)
+			any_inhibits?(rest, motive_name, inhibitor_names, on_motives)
 		end
 	end
 

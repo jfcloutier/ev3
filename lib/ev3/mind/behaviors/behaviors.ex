@@ -5,6 +5,9 @@ defmodule Ev3.Behaviors do
 	alias Ev3.BehaviorConfig
 	alias Ev3.FSM
 	alias Ev3.Transition
+	alias Ev3.CNS
+	alias Ev3.Percept
+	alias Ev3.Intent
 
 	@doc "Give the configurations of all benaviors to be activated"
   def behavior_configs() do
@@ -66,7 +69,7 @@ defmodule Ev3.Behaviors do
 							 }
 				),
 		 BehaviorConfig.new( #now is the time to panic!
-			 name: :run_around,
+			 name: :headless_chicken,
 			 motivated_by: [:panic],
 			 senses: [:ambient],
 			 fsm: %FSM{
@@ -88,43 +91,47 @@ defmodule Ev3.Behaviors do
 	end
 
 	defp roam() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("ROAMING from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end
 
 	defp avoid_collision() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("AVOIDING COLLISION from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end
 
 	defp backoff() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("BACKING OFF from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end
 
 	defp stay_the_course() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("STAYING THE COURSE from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end
 
 	defp change_course() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("CHANGING COURSE from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end
 
 	defp eat() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("EATING from #{percept.about} = #{inspect percept.value}")
-		end # TODO
+			intent = Intent.new(about: :eat, value: :lots)
+			CNS.notify_intended(intent)
+			percept = Percept.new(about: :hungry, value: :not) |> Percept.source(state.name)
+			CNS.notify_perceived(percept)
+		end
 	end
 
 	defp flail() do
-		fn(percept) ->
+		fn(percept, state) ->
 			Logger.info("FLAILING from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end	

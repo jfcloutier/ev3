@@ -54,7 +54,7 @@ defmodule Ev3.CNS do
 
 	@doc "Handle notification of an intent"
 	def notify_memorized(memorization, %Intent{} = intent) do
-		Logger.info("Memorized ===> #{memorization}: INTENT #{intent.name} #{inspect intent.value}")
+		Logger.info("Memorized ===> #{memorization}: INTENT #{intent.about} #{inspect intent.value}")
 		GenServer.cast(@name, {:notify_memorized, memorization, intent})
 	end
 

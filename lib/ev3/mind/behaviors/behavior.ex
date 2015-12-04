@@ -10,7 +10,8 @@ defmodule Ev3.Behavior do
 	@doc "Start a behavior from a configuration"
 	def start_link(behavior_config) do
 		Logger.info("Starting #{__MODULE__} #{behavior_config.name}")
-		Agent.start_link(fn() -> %{fsm: behavior_config.fsm,
+		Agent.start_link(fn() -> %{name: behavior_config.name,
+															 fsm: behavior_config.fsm,
 															 motives: [],
 															 fsm_state: nil} end,
 										 [name: behavior_config.name])
@@ -22,9 +23,9 @@ defmodule Ev3.Behavior do
 			name,
 			fn(state) ->
 				if Motive.on?(motive) do
-						start(motive, state)
+						start(motive, state) # maybe
 				else
-						stop(motive, state)
+						stop(motive, state) # maybe
 				end
 			end)
 	end
@@ -40,9 +41,14 @@ defmodule Ev3.Behavior do
 
 	### Private
 
+	defp inhibited?(%{motives: motives} = state) do
+		Enum.all?(motives, &Memory.inhibited?(&1.about))
+	end
+
 	defp start(on_motive,  %{fsm_state: nil} = state) do # might start only if not started yet
-		if not Memory.inhibited?(on_motive) do
+		if not Memory.inhibited?(on_motive.about) do
 			if not on_motive in state.motives do
+				Logger.info("STARTED behavior #{state.name}")
 				%{state | motives: [on_motive | state.motives], fsm_state: state.fsm.initial_state}
 			else
 				state
@@ -63,19 +69,29 @@ defmodule Ev3.Behavior do
 	defp stop(off_motive, state) do # might stop or do nothing
 		surviving_motives = Enum.filter(state.motives, &(&1.about != off_motive.about))
 		case surviving_motives do
-			[] -> %{state | motives: [], fsm_state: nil}
-			motives -> %{state | motives: motives}
+			[] ->
+				Logger.info("STOPPED behavior #{state.name}")
+				%{state | motives: [], fsm_state: nil}
+			motives ->
+				%{state | motives: motives}
 		end
 	end
 
-	defp transition_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
+	defp transit_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
 		state
 	end
 	
 	defp transit_on(percept, state) do
 		case find_transition(percept, state) do
-			nil -> state
-			transition -> apply_transition(transition, percept, state)
+			nil ->
+				state
+			transition ->
+				if not inhibited?(state) do
+					apply_transition(transition, percept, state)
+				else
+					Logger.info("INHIBITED behavior #{state.name}")
+					state
+				end
 		end
 	end
 
@@ -93,7 +109,7 @@ defmodule Ev3.Behavior do
 	end
 
 	defp apply_transition(%Transition{doing: action} = transition, percept, state) do
-		action.(percept)
+		action.(percept, state)
 		%{state | fsm_state: transition.to}
 	end
 	

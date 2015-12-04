@@ -26,6 +26,11 @@ defmodule Ev3.Percept do
 							   value: value,
 							 	 transient: true}
 	end
+
+	@doc "Set the source"
+	def source(percept, source) do
+		%Ev3.Percept{percept | source: source}
+	end
 	
 	@doc "Are two percepts essentially the same (same sense, value and source)?"
 	def same?(percept1, percept2) do
