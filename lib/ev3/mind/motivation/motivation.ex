@@ -8,27 +8,27 @@ defmodule Ev3.Motivation do
 	alias Ev3.Percept
 	import Ev3.MemoryUtils
 	
-	@doc "Give the configurations of all motivators to be activated"
+	@doc "Give the configurations of all motivators. Motivators turn motives on and off"
   def motivator_configs() do
 		[
 				# A curiosity motivator
 				MotivatorConfig.new(
-					name: :curiosity_motivator,
+					name: :curiosity,
 					focus: %{senses: [:time_elapsed], motives: [], intents: []},
 					span: nil,
 					logic: curiosity()
 				),
 				# A hunger motivator
 				MotivatorConfig.new(
-					name: :feeding_motivator,
+					name: :hunger,
 					focus: %{senses: [:hungry, :sated], motives: [], intents: []},
 					span: nil, # for as long as we can remember
 					logic: hunger(),
 				),
 				# A panic motivator
 				MotivatorConfig.new(
-					name: :panic_motivator,
-					focus: %{senses: [:scared], motives: [], intents: []},
+					name: :panic,
+					focus: %{senses: [:danger], motives: [], intents: []},
 					span: nil, # for as long as we can remember
 					logic: panic()
 				)
@@ -39,7 +39,7 @@ defmodule Ev3.Motivation do
 	def curiosity() do
 		fn
 		(%Percept{about: :time_elapsed}, _) ->
-				Motive.on(:curiosity)
+				Motive.on(:curiosity) # never turned off
 		end
 	end
 	
@@ -49,7 +49,7 @@ defmodule Ev3.Motivation do
 		(%Percept{about: :hungry, value: :very}, %{percepts: percepts }) ->
 				if not any_memory?(
 							percepts,
-							:scared,
+							:danger,
 							5_000,
 							fn(value) -> value == :very end) do
 					Motive.on(:hunger) |> Motive.inhibit(:curiosity)
@@ -63,12 +63,12 @@ defmodule Ev3.Motivation do
 		end
 	end
 
-	@doc "Panic motivation"
+	@doc "Fear motivation"
 	def panic() do
 		fn
-		(%Percept{about: :scared, value: :very}, _) ->
+		(%Percept{about: :danger, value: :high}, _) ->
 				Motive.on(:panic) |> Motive.inhibit_all()
-		(%Percept{about: :scared, value: :not}, _) ->
+		(%Percept{about: :danger, value: :none}, _) ->
 				Motive.off(:panic)
 		(_,_) ->
 				nil

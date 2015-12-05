@@ -11,40 +11,40 @@ defmodule Ev3.Perception do
 		[
 				# A getting darker or lighter perceptor
 				PerceptorConfig.new(
-					name: :darker_lighter_perceptor,
+					name: :darker,
 					focus: %{senses: [:ambient], motives: [], intents: []},
-					span: {10, :secs},
+					span: {3, :secs},
 					ttl: {30, :secs},
 					logic: darker()),
 				# A getting lighter perceptor
 				PerceptorConfig.new(
-					name: :lighter_perceptor,
+					name: :lighter,
 					focus: %{senses: [:ambient], motives: [], intents: []},
-					span: {10, :secs},
+					span: {3, :secs},
 					ttl: {30, :secs},
 					logic: lighter()),
 				# A collision perceptor based on proximity sensing
 				PerceptorConfig.new(
-					name: :collision_perceptor,
+					name: :collision,
 					focus: %{senses: [:proximity, :touch, :collision, :time_elapsed], motives: [], intents: []},
 					span: nil, # no windowing
 					ttl: {30, :secs}, # remember for 30 seconds
 					logic: collision()),
 				PerceptorConfig.new(
-					name: :fear_perceptor,
-					focus: %{senses: [:ambient, :collision, :scared, :time_elapsed], motives: [], intents: []},
+					name: :danger,
+					focus: %{senses: [:ambient, :collision, :danger, :time_elapsed], motives: [], intents: []},
 					span: {10, :secs}, # only react to what happened in the last 10 seconds
 					ttl: {2, :mins}, # remember for 2 minutes
 					logic: scared()),
 				PerceptorConfig.new(
-					name: :hunger_perceptor,
+					name: :hungry,
 					focus: %{senses: [:time_elapsed], motives: [], intents: [:eat]},
 					span: {10, :mins},
 					ttl: {5, :mins},
 					logic: hungry()),
 				# A food perceptor
 				PerceptorConfig.new(
-					name: :food_perceptor,
+					name: :food,
 					focus: %{senses: [:ambient, :color], motives: [], intents: []},
 					span: {30, :secs},
 					ttl: {2, :mins},
@@ -58,9 +58,9 @@ defmodule Ev3.Perception do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				previous = Enum.find(percepts, &(&1.about == :ambient))
-				if previous != nil and val < previous.value do
-					Percept.new(about: :darker, value: previous.value - val)
+				average = average(percepts, :ambient)
+				if average != nil and val < average do
+					Percept.new(about: :darker, value: average - val)
 				else
 					nil	  
 				end
@@ -71,9 +71,9 @@ defmodule Ev3.Perception do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				previous = Enum.find(percepts, &(&1.about == :ambient))
-				if previous != nil and val > previous.value do
-					Percept.new(about: :darker, value: val - previous.value)
+				average = average(percepts, :ambient)
+				if average != nil and val > average do
+					Percept.new(about: :lighter, value: val - average)
 				else
 					nil	  
 				end
@@ -149,17 +149,17 @@ defmodule Ev3.Perception do
 							:ambient,
 							2000,
 							fn(value) -> value < 10 end) do
-					Percept.new(about: :scared, value: :very)
+					Percept.new(about: :danger, value: :high)
 				else
-					Percept.new(about: :scared, value: :a_little)
+					Percept.new(about: :danger, value: :low)
 				end
 		(%Percept{about: :time_elapsed}, %{percepts: percepts}) ->
 				if not any_memory?(
 							percepts,
-							:scared,
+							:danger,
 							3000,
-							fn(value) -> value in [:very, :a_little] end) do
-					Percept.new(about: :scared, value: :not)
+							fn(value) -> value in [:high, :low] end) do
+					Percept.new(about: :danger, value: :none)
 				else
 					nil
 				end

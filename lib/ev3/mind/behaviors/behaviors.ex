@@ -9,11 +9,11 @@ defmodule Ev3.Behaviors do
 	alias Ev3.Percept
 	alias Ev3.Intent
 
-	@doc "Give the configurations of all benaviors to be activated"
+	@doc "Give the configurations of all benaviors to be activated by motives and driven by percepts"
   def behavior_configs() do
 		[
 				BehaviorConfig.new( # roam around
-					name: :roam,
+					name: :exploring,
 					motivated_by: [:curiosity],
 					senses: [:collision, :time_elapsed],
 					fsm: %FSM{
@@ -40,7 +40,7 @@ defmodule Ev3.Behaviors do
 							 }
 					),
 				BehaviorConfig.new( # look for food in bright places
-					name: :forage,
+					name: :foraging,
 					motivated_by: [:hunger],
 					senses: [:food, :darker, :lighter],
 					fsm: %FSM{
@@ -69,7 +69,7 @@ defmodule Ev3.Behaviors do
 							 }
 				),
 		 BehaviorConfig.new( #now is the time to panic!
-			 name: :headless_chicken,
+			 name: :flailing,
 			 motivated_by: [:panic],
 			 senses: [:ambient],
 			 fsm: %FSM{

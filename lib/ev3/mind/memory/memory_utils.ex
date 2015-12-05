@@ -46,6 +46,22 @@ defmodule Ev3.MemoryUtils do
 		end
 	end
 
+	def average(memories, about) do
+		list = Enum.filter(memories, &(&1.about == about))
+		case sum(list) do
+			nil -> nil
+			n -> n / Enum.count(list)
+		end
+	end
+
+	defp sum([]) do
+		nil
+	end
+
+	defp sum([memory | rest]) do
+		Enum.reduce(rest, memory.value, fn(other, acc) -> acc + other.value end)
+	end
+
 	def when_last_true(%Percept{until: until}) do
 		until
 	end

@@ -249,7 +249,7 @@ defmodule Ev3.Memory do
 						if percept.ttl == nil or (percept.until + percept.ttl) > msecs do
 							true
 						else
-							Logger.debug("Forgot #{inspect percept.about} = #{inspect percept.value} after #{div(msecs - percept.until, 1000)} secs")
+							# Logger.debug("Forgot #{inspect percept.about} = #{inspect percept.value} after #{div(msecs - percept.until, 1000)} secs")
 							false
 						end
 					end)
@@ -269,7 +269,7 @@ defmodule Ev3.Memory do
 					[motive] -> Map.put(acc, name, [motive])
 					[motive | rest] ->
 						expired = Enum.filter(rest, &((&1.since + @motive_ttl) < msecs))
-						Logger.debug("Forgot #{name} motives #{inspect expired}")
+						# Logger.debug("Forgot #{name} motives #{inspect expired}")
 						Map.put(acc, name, [motive | rest -- expired])
 				end
 			end)
@@ -286,7 +286,7 @@ defmodule Ev3.Memory do
 					[] -> Map.put_new(acc, name, [])
 					intents ->
 						expired = Enum.filter(intents, &((&1.since + @intent_ttl) < msecs))
-						Logger.debug("Forgot #{name} intents #{inspect expired}")
+						# Logger.debug("Forgot #{name} intents #{inspect expired}")
 						Map.put(acc, name, intents -- expired)
 				end
 			end)

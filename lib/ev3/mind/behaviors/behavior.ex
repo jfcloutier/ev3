@@ -89,7 +89,7 @@ defmodule Ev3.Behavior do
 				if not inhibited?(state) do
 					apply_transition(transition, percept, state)
 				else
-					Logger.info("INHIBITED behavior #{state.name}")
+					Logger.info("-- INHIBITED: behavior #{state.name}")
 					state
 				end
 		end
