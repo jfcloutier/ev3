@@ -5,6 +5,7 @@ defmodule Ev3.Behavior do
 	alias Ev3.Percept
 	alias Ev3.Motive
 	alias Ev3.Transition
+	alias Ev3.FSM
 	require Logger
 
 	@doc "Start a behavior from a configuration"
@@ -49,7 +50,7 @@ defmodule Ev3.Behavior do
 		if not Memory.inhibited?(on_motive.about) do
 			if not on_motive in state.motives do
 				Logger.info("STARTED behavior #{state.name}")
-				%{state | motives: [on_motive | state.motives], fsm_state: state.fsm.initial_state}
+				initial_transit(%{state | motives: [on_motive | state.motives]})
 			else
 				state
 			end
@@ -77,6 +78,19 @@ defmodule Ev3.Behavior do
 		end
 	end
 
+	defp initial_transit(%{fsm_state: nil, fsm: fsm} = state) do
+		transition = find_initial_transition(fsm)
+		if transition != nil do
+			transition.doing.(nil, state)
+		end
+		%{state | fsm_state: fsm.initial_state}
+	end
+
+	defp find_initial_transition(%FSM{initial_state: initial_state,
+																		transitions: transitions}) do
+		Enum.find(transitions, &(&1.from == nil and &1.to == initial_state and &1.doing != nil))
+	end
+
 	defp transit_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
 		state
 	end
@@ -98,7 +112,8 @@ defmodule Ev3.Behavior do
 	defp find_transition(percept, %{fsm_state: fsm_state, fsm: fsm} = state) do
 		fsm.transitions
 		|> Enum.find(fn(transition) ->
-			fsm_state in transition.from
+			transition.from != nil # else initial transition
+			and fsm_state in transition.from
 			and percept.about == transition.on
 			and (transition.condition == nil or transition.condition.(percept.value))
 		end)

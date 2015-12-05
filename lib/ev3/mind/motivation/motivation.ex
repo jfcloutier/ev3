@@ -25,12 +25,12 @@ defmodule Ev3.Motivation do
 					span: nil, # for as long as we can remember
 					logic: hunger(),
 				),
-				# A panic motivator
+				# A fear motivator
 				MotivatorConfig.new(
-					name: :panic,
+					name: :fear,
 					focus: %{senses: [:danger], motives: [], intents: []},
 					span: nil, # for as long as we can remember
-					logic: panic()
+					logic: fear()
 				)
 		]
 	end
@@ -64,12 +64,12 @@ defmodule Ev3.Motivation do
 	end
 
 	@doc "Fear motivation"
-	def panic() do
+	def fear() do
 		fn
 		(%Percept{about: :danger, value: :high}, _) ->
-				Motive.on(:panic) |> Motive.inhibit_all()
+				Motive.on(:fear) |> Motive.inhibit_all()
 		(%Percept{about: :danger, value: :none}, _) ->
-				Motive.off(:panic)
+				Motive.off(:fear)
 		(_,_) ->
 				nil
 		end

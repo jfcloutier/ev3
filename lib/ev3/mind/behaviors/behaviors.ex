@@ -19,6 +19,8 @@ defmodule Ev3.Behaviors do
 					fsm: %FSM{
 									 initial_state: :started,
 									 transitions: [
+										 %Transition{to: :started,
+																 doing: nothing()},																 
 										 %Transition{from: [:started, :roaming],
 																 on: :time_elapsed,
 																 to: :roaming,
@@ -38,7 +40,7 @@ defmodule Ev3.Behaviors do
 																},
 									 ]
 							 }
-					),
+				),
 				BehaviorConfig.new( # look for food in bright places
 					name: :foraging,
 					motivated_by: [:hunger],
@@ -46,6 +48,8 @@ defmodule Ev3.Behaviors do
 					fsm: %FSM{
 									 initial_state: :started,
 									 transitions: [
+										 %Transition{to: :started,
+																 doing: nothing()},																 
 										 %Transition{from: [:started, :on_track],
 																 on: :lighter,
 																 to: :on_track,
@@ -58,37 +62,46 @@ defmodule Ev3.Behaviors do
 										 %Transition{from: [:started, :on_track, :off_track],
 																 on: :food,
 																 to: :feeding,
-																 condition: fn(value) -> value == :plenty end,
-																 doing: eat()},
+																	condition: fn(value) -> value == :plenty end,
+																	doing: eat()},
 										 %Transition{from: [:feeding],
 																 on: :hungry,
-																 condition: fn(value) -> value == :not end,
-																 to: nil,
-																 doing: nil}
+																	condition: fn(value) -> value == :not end,
+																	to: nil,
+																	doing: nil}
 									 ]
 							 }
 				),
-		 BehaviorConfig.new( #now is the time to panic!
-			 name: :flailing,
-			 motivated_by: [:panic],
-			 senses: [:ambient],
-			 fsm: %FSM{
-								initial_state: :started,
-								transitions: [
-									%Transition{from: [:started],
-															on: :ambient,
-															 condition: fn(value) -> value <= 50 end,
-															 to: :panicking,
-															 doing: flail()},
-									%Transition{from: [:panicking],
-															on: :ambient,
-															 condition: fn(value) -> value > 50 end,
-															 to: nil}
-									]
-								}
-						) 
-		 ] 
+				BehaviorConfig.new( # now is the time to panic!
+					name: :panicking,
+					motivated_by: [:fear],
+					senses: [:ambient],
+					fsm: %FSM{
+									 initial_state: :started,
+									 transitions: [
+										 %Transition{to: :started,
+																 doing: panic()},																 
+										 %Transition{from: [:started],
+																 on: :ambient,
+																	condition: fn(value) -> value <= 50 end,
+																	to: :panicking,
+																	doing: panic()},
+										 %Transition{from: [:panicking],
+																 on: :ambient,
+																	condition: fn(value) -> value > 50 end,
+																	to: nil}
+									 ]
+							 }
+				) 
+		] 
 	end
+
+	defp nothing() do
+		fn(_percept, _state) ->
+			Logger.info("Doing NOTHING yet")
+		end
+	end
+		
 
 	defp roam() do
 		fn(percept, state) ->
@@ -130,9 +143,9 @@ defmodule Ev3.Behaviors do
 		end
 	end
 
-	defp flail() do
+	defp panic() do
 		fn(percept, state) ->
-			Logger.info("FLAILING from #{percept.about} = #{inspect percept.value}")
+			Logger.info("PANICKING from #{percept.about} = #{inspect percept.value}")
 		end # TODO
 	end	
 	
