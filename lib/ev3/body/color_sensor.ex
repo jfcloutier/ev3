@@ -85,13 +85,4 @@ defmodule Ev3.ColorSensor do
 		LegoSensor.set_mode(sensor, @color)
 	end
 
-	# Give currently set mode
-  defp mode(sensor) do
-		case LegoSensor.mode(sensor) do
-			@reflect -> :reflect
-			@ambient -> :ambient
-			@color -> :color
-    end
-  end
-
 end

@@ -2,6 +2,7 @@ defmodule Ev3.Tachomotor do
 	@moduledoc "A tacho motor"
 
 	@behaviour Ev3.Sensing
+	@behaviour Ev3.Moving
 
 	alias Ev3.Device
 	alias Ev3.LegoMotor
@@ -36,7 +37,7 @@ defmodule Ev3.Tachomotor do
 		end
 	end
 
-	####
+	#### Acting
 	
 	@doc "Reset a motor to defaul control values"
   def reset(motor) do
@@ -60,17 +61,21 @@ defmodule Ev3.Tachomotor do
 		motor1 = set_control(motor, :time, msecs)
 		apply_motor_controls(motor1)
 		execute_command(motor1, "run-timed")
+		:timer.sleep(msecs)
 		motor1
   end
 
 	@doc "Run a motor to an absolute position in degrees according to controls"
   def run_to_absolute(motor, degrees) do
 		run_to_position(motor, :absolute, degrees)
+		# TODO wait until absolute position reached, or time out
+		motor
   end
 
 	@doc "Run a motor to a relative position in degrees according to controls"
   def run_to_relative(motor, degrees) do
 		run_to_position(motor, :relative, degrees)
+		# TODO wait until relative position reached, or time out
 		motor
   end
 
@@ -109,22 +114,12 @@ defmodule Ev3.Tachomotor do
     end
   end
 
-  @doc "Get current polarity"
-  def polarity(motor) do
-		get_control(motor, :polarity)
-  end
-
 	@doc "Change the motor's duty cycle. Immediately effective only when running direct"
   def set_duty_cycle(motor, value) when value in -100 .. 100 do
 		set_attribute(motor, "duty_cycle_sp", value) #takes effect immediately
 		motor
 		 |> set_control(:duty_cycle, value)
 		 |> set_control(:speed, 0)
-  end
-
-  @doc "Get target duty cycle"
-  def target_duty_cycle(motor) do
-		get_control(motor, :duty_cycle)
   end
 
 	@doc "Set the target speed to maintain in degrees per second"
@@ -143,16 +138,6 @@ defmodule Ev3.Tachomotor do
 		|> set_control(:speed_regulation, :on)
     |> set_control(:speed_mode, :rps)
 		|> set_control(:speed, count_per_sec)
-  end
-
-	@doc "Get the target speed in rotations per second"
-  def target_speed(motor, :rps) do # rotations per second
-    get_control(motor, :speed) / count_per_rot(motor)
-  end
-
-	@doc "Get the target speed in degrees per second"
-  def target_speed(motor, :dps) do # degrees per second
-		get_control(motor, :speed) * (360 / count_per_rot(motor))
   end
 
   @doc "Set the target position in degrees"
@@ -186,6 +171,28 @@ defmodule Ev3.Tachomotor do
 	def set_ramp_down(motor, msecs) when is_integer(msecs) and msecs >= 0 do
 		set_control(motor, :ramp_down, msecs)
  end
+
+###########
+	
+  @doc "Get target duty cycle"
+  def target_duty_cycle(motor) do
+		get_control(motor, :duty_cycle)
+  end
+
+	@doc "Get the target speed in rotations per second"
+  def target_speed(motor, :rps) do # rotations per second
+    get_control(motor, :speed) / count_per_rot(motor)
+  end
+
+	@doc "Get the target speed in degrees per second"
+  def target_speed(motor, :dps) do # degrees per second
+		get_control(motor, :speed) * (360 / count_per_rot(motor))
+  end
+
+	@doc "Get current polarity"
+  def polarity(motor) do
+		get_control(motor, :polarity)
+  end
 
 	@doc "Get the actual motor speed"
   def current_speed(motor, mode) do

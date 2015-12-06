@@ -15,7 +15,7 @@ defmodule Ev3.Mock.TouchSensor do
 		[:touch]
 	end
 
-	def read(sensor, sense) do
+	def read(sensor, _sense) do
 		value = case :random.uniform(2) - 1 do
 			0 -> :released
 			1 -> :pressed

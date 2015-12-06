@@ -1,14 +1,23 @@
 defmodule Ev3.ActuatorConfig do
 	@moduledoc "An actuator's configuration"
 
-	defstruct name: nil, intent: nil, motor_specs: nil, logic: nil
+	defstruct name: nil, motor_specs: nil, activations: nil, intents: nil
 
 	@doc "Make a new actuator"
-	def new(name: name, intent: intent_name, motor_specs: motor_specs, logic: logic) do
-		%Ev3.ActuatorConfig{name: name,
-												intent: intent_name,
+	def new(name: name, motor_specs: motor_specs, activations: activations) do
+		config = %Ev3.ActuatorConfig{name: name,
 												motor_specs: motor_specs,
-												logic: logic}
+												activations: activations}
+		%Ev3.ActuatorConfig{config | intents: intent_names(config.activations)}
+	end
+
+	defp intent_names(activations) do
+		set = Enum.reduce(
+			activations,
+			HashSet.new(),
+			fn(activation, acc) -> HashSet.put(acc, activation.intent) end
+		)
+		Enum.to_list(set)
 	end
 
 end

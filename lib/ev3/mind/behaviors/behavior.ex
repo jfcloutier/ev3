@@ -42,7 +42,7 @@ defmodule Ev3.Behavior do
 
 	### Private
 
-	defp inhibited?(%{motives: motives} = state) do
+	defp inhibited?(%{motives: motives} = _state) do
 		Enum.all?(motives, &Memory.inhibited?(&1.about))
 	end
 
@@ -109,7 +109,7 @@ defmodule Ev3.Behavior do
 		end
 	end
 
-	defp find_transition(percept, %{fsm_state: fsm_state, fsm: fsm} = state) do
+	defp find_transition(percept, %{fsm_state: fsm_state, fsm: fsm} = _state) do
 		fsm.transitions
 		|> Enum.find(fn(transition) ->
 			transition.from != nil # else initial transition

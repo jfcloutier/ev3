@@ -102,7 +102,6 @@ defmodule Ev3.Memory do
 	end
 
 	def handle_call({:recall_percepts, senses, window_width}, _from, state) do
-		msecs = now()
 		percepts = recent_percepts(window_width, senses, state)
 		{:reply, percepts, state}
 	end

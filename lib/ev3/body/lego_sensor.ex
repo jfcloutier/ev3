@@ -21,7 +21,7 @@ defmodule Ev3.LegoSensor do
 		end
   end
 
-	defp dispatch(sensor) do
+	defp module_for(sensor) do
 		if !Ev3.testing?() do
 			case sensor.type do
 				:touch -> Ev3.TouchSensor
@@ -39,14 +39,14 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Get the list of senses from a sensor"
 	def senses(sensor) do
-		apply(dispatch(sensor), :senses, [sensor])
+		apply(module_for(sensor), :senses, [sensor])
 	end
 
 
 	@doc "Read the value of a sense from a sensor"
 	def read(sensor, sense) do # {value, updated_sensor} - value can be nil
 		try do
-			apply(dispatch(sensor), :read, [sensor, sense])
+			apply(module_for(sensor), :read, [sensor, sense])
 		rescue
 			error ->
 				Logger.warn("#{inspect error} when reading #{inspect sense} from #{inspect sensor}")
@@ -56,12 +56,12 @@ defmodule Ev3.LegoSensor do
 
 	@doc "Get how long to pause between reading a sense from a sensor. In msecs"
 	def pause(sensor) do
-			apply(dispatch(sensor), :pause, [sensor])
+			apply(module_for(sensor), :pause, [sensor])
 	end
 
 	@doc "Get the resolution of a sensor (the delta between essentially identical readings). Nil or an integer."
 	def sensitivity(sensor, sense) do
-			apply(dispatch(sensor), :sensitivity, [sensor, sense])
+			apply(module_for(sensor), :sensitivity, [sensor, sense])
 	end
 
 	@doc "Is this the ultrasonic sensor?"

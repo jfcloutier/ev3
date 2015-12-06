@@ -16,11 +16,11 @@ defmodule Ev3.LegoMotor do
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_motor("#{@sys_path}/#{&1}")))
 		else
-			[Ev3.Mock.Tachomotor.new(:large), Ev3.Mock.Tachomotor.new(:medium)]
+			[Ev3.Mock.Tachomotor.new(:large, "A"), Ev3.Mock.Tachomotor.new(:medium, "B")]
 		end
   end
 
-	defp dispatch(motor) do
+	defp module_for(_motor) do
 		if !Ev3.testing?() do
 			Ev3.Tachomotor
 		else
@@ -30,14 +30,14 @@ defmodule Ev3.LegoMotor do
 
  @doc "Get the list of senses from a motor"
 	def senses(motor) do
-		apply(dispatch(motor), :senses, [motor])
+		apply(module_for(motor), :senses, [motor])
 	end
 
 
 	@doc "Read the value of a sense from a motor"
 	def read(motor, sense) do # {value, updated_motor} - value can be nil
 		try do
-			apply(dispatch(motor), :read, [motor, sense])
+			apply(module_for(motor), :read, [motor, sense])
 		rescue
 			error ->
 				Logger.warn("#{inspect error} when reading #{inspect sense} from #{inspect motor}")
@@ -47,12 +47,12 @@ defmodule Ev3.LegoMotor do
 
 	@doc "Get how long to pause between reading a sense from a motor. In msecs"
 	def pause(motor) do
-			apply(dispatch(motor), :pause, [motor])
+			apply(module_for(motor), :pause, [motor])
 	end
 
 	@doc "Get the resolution of a motor (the delta between essentially identical readings). Nil or an integer."
 	def sensitivity(motor, sense) do
-			apply(dispatch(motor), :sensitivity, [motor, sense])
+			apply(module_for(motor), :sensitivity, [motor, sense])
 	end
 
 	  @doc "Is this a large motor?"
@@ -64,6 +64,10 @@ defmodule Ev3.LegoMotor do
   def medium?(motor) do
 		motor.type == :medium
   end
+
+	def execute_command(motor, command, params) do
+		apply(module_for(motor), command, [motor | params])
+	end
 
 	### PRIVATE
 

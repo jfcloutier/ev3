@@ -27,7 +27,7 @@ defmodule Ev3.ActuatorsHandler do
 
 	defp process_intent(intent, %{actuator_configs: actuator_configs}) do
 		actuator_configs
-		|> Enum.filter(&(intent.name == &1.intent))
+		|> Enum.filter(&(intent.about in &1.intents))
 		|> Enum.each(
 			fn(actuator_config) ->
 				Actuator.realize_intent(actuator_config.name, intent)

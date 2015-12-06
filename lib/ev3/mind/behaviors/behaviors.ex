@@ -59,11 +59,10 @@ defmodule Ev3.Behaviors do
 																 on: :darker,
 																 to: :off_track,
 																 doing: change_course()},
-										 %Transition{from: [:started, :on_track, :off_track],
+										 %Transition{from: [:started, :on_track, :off_track, :feeding],
 																 on: :food,
 																 to: :feeding,
-																	condition: fn(value) -> value == :plenty end,
-																	doing: eat()},
+																 doing: eat()},
 										 %Transition{from: [:feeding],
 																 on: :hungry,
 																	condition: fn(value) -> value == :not end,
@@ -106,7 +105,14 @@ defmodule Ev3.Behaviors do
 	defp roam() do
 		fn(percept, state) ->
 			Logger.info("ROAMING from #{percept.about} = #{inspect percept.value}")
-		end # TODO
+			turn_where = case :random.uniform(2) do
+									1 -> :turn_left
+									2 -> :turn_right
+									 end
+			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(90)))
+			how_long = :random.uniform(5) # secs
+			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: how_long}))
+		end
 	end
 
 	defp avoid_collision() do
@@ -134,12 +140,14 @@ defmodule Ev3.Behaviors do
 	end
 
 	defp eat() do
-		fn(percept, state) ->
+		fn(%Percept{about: :food, value: value} = percept, state) ->
 			Logger.info("EATING from #{percept.about} = #{inspect percept.value}")
-			intent = Intent.new(about: :eat, value: :lots)
-			CNS.notify_intended(intent)
-			percept = Percept.new(about: :hungry, value: :not) |> Percept.source(state.name)
-			CNS.notify_perceived(percept)
+			CNS.notify_intended(Intent.new(about: :stop, value: nil))
+			how_much = case value do
+									 :plenty -> :lots
+									 :little -> :some
+								 end
+			CNS.notify_intended(Intent.new(about: :eat, value: how_much))
 		end
 	end
 

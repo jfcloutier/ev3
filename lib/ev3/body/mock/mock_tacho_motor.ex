@@ -2,11 +2,13 @@ defmodule Ev3.Mock.Tachomotor do
 	@moduledoc "A mock large tachomotor"
 
 	@behaviour Ev3.Sensing
+	@behaviour Ev3.Moving
 
-	def new(type) do
-			 %Ev3.Device{class: :motor,
-						path: "/mock/#{type}_tachomotor", 
-						type: type}
+	def new(type, port_name) do
+		%Ev3.Device{class: :motor,
+								path: "/mock/#{type}_tachomotor", 
+								type: type,
+								port: port_name}
   end
 
  # Sensing
@@ -30,6 +32,74 @@ defmodule Ev3.Mock.Tachomotor do
 
 	def sensitivity(_motor, _sense) do
 		nil
+	end
+
+	# Moving
+
+	def reset(motor) do
+		IO.puts("Resetting #{motor.path}")
+		motor
+	end
+
+	def set_speed(motor, mode, speed) do
+		IO.puts("Setting the speed of #{motor.path} to #{speed} #{mode}")
+		motor
+	end
+
+	def reverse_polarity(motor) do
+		IO.puts("Reversing polarity of #{motor.path}")
+		motor
+	end
+
+	def set_duty_cycle(motor, duty_cycle) do
+		IO.puts("Setting the duty cycle of #{motor.path} to #{duty_cycle}")
+		motor
+	end
+
+	def set_ramp_up(motor, msecs) do
+		IO.puts("Setting ramp-up of #{motor.path} to #{msecs} msecs")
+		motor
+	end
+		
+	def set_ramp_down(motor, msecs) do
+		IO.puts("Setting ramp-up of #{motor.path} to #{msecs} msecs")
+		motor
+	end
+		
+	def run(motor) do
+		IO.puts("Running #{motor.path}")
+		motor
+	end
+
+	def run_to_absolute(motor, degrees) do
+		IO.puts("Running #{motor.path} to #{degrees} absolute degrees")
+		motor
+	end
+
+	def run_to_relative(motor, degrees) do
+		IO.puts("Running #{motor.path} to #{degrees} relative degrees")
+		motor
+	end
+
+	def run_for(motor, msecs) when is_integer(msecs) do
+		IO.puts("Running #{motor.path} for #{msecs} msecs")
+		:timer.sleep(msecs)
+		motor
+	end
+	
+	def coast(motor) do
+		IO.puts("Coasting #{motor.path}")
+		motor
+	end
+
+	def brake(motor) do
+		IO.puts("Braking #{motor.path}")
+		motor
+	end
+
+	def hold(motor) do
+		IO.puts("Holding #{motor.path}")
+		motor
 	end
 
 	### PRIVATE

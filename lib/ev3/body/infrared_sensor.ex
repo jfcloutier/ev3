@@ -133,13 +133,4 @@ defmodule Ev3.InfraredSensor do
 		LegoSensor.set_mode(sensor, @remote)
 	end		
 
-	# Give currently set mode
-  defp mode(sensor) do
-		case LegoSensor.mode(sensor) do
-			@proximity -> :proximity
-			@seek -> :seek
-			@remote -> :remote
-    end
-  end
-
 end

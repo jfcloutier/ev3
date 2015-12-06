@@ -58,7 +58,7 @@ defmodule Ev3.Perception do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				average = average(percepts, :ambient)
+				average = average(percepts, :ambient, fn(value) -> value end)
 				if average != nil and val < average do
 					Percept.new(about: :darker, value: average - val)
 				else
@@ -71,7 +71,7 @@ defmodule Ev3.Perception do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				average = average(percepts, :ambient)
+				average = average(percepts, :ambient, fn(value) -> value end)
 				if average != nil and val > average do
 					Percept.new(about: :lighter, value: val - average)
 				else
@@ -171,14 +171,22 @@ defmodule Ev3.Perception do
 	def hungry() do
 		fn # Hunger based on time since last :eat intend
 		(%Percept{about: :time_elapsed}, %{intents: intents}) ->
-				elapsed = time_elapsed_since_last(intents, :eat, fn(_value) -> true end)
-				case elapsed do
-					nil -> Percept.new(about: :hungry, value: :very)
-					n when n > 60_000 -> Percept.new(about: :hungry, value: :very)
-					n when n > 10_000 -> Percept.new(about: :hungry, value: :a_little)
-					_ -> nil
+				how_full = summation(
+				intents,
+				:eat,
+				30_000,
+				fn(value) ->
+					case value do
+						:lots -> 3
+						:some -> 1
+					end
+				end)
+				cond do
+					how_full > 10 -> Percept.new(about: :hungry, value: :not)
+					how_full > 5 -> Percept.new(about: :hungry, value: :a_little)
+					true -> Percept.new(about: :hungry, value: :very_)
 				end
-				(_,_) -> nil
+			(_,_) -> nil
 		end
 	end
 
