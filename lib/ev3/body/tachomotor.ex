@@ -61,7 +61,6 @@ defmodule Ev3.Tachomotor do
 		motor1 = set_control(motor, :time, msecs)
 		apply_motor_controls(motor1)
 		execute_command(motor1, "run-timed")
-		:timer.sleep(msecs)
 		motor1
   end
 

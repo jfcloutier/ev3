@@ -83,7 +83,6 @@ defmodule Ev3.Mock.Tachomotor do
 
 	def run_for(motor, msecs) when is_integer(msecs) do
 		IO.puts("Running #{motor.path} for #{msecs} msecs")
-		:timer.sleep(msecs)
 		motor
 	end
 	

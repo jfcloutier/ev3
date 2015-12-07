@@ -19,27 +19,49 @@ defmodule Ev3.Script do
 		%Ev3.Script{script | steps: script.steps ++ [%{motor_name: motor_name, command: command, params: params}]}
 	end
 
-	@doc "Execute the steps and run the motors where applicable"
+	@doc "Add a timer wait to the script"
+	def add_wait(script, msecs) do
+		%Ev3.Script{script | steps: script.steps ++ [%{sleep: msecs}]}
+	end
+
+	@doc "Execute the steps and waits of the script"
 	def execute(script) do
 		updated_motors = Enum.reduce(
 			script.steps,
 			script.motors,
 			fn(step, acc) ->
-				motors = case step.motor_name do
-									 :all -> Map.values(script.motors)
-									 name -> [Map.get(acc, name)]
-								 end
-				Enum.reduce(
-					motors,
-					acc,
-					fn(motor, acc1) ->
-						updated_motor = LegoMotor.execute_command(motor, step.command, step.params)
-						Map.put(acc1, step.motor_name, updated_motor)
-					end
-				)
+				case step do
+					%{motor_name: motor_name, command: command, params: params} ->
+						execute_command(motor_name, command, params, acc)
+					%{sleep: msecs} ->
+						sleep(msecs, acc)
+				end
 			end
 		)
 		%Ev3.Script{script | motors: updated_motors}
 	end
-	
+
+	### Private
+
+	defp execute_command(motor_name, command, params, all_motors) do
+		motors = case motor_name do
+							 :all -> Map.values(all_motors)
+							 name -> [Map.get(all_motors, name)]
+						 end
+		Enum.reduce(
+			motors,
+			all_motors,
+			fn(motor, acc) ->
+				updated_motor = LegoMotor.execute_command(motor, command, params)
+				Map.put(acc, motor_name, updated_motor)
+			end
+		)
+	end
+
+	defp sleep(msecs, all_motors) do
+		IO.puts("SLEEPING for #{msecs}")
+		:timer.sleep(msecs)
+		all_motors
+	end
+			
 end

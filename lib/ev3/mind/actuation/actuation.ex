@@ -46,6 +46,7 @@ defmodule Ev3.Actuation do
 			Script.new(:going_forward, motors)
 			|> Script.add_step(:all, :set_speed, [:rps, rps_speed])
 			|> Script.add_step(:all, :run_for, [how_long] )
+			|> Script.add_wait(how_long)
 		end
 	end
 
