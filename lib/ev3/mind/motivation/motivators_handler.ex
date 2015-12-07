@@ -31,12 +31,16 @@ defmodule Ev3.MotivatorsHandler do
 		|> Enum.filter(&(percept.about in &1.focus.senses))
 		|> Enum.each(
 			fn(motivator_config) ->
-				case Motivator.react_to_percept(motivator_config.name, percept) do
-					nil -> :ok
-					%Motive{} = new_motive ->
-						CNS.notify_motivated(%{new_motive | source: motivator_config.name})
-				end
-			end )
+				Process.spawn( # allow parallelism
+					fn() ->
+						case Motivator.react_to_percept(motivator_config.name, percept) do
+							nil -> :ok
+							%Motive{} = new_motive ->
+								CNS.notify_motivated(%{new_motive | source: motivator_config.name})
+						end
+					end,
+					[:link])
+			end)
 	end
 	
 end

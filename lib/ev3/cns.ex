@@ -40,6 +40,12 @@ defmodule Ev3.CNS do
 		GenServer.cast(@name, {:notify_intended, intent})
 	end
 
+		@doc "Handle notification of an intent realized"
+	def notify_realized(intent) do
+		# Logger.debug("Intent #{intent.name}")
+		GenServer.cast(@name, {:notify_realized, intent})
+	end
+
 	@doc "Handle notification of an new or extended memory change"
 	def notify_memorized(memorization, %Percept{} = percept) do
 		#Logger.info("Memorized ===> #{memorization} PERCEPT #{inspect percept.about} = #{inspect percept.value}")
@@ -83,6 +89,10 @@ defmodule Ev3.CNS do
 		{:noreply, state}
 	end
 	
+	def handle_cast({:notify_realized, intent}, state) do
+		GenEvent.notify(@dispatcher, {:realized, intent})
+		{:noreply, state}
+	end
 	
 	def handle_cast({:notify_memorized, memorization, data}, state) do
 		GenEvent.notify(@dispatcher, {:memorized, memorization, data})

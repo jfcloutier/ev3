@@ -16,12 +16,26 @@ defmodule Ev3.Script do
 	end
 
 	def add_step(script, motor_name, command, params) do
-		%Ev3.Script{script | steps: script.steps ++ [%{motor_name: motor_name, command: command, params: params}]}
+		cond do
+			motor_name == :all or motor_name in Map.keys(script.motors) ->
+				%Ev3.Script{script | steps: script.steps ++ [%{motor_name: motor_name, command: command, params: params}]}
+			true ->
+				throw "Unknown motor #{motor_name}"
+		end
 	end
 
 	@doc "Add a timer wait to the script"
 	def add_wait(script, msecs) do
 		%Ev3.Script{script | steps: script.steps ++ [%{sleep: msecs}]}
+	end
+
+	def add_wait(script, motor_name, property, test) do
+		cond do
+			motor_name == :all or motor_name in Map.keys(script.motors) ->
+				%Ev3.Script{script | steps: script.steps ++ [%{wait_on: motor_name, property: property, test: test}]}
+			true ->
+				throw "Unknown motor #{motor_name}"
+		end
 	end
 
 	@doc "Execute the steps and waits of the script"
@@ -35,6 +49,8 @@ defmodule Ev3.Script do
 						execute_command(motor_name, command, params, acc)
 					%{sleep: msecs} ->
 						sleep(msecs, acc)
+					%{wait_on: motor_name, property: property, test: test, timeout: timeout} ->
+						wait_on(motor_name, property, test, timeout, acc)
 				end
 			end
 		)
@@ -63,5 +79,11 @@ defmodule Ev3.Script do
 		:timer.sleep(msecs)
 		all_motors
 	end
+
+	defp wait_on(motor_name, property, test, timeout, all_motors) do
+		# TODO
+    all_motors
+	end
+		
 			
 end

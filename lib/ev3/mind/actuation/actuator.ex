@@ -6,6 +6,11 @@ defmodule Ev3.Actuator do
 	alias Ev3.Script
 	alias Ev3.MotorSpec
 	alias Ev3.Device
+	alias Ev3.CNS
+	import Ev3.Utils
+
+	@max_intent_age 1000 # intents older than 1 sec are dropped
+
 
 		@doc "Start an actuator from a configuration"
 	def start_link(actuator_config) do
@@ -20,15 +25,20 @@ defmodule Ev3.Actuator do
 		Agent.update(
 			name,
 			fn(state) ->
-				state.actuator_config.activations
-				|> Enum.filter_map(
-					fn(activation) -> activation.intent == intent.about end,
-					fn(activation) -> activation.action end)
-				|> Enum.each(
-					fn(action) ->
-						script = action.(intent, state.motors)
-						Script.execute(script)
-					end)
+				if intent_fresh?(intent) do
+					state.actuator_config.activations
+					|> Enum.filter_map(
+						fn(activation) -> activation.intent == intent.about end,
+						fn(activation) -> activation.action end)
+					|> Enum.each( # execute activated actions sequentially
+						fn(action) ->
+							script = action.(intent, state.motors)
+							Script.execute(script)
+							CNS.notify_realized(intent) # This will have the intent stored in memory. Unrealized intents are not retained in memory.
+						end)
+				else
+					IO.puts("STALE: Actuator #{name} not realizing intent #{intent.about} #{inspect intent.value}")
+				end
 				state
 			end,
 			30_000
@@ -37,9 +47,13 @@ defmodule Ev3.Actuator do
 
 	### Private
 
+	defp intent_fresh?(intent) do
+		(now() - intent.since) < @max_intent_age
+	end
+
 	defp find_motors(motor_spec) do
 		all_motors = LegoMotor.motors()
-		Enum.reduce(
+		found = Enum.reduce(
 			motor_spec,
 			%{},
 			fn(motor_spec, acc) ->
@@ -47,6 +61,7 @@ defmodule Ev3.Actuator do
 													&(MotorSpec.matches?(motor_spec, &1)))
 				Map.put(acc, motor_spec.name, motor)
 			end)
+		found
 	end
 
 end

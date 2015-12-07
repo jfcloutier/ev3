@@ -30,7 +30,11 @@ defmodule Ev3.ActuatorsHandler do
 		|> Enum.filter(&(intent.about in &1.intents))
 		|> Enum.each(
 			fn(actuator_config) ->
-				Actuator.realize_intent(actuator_config.name, intent)
+				Process.spawn( # allow parallelism
+					fn() ->
+						Actuator.realize_intent(actuator_config.name, intent)
+					end,
+					[:link])
 			end)
 	end
 

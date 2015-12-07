@@ -35,7 +35,7 @@ defmodule Ev3.Perception do
 					focus: %{senses: [:ambient, :collision, :danger, :time_elapsed], motives: [], intents: []},
 					span: {10, :secs}, # only react to what happened in the last 10 seconds
 					ttl: {2, :mins}, # remember for 2 minutes
-					logic: scared()),
+					logic: danger()),
 				PerceptorConfig.new(
 					name: :hungry,
 					focus: %{senses: [:time_elapsed], motives: [], intents: [:eat]},
@@ -139,8 +139,8 @@ defmodule Ev3.Perception do
 		end
 	end
 
-	@doc "Should the robot be scared?"
-	def scared() do
+	@doc "Danger, Will Robinson!"
+	def danger() do
 		fn
 		(_percept, []) -> nil
 		(%Percept{about: :collision, value: :now}, %{percepts: percepts}) ->
@@ -180,11 +180,13 @@ defmodule Ev3.Perception do
 						:lots -> 3
 						:some -> 1
 					end
-				end)
+				end,
+				0
+			)
 				cond do
 					how_full > 10 -> Percept.new(about: :hungry, value: :not)
 					how_full > 5 -> Percept.new(about: :hungry, value: :a_little)
-					true -> Percept.new(about: :hungry, value: :very_)
+					true -> Percept.new(about: :hungry, value: :very)
 				end
 			(_,_) -> nil
 		end

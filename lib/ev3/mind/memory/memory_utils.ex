@@ -47,18 +47,18 @@ defmodule Ev3.MemoryUtils do
 	end
 
 	@doc "Get the average value for selected memories"
-	def average(memories, about, valuation) do
+	def average(memories, about, valuation, default \\ nil) do
 		list = Enum.filter(memories, &(&1.about == about))
-		case sum(list, valuation) do
+		case sum(list, valuation, default) do
 			nil -> nil
 			n -> n / Enum.count(list)
 		end
 	end
 
 	@doc "Summation over selected memories"
-	def summation(memories, about, past, valuation) do
+	def summation(memories, about, past, valuation, default \\ nil) do
 		select_memories(memories, about: about, since: past)
-		|> sum(valuation)
+		|> sum(valuation, default)
 	end
 
 	def when_last_true(%Percept{until: until}) do
@@ -75,14 +75,14 @@ defmodule Ev3.MemoryUtils do
 
 	### Private
 
-	defp sum([], _valuation) do
-		nil
+	defp sum([], _valuation, default) do
+		default
 	end
 
-	defp sum([memory | rest], valuation) do
+	defp sum([memory | rest], valuation, _default) do
 		Enum.reduce(
 			rest,
-			memory.value,
+			valuation.(memory.value),
 			fn(other, acc) ->
 				value = valuation.(other.value)
 				acc + value

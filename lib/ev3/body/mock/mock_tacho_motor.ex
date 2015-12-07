@@ -6,8 +6,9 @@ defmodule Ev3.Mock.Tachomotor do
 
 	def new(type, port_name) do
 		%Ev3.Device{class: :motor,
-								path: "/mock/#{type}_tachomotor", 
+								path: "/mock/#{type}_motor/#{port_name}", 
 								type: type,
+								mock: true,
 								port: port_name}
   end
 

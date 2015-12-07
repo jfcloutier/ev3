@@ -110,7 +110,7 @@ defmodule Ev3.Behaviors do
 									2 -> :turn_right
 									 end
 			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(90)))
-			how_long = :random.uniform(5) # secs
+			how_long = :random.uniform(3) # secs
 			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: how_long}))
 		end
 	end
@@ -118,25 +118,34 @@ defmodule Ev3.Behaviors do
 	defp avoid_collision() do
 		fn(percept, state) ->
 			Logger.info("AVOIDING COLLISION from #{percept.about} = #{inspect percept.value}")
-		end # TODO
+			turn_where = case :random.uniform(2) do
+									1 -> :turn_left
+									2 -> :turn_right
+									 end
+			CNS.notify_intended(Intent.new(about: turn_where, value: 30 + :random.uniform(60)))
+		end
 	end
 
 	defp backoff() do
 		fn(percept, state) ->
 			Logger.info("BACKING OFF from #{percept.about} = #{inspect percept.value}")
-		end # TODO
+			how_long = :random.uniform(2) # secs
+			CNS.notify_intended(Intent.new(about: :go_backward, value: %{speed: :fast, time: how_long}))
+		end 
 	end
 
 	defp stay_the_course() do
 		fn(percept, state) ->
 			Logger.info("STAYING THE COURSE from #{percept.about} = #{inspect percept.value}")
-		end # TODO
+			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: 1}))
+		end 
 	end
 
 	defp change_course() do
 		fn(percept, state) ->
 			Logger.info("CHANGING COURSE from #{percept.about} = #{inspect percept.value}")
-		end # TODO
+			intend_to_change_course()
+		end
 	end
 
 	defp eat() do
@@ -154,7 +163,19 @@ defmodule Ev3.Behaviors do
 	defp panic() do
 		fn(percept, state) ->
 			Logger.info("PANICKING from #{percept.about} = #{inspect percept.value}")
-		end # TODO
-	end	
+			for n <- [1 .. :random.uniform(10)] do
+				intend_to_change_course()
+			end
+		end
+	end
+
+	defp intend_to_change_course() do
+			turn_where = case :random.uniform(2) do
+									1 -> :turn_left
+									2 -> :turn_right
+									 end
+			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(90)))
+			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: 1}))
+	end
 	
 end

@@ -16,7 +16,9 @@ defmodule Ev3.LegoMotor do
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_motor("#{@sys_path}/#{&1}")))
 		else
-			[Ev3.Mock.Tachomotor.new(:large, "A"), Ev3.Mock.Tachomotor.new(:medium, "B")]
+			[Ev3.Mock.Tachomotor.new(:large, "A"),
+			 Ev3.Mock.Tachomotor.new(:large, "B"),
+			 Ev3.Mock.Tachomotor.new(:medium, "C")]
 		end
   end
 

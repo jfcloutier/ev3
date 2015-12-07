@@ -34,7 +34,11 @@ defmodule Ev3.BehaviorsHandler do
 		|> Enum.filter(&(percept.about in &1.senses))
 		|> Enum.each(
 			fn(behavior_config) ->
-				Behavior.react_to_percept(behavior_config.name, percept)
+				Process.spawn( # allow parallelism
+					fn() ->
+						Behavior.react_to_percept(behavior_config.name, percept)
+					end,
+					[:link])
 			end)
 	end
 

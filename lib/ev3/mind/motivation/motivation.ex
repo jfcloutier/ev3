@@ -21,7 +21,7 @@ defmodule Ev3.Motivation do
 				# A hunger motivator
 				MotivatorConfig.new(
 					name: :hunger,
-					focus: %{senses: [:hungry, :sated], motives: [], intents: []},
+					focus: %{senses: [:hungry], motives: [], intents: []},
 					span: nil, # for as long as we can remember
 					logic: hunger(),
 				),
@@ -56,7 +56,7 @@ defmodule Ev3.Motivation do
 				else
 					nil
 				end
-	  (%Percept{about: :hungry, value: :not}, __) ->
+	  (%Percept{about: :hungry, value: :not}, _) ->
 				Motive.off(:hunger)
 	  (_,_) ->
 				nil

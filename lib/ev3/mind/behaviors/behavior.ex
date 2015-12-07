@@ -6,7 +6,10 @@ defmodule Ev3.Behavior do
 	alias Ev3.Motive
 	alias Ev3.Transition
 	alias Ev3.FSM
+	import Ev3.Utils
 	require Logger
+
+	@max_percept_age 1000 # percepts older than 1 sec are dropped
 
 	@doc "Start a behavior from a configuration"
 	def start_link(behavior_config) do
@@ -24,9 +27,9 @@ defmodule Ev3.Behavior do
 			name,
 			fn(state) ->
 				if Motive.on?(motive) do
-						start(motive, state) # maybe
+						start(motive, state) # if applicable
 				else
-						stop(motive, state) # maybe
+						stop(motive, state) # if applicable
 				end
 			end)
 	end
@@ -35,12 +38,21 @@ defmodule Ev3.Behavior do
 		Agent.update(
 			name,
 			fn(state) ->
-				transit_on(percept, state)
+				if percept_fresh?(percept) do
+					transit_on(percept, state)
+				else
+					IO.puts("STALE: Behavior #{name} not reacting to percept #{percept.about} = #{inspect percept.value}")
+					state
+				end
 			end
 		)
 	end
 
 	### Private
+
+	defp percept_fresh?(percept) do
+		(now() - percept.since) < @max_percept_age
+	end
 
 	defp inhibited?(%{motives: motives} = _state) do
 		Enum.all?(motives, &Memory.inhibited?(&1.about))

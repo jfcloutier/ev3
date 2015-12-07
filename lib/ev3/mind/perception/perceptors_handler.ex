@@ -33,13 +33,17 @@ defmodule Ev3.PerceptorsHandler do
 		|> Enum.filter(&(percept.about in &1.focus.senses))
 		|> Enum.each(
 			fn(perceptor_config) ->
-				case Perceptor.analyze_percept(perceptor_config.name, percept) do
-					nil -> :ok
-					new_percept ->
-						CNS.notify_perceived(%{new_percept |
-																						ttl: perceptor_config.ttl,
-																						source: perceptor_config.name} )
-				end
+				Process.spawn( # allow parallelism
+					fn() ->
+						case Perceptor.analyze_percept(perceptor_config.name, percept) do
+							nil -> :ok
+							new_percept ->
+								CNS.notify_perceived(%{new_percept |
+																			 ttl: perceptor_config.ttl,
+																			 source: perceptor_config.name} )
+						end
+					end,
+					[:link])
 			end)
 	end
 

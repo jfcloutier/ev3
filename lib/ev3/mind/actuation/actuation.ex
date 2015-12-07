@@ -14,7 +14,7 @@ defmodule Ev3.Actuation do
 				ActuatorConfig.new(name: :locomotion,
 													 motor_specs: [  # to find and name motors from specs
 														 %MotorSpec{name: :left_wheel, port: "A"},
-														 %MotorSpec{name: :right, port: "B"}
+														 %MotorSpec{name: :right_wheel, port: "B"}
 													 ],
 													 activations: [ # scripted actions to be taken upon receiving intents
 														 %Activation{intent: :go_forward,
@@ -29,14 +29,19 @@ defmodule Ev3.Actuation do
 																				 action: stopping()}
 													 ]),
 				ActuatorConfig.new(name: :manipulation,
-													 motor_specs: [ # todo
+													 motor_specs: [
+														 %MotorSpec{name: :mouth, port: "C"}
 													 ],
-													 activations: [ # todo
+													 activations: [
+														 %Activation{intent: :eat,
+																				 action: eating()}
 													 ])														 
 		]
 	end
 
-	def going_forward() do
+	# locomotion
+
+	defp going_forward() do
 		fn(intent, motors) ->
 			rps_speed = case intent.value.speed do
 										:fast -> 3
@@ -46,11 +51,11 @@ defmodule Ev3.Actuation do
 			Script.new(:going_forward, motors)
 			|> Script.add_step(:all, :set_speed, [:rps, rps_speed])
 			|> Script.add_step(:all, :run_for, [how_long] )
-			|> Script.add_wait(how_long)
+#			|> Script.add_wait(how_long)
 		end
 	end
 
-	def going_backward() do
+	defp going_backward() do
 		fn(intent, motors) ->
 			rps_speed = case intent.value.speed do
 										:fast -> 3
@@ -66,28 +71,41 @@ defmodule Ev3.Actuation do
 		end
 	end
 
-	def turning_right() do
+	defp turning_right() do
 		fn(intent, motors) ->
-			IO.puts("UNDEFINED :turning_right")
 			Script.new(:turning_right, motors)
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, 1])
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, -1])
+			|> Script.add_step(:all, :run_for, [1000])
 		end
-		# todo
   end
 
-	def turning_left() do
+	defp turning_left() do
 		fn(intent, motors) ->
-			IO.puts("UNDEFINED :turning_left")
 			Script.new(:turning_left, motors)
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, 1])
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, -1])
+			|> Script.add_step(:all, :run_for, [1000])
 		end
 		# todo
   end
 
-	def stopping() do
+	defp stopping() do
 		fn(intent, motors) ->
-			IO.puts("UNDEFINED :stop")
 			Script.new(:stopping, motors)
+			|> Script.add_step(:all, :coast)
+			|> Script.add_step(:all, :reset)
 		end
-		# todo
   end
+
+	# manipulation
+
+	defp eating() do
+		fn(intent, motors) ->
+			Script.new(:eating, motors)
+			|> Script.add_step(:mouth, :set_speed, [:rps, 1])
+			|> Script.add_step(:mouth, :run_for, [1000])
+		end
+	end
 	
 end
