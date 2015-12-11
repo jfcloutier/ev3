@@ -2,25 +2,26 @@ defmodule Ev3.Script do
 	@moduledoc "Activation script"
 
 	alias Ev3.LegoMotor
+	alias Ev3.LegoLED
 
-	defstruct name: nil, steps: [], motors: nil
+	defstruct name: nil, steps: [], devices: nil
 	
 	@doc "Make a new script"
-	def new(name, motors) do
-	  %Ev3.Script{name: name, motors: motors}
+	def new(name, devices) do
+	  %Ev3.Script{name: name, devices: devices}
 	end
 
 	@doc "Add a step to the script"
-	def add_step(script, motor_name, command) do
-		add_step(script, motor_name, command, [])
+	def add_step(script, device_name, command) do
+		add_step(script, device_name, command, [])
 	end
 
-	def add_step(script, motor_name, command, params) do
+	def add_step(script, device_name, command, params) do
 		cond do
-			motor_name == :all or motor_name in Map.keys(script.motors) ->
-				%Ev3.Script{script | steps: script.steps ++ [%{motor_name: motor_name, command: command, params: params}]}
+			device_name == :all or device_name in Map.keys(script.devices) ->
+				%Ev3.Script{script | steps: script.steps ++ [%{device_name: device_name, command: command, params: params}]}
 			true ->
-				throw "Unknown motor #{motor_name}"
+				throw "Unknown device #{device_name}"
 		end
 	end
 
@@ -29,61 +30,68 @@ defmodule Ev3.Script do
 		%Ev3.Script{script | steps: script.steps ++ [%{sleep: msecs}]}
 	end
 
-	def add_wait(script, motor_name, property, test) do
+	def add_wait(script, device_name, property, test) do
 		cond do
-			motor_name == :all or motor_name in Map.keys(script.motors) ->
-				%Ev3.Script{script | steps: script.steps ++ [%{wait_on: motor_name, property: property, test: test}]}
+			device_name == :all or device_name in Map.keys(script.devices) ->
+				%Ev3.Script{script | steps: script.steps ++ [%{wait_on: device_name, property: property, test: test}]}
 			true ->
-				throw "Unknown motor #{motor_name}"
+				throw "Unknown device #{device_name}"
 		end
 	end
 
 	@doc "Execute the steps and waits of the script"
-	def execute(script) do
-		updated_motors = Enum.reduce(
+	def execute(actuator_type, script) do
+		updated_devices = Enum.reduce(
 			script.steps,
-			script.motors,
+			script.devices,
 			fn(step, acc) ->
 				case step do
-					%{motor_name: motor_name, command: command, params: params} ->
-						execute_command(motor_name, command, params, acc)
+					%{device_name: device_name, command: command, params: params} ->
+						execute_command(actuator_type, device_name, command, params, acc)
 					%{sleep: msecs} ->
 						sleep(msecs, acc)
-					%{wait_on: motor_name, property: property, test: test, timeout: timeout} ->
-						wait_on(motor_name, property, test, timeout, acc)
+					%{wait_on: device_name, property: property, test: test, timeout: timeout} ->
+						wait_on(device_name, property, test, timeout, acc)
 				end
 			end
 		)
-		%Ev3.Script{script | motors: updated_motors}
+		%Ev3.Script{script | devices: updated_devices}
 	end
 
 	### Private
 
-	defp execute_command(motor_name, command, params, all_motors) do
-		motors = case motor_name do
-							 :all -> Map.values(all_motors)
-							 name -> [Map.get(all_motors, name)]
+	defp execute_command(actuator_type, device_name, command, params, all_devices) do
+		devices = case device_name do
+							 :all -> Map.values(all_devices)
+							 name -> [Map.get(all_devices, name)]
 						 end
 		Enum.reduce(
-			motors,
-			all_motors,
-			fn(motor, acc) ->
-				updated_motor = LegoMotor.execute_command(motor, command, params)
-				Map.put(acc, motor_name, updated_motor)
+			devices,
+			all_devices,
+			fn(device, acc) ->
+				updated_device =
+					case actuator_type do
+						:motor ->
+							LegoMotor.execute_command(device, command, params)
+						:led ->
+							LegoLED.execute_command(device, command, params)
+					end
+				Map.put(acc, device_name, updated_device)
 			end
 		)
 	end
 
-	defp sleep(msecs, all_motors) do
+
+	
+	defp sleep(msecs, all_devices) do
 		IO.puts("SLEEPING for #{msecs}")
 		:timer.sleep(msecs)
-		all_motors
+		all_devices
 	end
 
-	defp wait_on(motor_name, property, test, timeout, all_motors) do
+	defp wait_on(_device_name, _property, _test, _timeout, all_devices) do
 		# TODO
-    all_motors
+    all_devices
 	end
-		
-			
+				
 end

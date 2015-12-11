@@ -12,13 +12,19 @@ defmodule Ev3.LegoMotor do
 	@doc "Generates a list of all plugged in motor devices"
 	def motors() do
 		if !Ev3.testing?() do
-			File.ls!(@sys_path)
+	 		files = case File.ls(@sys_path) do
+								{:ok, files} -> files
+								{:error, reason} ->
+									Logger.warn("Failed getting motor files: #{inspect reason}")
+									[]
+							end
+			files
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_motor("#{@sys_path}/#{&1}")))
 		else
-			[Ev3.Mock.Tachomotor.new(:large, "A"),
-			 Ev3.Mock.Tachomotor.new(:large, "B"),
-			 Ev3.Mock.Tachomotor.new(:medium, "C")]
+			[Ev3.Mock.Tachomotor.new(:large, "outA"),
+			 Ev3.Mock.Tachomotor.new(:large, "outB"),
+			 Ev3.Mock.Tachomotor.new(:medium, "outC")]
 		end
   end
 
@@ -67,9 +73,22 @@ defmodule Ev3.LegoMotor do
 		motor.type == :medium
   end
 
+	@doc "Execute a motor command"
 	def execute_command(motor, command, params) do
 		apply(module_for(motor), command, [motor | params])
 	end
+
+	@doc "Get motor controls"
+  def get_sys_controls(motor) do
+		%{polarity: get_attribute(motor, "polarity", :atom),
+			speed:  get_attribute(motor, "speed_sp", :integer), # in counts/sec,
+			duty_cycle:  get_attribute(motor, "duty_cycle_sp", :integer),
+			ramp_up: get_attribute(motor, "ramp_up_sp", :integer),
+			ramp_down: get_attribute(motor, "ramp_down_sp", :integer),
+			position: get_attribute(motor, "position_sp", :integer), # in counts,
+	 	  time: get_attribute(motor, "time_sp", :integer),
+		  speed_regulation: get_attribute(motor, "speed_regulation", :atom)}
+  end
 
 	### PRIVATE
 
@@ -94,17 +113,6 @@ defmodule Ev3.LegoMotor do
 														 controls: Map.put_new(get_sys_controls(motor), 
 																									 :speed_mode, 
 																									 nil)}}  
-  end
-
-  defp get_sys_controls(motor) do
-		%{polarity: get_attribute(motor, "polarity", :atom),
-			speed:  get_attribute(motor, "speed_sp", :integer), # in counts/sec,
-			duty_cycle:  get_attribute(motor, "duty_cycle_sp", :integer),
-			ramp_up: get_attribute(motor, "ramp_up_sp", :integer),
-			ramp_down: get_attribute(motor, "ramp_down_sp", :integer),
-			position: get_attribute(motor, "position_sp", :integer), # in counts,
-	 	  time: get_attribute(motor, "time_sp", :integer),
-		  speed_regulation: get_attribute(motor, "speed_regulation", :atom)}
   end
 
 end

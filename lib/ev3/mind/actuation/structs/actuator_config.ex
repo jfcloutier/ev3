@@ -1,13 +1,14 @@
 defmodule Ev3.ActuatorConfig do
 	@moduledoc "An actuator's configuration"
 
-	defstruct name: nil, motor_specs: nil, activations: nil, intents: nil
+	defstruct name: nil, type: nil, specs: nil, activations: nil, intents: nil
 
 	@doc "Make a new actuator"
-	def new(name: name, motor_specs: motor_specs, activations: activations) do
+	def new(name: name, type: type, specs: specs, activations: activations) do
 		config = %Ev3.ActuatorConfig{name: name,
-												motor_specs: motor_specs,
-												activations: activations}
+																 type: type,
+																 specs: specs,
+																 activations: activations}
 		%Ev3.ActuatorConfig{config | intents: intent_names(config.activations)}
 	end
 

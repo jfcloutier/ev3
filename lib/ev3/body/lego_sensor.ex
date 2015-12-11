@@ -13,29 +13,19 @@ defmodule Ev3.LegoSensor do
 	@doc "Get the currently connected lego sensors"
   def sensors() do
 		if !Ev3.testing?() do
-	 		File.ls!(@sys_path)
+	 		files = case File.ls(@sys_path) do
+								{:ok, files} -> files
+								{:error, reason} ->
+									Logger.warn("Failed getting sensor files: #{inspect reason}")
+									[]
+							end
+			files
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
 		else
 			[Ev3.Mock.TouchSensor.new(), Ev3.Mock.ColorSensor.new(), Ev3.Mock.InfraredSensor.new()]
 		end
   end
-
-	defp module_for(sensor) do
-		if !Ev3.testing?() do
-			case sensor.type do
-				:touch -> Ev3.TouchSensor
-				:color -> Ev3.ColorSensor
-				:infrared -> Ev3.InfraredSensor
-			end
-		else
-			case sensor.type do
-				:touch -> Ev3.Mock.TouchSensor
-				:color -> Ev3.Mock.ColorSensor
-				:infrared -> Ev3.Mock.InfraredSensor
-			end
-		end
-	end
 
 	@doc "Get the list of senses from a sensor"
 	def senses(sensor) do
@@ -109,6 +99,22 @@ defmodule Ev3.LegoSensor do
 
   #### PRIVATE
 
+	defp module_for(sensor) do
+		if !Ev3.testing?() do
+			case sensor.type do
+				:touch -> Ev3.TouchSensor
+				:color -> Ev3.ColorSensor
+				:infrared -> Ev3.InfraredSensor
+			end
+		else
+			case sensor.type do
+				:touch -> Ev3.Mock.TouchSensor
+				:color -> Ev3.Mock.ColorSensor
+				:infrared -> Ev3.Mock.InfraredSensor
+			end
+		end
+	end
+
   defp init_sensor(path) do
 		port_name = read_sys(path, "port_name")
     driver_name = read_sys(path, "driver_name")
@@ -121,9 +127,9 @@ defmodule Ev3.LegoSensor do
 						 "ir" -> :infrared
            end
     sensor = %Device{class: :sensor,
-						path: path, 
-						port: port_name, 
-						type: type}
+										 path: path, 
+										 port: port_name, 
+										 type: type}
 		mode = get_attribute(sensor, "mode", :string)
     %Device{sensor | props: %{mode: mode}}    
   end

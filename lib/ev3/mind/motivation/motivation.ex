@@ -51,7 +51,7 @@ defmodule Ev3.Motivation do
 							percepts,
 							:danger,
 							5_000,
-							fn(value) -> value == :very end) do
+							fn(_value) -> true end) do
 					Motive.on(:hunger) |> Motive.inhibit(:curiosity)
 				else
 					nil

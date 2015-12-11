@@ -182,7 +182,7 @@ defmodule Ev3.Perception do
 					end
 				end,
 				0
-			)
+			) # How much did I eat in the last 30 secs?
 				cond do
 					how_full > 10 -> Percept.new(about: :hungry, value: :not)
 					how_full > 5 -> Percept.new(about: :hungry, value: :a_little)
