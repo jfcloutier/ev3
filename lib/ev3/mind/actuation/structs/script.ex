@@ -62,9 +62,9 @@ defmodule Ev3.Script do
 
 	defp execute_command(actuator_type, device_name, command, params, all_devices) do
 		devices = case device_name do
-							 :all -> Map.values(all_devices)
-							 name -> [Map.get(all_devices, name)]
-						 end
+								:all -> Map.values(all_devices)
+								name -> [Map.get(all_devices, name)]
+							end
 		Enum.reduce(
 			devices,
 			all_devices,

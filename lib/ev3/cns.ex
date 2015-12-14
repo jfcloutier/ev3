@@ -24,31 +24,31 @@ defmodule Ev3.CNS do
 
 	@doc "Handle notification of a new perception"
 	def notify_perceived(percept) do
-		# Logger.debug("#{inspect percept.about} = #{inspect percept.value}")
+		Logger.debug("Percept #{inspect percept.about} #{inspect percept.value}")
 		GenServer.cast(@name, {:notify_perceived, percept})
 	end
 
 	@doc "Handle notification of a new motive"
 	def notify_motivated(motive) do
-		# Logger.debug("Motive #{motive.about}")
+		Logger.debug("Motive #{motive.about} #{inspect motive.value}")
 		GenServer.cast(@name, {:notify_motivated, motive})
 	end
 
 	@doc "Handle notification of a new intent"
 	def notify_intended(intent) do
-		# Logger.debug("Intent #{intent.name}")
+		Logger.debug("Intent #{intent.about}")
 		GenServer.cast(@name, {:notify_intended, intent})
 	end
 
 		@doc "Handle notification of an intent realized"
 	def notify_realized(intent) do
-		# Logger.debug("Intent #{intent.name}")
+	  Logger.debug("Intent realized #{intent.about} #{inspect intent.value}")
 		GenServer.cast(@name, {:notify_realized, intent})
 	end
 
 	@doc "Handle notification of an new or extended memory change"
 	def notify_memorized(memorization, %Percept{} = percept) do
-		#Logger.info("Memorized ===> #{memorization} PERCEPT #{inspect percept.about} = #{inspect percept.value}")
+		Logger.info("Memorized ===> #{memorization} PERCEPT #{inspect percept.about} = #{inspect percept.value}")
 		GenServer.cast(@name, {:notify_memorized, memorization, percept})
 	end
 
@@ -64,6 +64,11 @@ defmodule Ev3.CNS do
 		GenServer.cast(@name, {:notify_memorized, memorization, intent})
 	end
 
+	@doc "A component is overwhelmed"
+	def notify_overwhelmed(component_type, name) do
+		Logger.warn("OVERWHELMED: #{component_type}")
+		GenServer.cast(@name, {:notify_overwhelmed, component_type, name})
+	end
 
 	### Callbacks
 
@@ -96,6 +101,11 @@ defmodule Ev3.CNS do
 	
 	def handle_cast({:notify_memorized, memorization, data}, state) do
 		GenEvent.notify(@dispatcher, {:memorized, memorization, data})
+		{:noreply, state}
+	end
+
+	def handle_cast({:notify_overwhelmed, component_type, name}, state) do
+		GenEvent.notify(@dispatcher, {:overwhelmed, component_type, name})
 		{:noreply, state}
 	end
 

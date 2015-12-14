@@ -26,6 +26,7 @@ config :ev3, Ev3.Endpoint,
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
+config :logger, level: :info
 
 # Configure your database
 # config :ev3, Ev3.Repo,

@@ -52,7 +52,7 @@ defmodule Ev3.Actuation do
 																				 action: green_lights()},
 														 %Activation{intent: :red_lights,
 																				 action: red_lights()},
-														 %Activation{intent: :all_lights,
+														 %Activation{intent: :orange_lights,
 																				 action: orange_lights()}
 													 ])
 		]
@@ -66,11 +66,12 @@ defmodule Ev3.Actuation do
 										:fast -> 3
 										:slow -> 1
 									end
-			how_long = intent.value.time * 1000
+			how_long = round(intent.value.time * 1000)
 			Script.new(:going_forward, motors)
-			|> Script.add_step(:all, :set_speed, [:rps, rps_speed])
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed])
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, rps_speed])
 			|> Script.add_step(:all, :run_for, [how_long] )
-			#			|> Script.add_wait(how_long)
+#			|> Script.add_wait(how_long)
 		end
 	end
 
@@ -80,33 +81,33 @@ defmodule Ev3.Actuation do
 										:fast -> 3
 										:slow -> 1
 									end
-			how_long = intent.value.time * 1000
+			how_long = round(intent.value.time * 1000)
 			Script.new(:going_backward, motors)
-			|> Script.add_step(:all, :reset)
-			|> Script.add_step(:all, :reverse_polarity)
-			|> Script.add_step(:all, :set_speed, [:rps, rps_speed])
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed])
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, rps_speed])
 			|> Script.add_step(:all, :run_for, [how_long])
-			|> Script.add_step(:all, :reverse_polarity)
+#			|> Script.add_wait(how_long)
 		end
 	end
 
 	defp turning_right() do
-		fn(_intent, motors) ->
+		fn(intent, motors) ->
+			how_long = round(intent.value * 1000)
 			Script.new(:turning_right, motors)
 			|> Script.add_step(:left_wheel, :set_speed, [:rps, 1])
 			|> Script.add_step(:right_wheel, :set_speed, [:rps, -1])
-			|> Script.add_step(:all, :run_for, [1000])
+			|> Script.add_step(:all, :run_for, [how_long])
 		end
   end
 
 	defp turning_left() do
-		fn(_intent, motors) ->
+		fn(intent, motors) ->
+			how_long = round(intent.value * 1000)
 			Script.new(:turning_left, motors)
 			|> Script.add_step(:right_wheel, :set_speed, [:rps, 1])
 			|> Script.add_step(:left_wheel, :set_speed, [:rps, -1])
-			|> Script.add_step(:all, :run_for, [1000])
+			|> Script.add_step(:all, :run_for, [how_long])
 		end
-		# todo
   end
 
 	defp stopping() do

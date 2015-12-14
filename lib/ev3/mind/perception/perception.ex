@@ -58,9 +58,11 @@ defmodule Ev3.Perception do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				average = average(percepts, :ambient, fn(value) -> value end)
-				if average != nil and val < average do
-					Percept.new(about: :darker, value: average - val)
+				if latest_memory?(
+							percepts,
+							:ambient,
+							fn(value) -> value < val end) do
+					Percept.new(about: :darker, value: val)
 				else
 					nil	  
 				end
@@ -71,9 +73,11 @@ defmodule Ev3.Perception do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				average = average(percepts, :ambient, fn(value) -> value end)
-				if average != nil and val > average do
-					Percept.new(about: :lighter, value: val - average)
+				if latest_memory?(
+							percepts,
+							:ambient,
+							fn(value) -> value > val end) do
+					Percept.new(about: :lighter, value: val)
 				else
 					nil	  
 				end
@@ -82,16 +86,20 @@ defmodule Ev3.Perception do
 
 	def food() do
 		fn						 
-		  (_percept, %{percepts: []}) -> nil
+		(_percept, %{percepts: []}) -> nil
 			(%Percept{about: :color, value: :green}, %{percepts: percepts}) ->
-			  if latest_memory?(
+			if latest_memory?(
 						percepts,
 						:ambient,
-						fn(value) -> value > 50  end) do
-				  Percept.new(about: :food, value: :plenty)
-			  else
-				  Percept.new(about: :food, value: :little)	  
-			  end
+						fn(value) -> value > 20  end) do
+				IO.puts "!!!! FOOD a plenty !!!!"
+			  Percept.new(about: :food, value: :plenty)
+			else
+				IO.puts "!!!! FOOD a little !!!!"
+				Percept.new(about: :food, value: :little)
+			end
+			(%Percept{about: :color, value: color}, %{percepts: percepts}) ->
+			Percept.new(about: :food, value: :none)
 		  (_, _) -> nil
 		end
 	end
@@ -110,7 +118,7 @@ defmodule Ev3.Perception do
 				else
 					nil
 				end
-				(%Percept{about: :proximity, value: val}, %{percepts: percepts}) ->
+			(%Percept{about: :proximity, value: val}, %{percepts: percepts}) ->
 				approaching? = latest_memory?(
 					percepts,
 					:proximity,
@@ -125,17 +133,9 @@ defmodule Ev3.Perception do
 				else
 					nil
 				end
-				(%Percept{about: :touch, value: :pressed}, %{percepts: percepts}) ->
-					if any_memory?(
-								percepts,
-								:collision,
-								5000,
-								fn(value) -> value == :imminent end) do
-						Percept.new(about: :collision, value: :now)
-					else
-						nil
-					end
-					(_, _) -> nil
+			(%Percept{about: :touch, value: :pressed}, %{percepts: percepts}) ->
+					Percept.new(about: :collision, value: :now)
+			(_, _) -> nil
 		end
 	end
 
@@ -158,7 +158,7 @@ defmodule Ev3.Perception do
 							percepts,
 							:danger,
 							3000,
-							fn(value) -> value in [:high, :low] end) do
+							fn(value) -> value in [:high] end) do
 					Percept.new(about: :danger, value: :none)
 				else
 					nil

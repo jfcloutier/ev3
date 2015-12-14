@@ -5,8 +5,8 @@ defmodule Ev3.Mock.LED do
 
 	def new(color, position) do
 		%Device{class: :led,
-								path: "/mock/led/#{position}:{color}",
-								type: "#{position}:{color}",
+								path: "/mock/led/#{position}:#{color}",
+								type: "#{position}:#{color}",
 								props: %{color: color, position: position, brightness: 0}}
 	end
 

@@ -9,7 +9,8 @@ defmodule Ev3.Behavior do
 	import Ev3.Utils
 	require Logger
 
-	@max_percept_age 1000 # percepts older than 1 sec are dropped
+	@max_percept_age 100 # percepts older than 0.1 sec are dropped
+	@down_time 1000
 
 	@doc "Start a behavior from a configuration"
 	def start_link(behavior_config) do
@@ -17,7 +18,8 @@ defmodule Ev3.Behavior do
 		Agent.start_link(fn() -> %{name: behavior_config.name,
 															 fsm: behavior_config.fsm,
 															 motives: [],
-															 fsm_state: nil} end,
+															 fsm_state: nil,
+															 responsive: true } end,
 										 [name: behavior_config.name])
 	end
 
@@ -38,14 +40,30 @@ defmodule Ev3.Behavior do
 		Agent.update(
 			name,
 			fn(state) ->
-				if percept_fresh?(percept) do
 					transit_on(percept, state)
-				else
-					IO.puts("STALE: Behavior #{name} not reacting to percept #{percept.about} = #{inspect percept.value}")
-					state
-				end
 			end
 		)
+	end
+
+	def actuator_overwhelmed(name) do
+		Agent.update(
+			name,
+			fn(state) ->
+				spawn_link(
+					fn() -> # make sure to reactivate
+						:timer.sleep(@down_time)
+						reactivate(name)
+					end)
+				%{state | responsive: false}
+			end)
+	end
+
+	def reactivate(name) do
+		Agent.update(
+			name,
+			fn(state) ->
+				%{state | responsive: true}
+			end)
 	end
 
 	### Private
@@ -106,6 +124,11 @@ defmodule Ev3.Behavior do
 	defp transit_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
 		state
 	end
+
+	defp transit_on(_percept, %{name: name, responsive: false} = state) do
+		Logger.info("-- NOT RESPONSIVE: #{name}")
+		state
+	end
 	
 	defp transit_on(percept, state) do
 		case find_transition(percept, state) do
@@ -113,7 +136,12 @@ defmodule Ev3.Behavior do
 				state
 			transition ->
 				if not inhibited?(state) do
-					apply_transition(transition, percept, state)
+					if percept_fresh?(percept) do
+						apply_transition(transition, percept, state)
+					else
+						Logger.warn("STALE: Behavior #{state.name} not reacting to percept #{percept.about} = #{inspect percept.value}")
+						state
+					end
 				else
 					Logger.info("-- INHIBITED: behavior #{state.name}")
 					state

@@ -16,7 +16,8 @@ defmodule Ev3.InfraredSensor do
 		beacon_senses = Enum.map(1.. @max_beacon_channels, 
 														 &([{:beacon_heading, &1}, {:beacon_distance, &1}, {:beacon_on, &1}, {:remote_buttons, &1}]))
 		|> List.flatten()
-		[:proximity | beacon_senses]
+#		[:proximity | beacon_senses]
+		[:proximity]
 	end
 
 	def read(sensor, sense) do

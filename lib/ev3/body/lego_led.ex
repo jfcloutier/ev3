@@ -56,6 +56,7 @@ defmodule Ev3.LegoLED do
 
 	@doc "Execute an LED command"
 	def execute_command(led, command, params) do
+#		IO.puts("--- Executing LED #{led.path} #{command} #{inspect params}")
 		apply(module_for(led), command, [led | params])
 	end
 

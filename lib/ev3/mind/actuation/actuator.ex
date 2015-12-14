@@ -31,7 +31,7 @@ defmodule Ev3.Actuator do
 		Agent.update(
 			name,
 			fn(state) ->
-				if intent_fresh?(intent) do
+				if intent.strong or intent_fresh?(intent) do
 					state.actuator_config.activations
 					|> Enum.filter_map(
 						fn(activation) -> activation.intent == intent.about end,
@@ -43,7 +43,8 @@ defmodule Ev3.Actuator do
 							CNS.notify_realized(intent) # This will have the intent stored in memory. Unrealized intents are not retained in memory.
 						end)
 				else
-					IO.puts("STALE: Actuator #{name} not realizing intent #{intent.about} #{inspect intent.value}")
+					Logger.warn("STALE: Actuator #{name} not realizing weak intent #{intent.about} #{inspect intent.value}")
+					CNS.notify_overwhelmed(:actuator, name)
 				end
 				state
 			end,

@@ -20,7 +20,7 @@ defmodule Ev3.Behaviors do
 									 initial_state: :started,
 									 transitions: [
 										 %Transition{to: :started,
-																 doing: nothing()},																 
+																 doing: start_green()},																 
 										 %Transition{from: [:started, :roaming],
 																 on: :time_elapsed,
 																 to: :roaming,
@@ -37,63 +37,89 @@ defmodule Ev3.Behaviors do
 																 to: :roaming,
 																	condition: fn(value) -> value == :now end,
 																	doing: backoff()
-																},
+																}
 									 ]
 							 }
 				),
 				BehaviorConfig.new( # look for food in bright places
 					name: :foraging,
 					motivated_by: [:hunger],
-					senses: [:food, :darker, :lighter, :time_elapsed],
+					senses: [:food, :darker, :lighter, :time_elapsed, :collision],
 					fsm: %FSM{
 									 initial_state: :started,
 									 transitions: [
 										 %Transition{to: :started,
-																 doing: nothing()},																 
-										 %Transition{from: [:started, :on_track],
-																 on: :lighter,
-																 to: :on_track,
-																 doing: stay_the_course()
-																},
+																 doing: start_green() },																 
 										 %Transition{from: [:started, :on_track],
 																 on: :time_elapsed,
 																 to: :on_track,
 																 doing: stay_the_course()
 																},
-										 %Transition{from: [:started, :on_track, :off_track],
+										 %Transition{from: [:off_track],
+																 on: :time_elapsed,
+																 to: :off_track,
+																 doing: change_course()
+																},
+										 %Transition{from: [:off_track],
+																 on: :lighter,
+																 to: :on_track,
+																 doing: nil
+																},
+										 %Transition{from: [:on_track],
 																 on: :darker,
 																 to: :off_track,
-																 doing: change_course()},
-										 %Transition{from: [:started, :on_track, :off_track, :feeding],
+																 doing: nil
+																},
+										 %Transition{from: [:on_track, :off_track],
+																 on: :collision,
+																 to: :off_track,
+																 condition: fn(value) -> value == :imminent end,
+																 doing: avoid_collision()
+																},
+										 %Transition{from: [:on_track, :off_track],
+																 on: :collision,
+																 to: :off_track,
+																 condition: fn(value) -> value == :now end,
+																 doing: backoff()
+																},
+										 %Transition{from: [:on_track, :off_track, :feeding],
 																 on: :food,
+																 condition: fn(value) -> value != :none end,
 																 to: :feeding,
-																 doing: eat()},
+																 doing: eat()
+																},
+										 %Transition{from: [:feeding],
+																 on: :food,
+																 condition: fn(value) -> value == :none end,
+																 to: :off_track,
+																 doing: nil
+																},
 										 %Transition{from: [:feeding],
 																 on: :hungry,
 																	condition: fn(value) -> value == :not end,
 																	to: nil,
-																	doing: nil}
+																	doing: nil
+																}
 									 ]
 							 }
 				),
 				BehaviorConfig.new( # now is the time to panic!
 					name: :panicking,
 					motivated_by: [:fear],
-					senses: [:ambient],
+					senses: [:lighter, :time_elapsed],
 					fsm: %FSM{
 									 initial_state: :started,
 									 transitions: [
 										 %Transition{to: :started,
-																 doing: panic()},																 
+																 doing: start_red()},																 
 										 %Transition{from: [:started],
-																 on: :ambient,
-																	condition: fn(value) -> value <= 50 end,
+																 on: :time_elapsed,
 																	to: :panicking,
 																	doing: panic()},
 										 %Transition{from: [:panicking],
-																 on: :ambient,
-																	condition: fn(value) -> value > 50 end,
-																	to: nil}
+																 on: :lighter,
+																 to: nil,
+																 doing: calm_down()}
 									 ]
 							 }
 				) 
@@ -105,7 +131,18 @@ defmodule Ev3.Behaviors do
 			Logger.info("Doing NOTHING yet")
 		end
 	end
-		
+
+	defp start_green() do
+		fn(_percept, _state) ->
+			green_lights()
+		end
+	end
+
+	defp start_red() do
+		fn(_percept, _state) ->
+			red_lights()
+		end
+	end
 
 	defp roam() do
 		fn(percept, _state) ->
@@ -115,7 +152,7 @@ defmodule Ev3.Behaviors do
 									1 -> :turn_left
 									2 -> :turn_right
 									 end
-			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(90)))
+			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(3)))
 			how_long = :random.uniform(3) # secs
 			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: how_long}))
 		end
@@ -128,22 +165,22 @@ defmodule Ev3.Behaviors do
 									1 -> :turn_left
 									2 -> :turn_right
 									 end
-			CNS.notify_intended(Intent.new(about: turn_where, value: 30 + :random.uniform(60)))
+			CNS.notify_intended(Intent.new(about: turn_where, value: 5))
 		end
 	end
 
 	defp backoff() do
 		fn(percept, _state) ->
 			Logger.info("BACKING OFF from #{percept.about} = #{inspect percept.value}")
-			how_long = :random.uniform(2) # secs
-			CNS.notify_intended(Intent.new(about: :go_backward, value: %{speed: :fast, time: how_long}))
+			how_long = :random.uniform(5) # secs
+			CNS.notify_intended(Intent.new_strong(about: :go_backward, value: %{speed: :slow, time: how_long}))
 		end 
 	end
 
 	defp stay_the_course() do
 		fn(percept, _state) ->
 			Logger.info("STAYING THE COURSE from #{percept.about} = #{inspect percept.value}")
-			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: 1}))
+			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :slow, time: 0.5}))
 		end 
 	end
 
@@ -156,9 +193,9 @@ defmodule Ev3.Behaviors do
 
 	defp eat() do
 		fn(%Percept{about: :food, value: value} = percept, _state) ->
-			Logger.info("EATING from #{percept.about} = #{inspect percept.value}")
+			Logger.info("EATING from food = #{inspect value}")
 			orange_lights()
-			CNS.notify_intended(Intent.new(about: :stop, value: nil))
+			CNS.notify_intended(Intent.new_strong(about: :stop, value: nil))
 			how_much = case value do
 									 :plenty -> :lots
 									 :little -> :some
@@ -171,35 +208,42 @@ defmodule Ev3.Behaviors do
 		fn(percept, _state) ->
 			Logger.info("PANICKING!")
 			red_lights()
-			for _n <- [1 .. :random.uniform(10)] do
+			for _n <- [1 .. :random.uniform(5)] do
 				intend_to_change_course()
 			end
 		end
 	end
 
+	def calm_down() do
+		fn(_percept, _state) ->
+			Logger.info("CALMING DOWN")
+			green_lights()
+		end
+	end
+
 	defp intend_to_change_course() do
-			turn_where = case :random.uniform(2) do
-									1 -> :turn_left
-									2 -> :turn_right
-									 end
-			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(90)))
-			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: 1}))
+		turn_where = case :random.uniform(2) do
+									 1 -> :turn_left
+									 2 -> :turn_right
+								 end
+		CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(5)))
+		CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: 1}))
 	end
 
   defp red_lights() do
 		Logger.info("TURNING ON RED LIGHTS")
-		CNS.notify_intended(Intent.new(about: :red_lights, value: :on))
+		CNS.notify_intended(Intent.new_strong(about: :red_lights, value: :on))
 	end
 			
 
 	defp green_lights() do
 		Logger.info("TURNING ON GREEN LIGHTS")
-		CNS.notify_intended(Intent.new(about: :green_lights, value: :on))
+		CNS.notify_intended(Intent.new_strong(about: :green_lights, value: :on))
 	end
 
 	defp orange_lights() do
 		Logger.info("TURNING ON ORANGE LIGHTS")
-		CNS.notify_intended(Intent.new(about: :orange_lights, value: :on))
+		CNS.notify_intended(Intent.new_strong(about: :orange_lights, value: :on))
 	end
 
 	

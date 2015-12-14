@@ -75,6 +75,7 @@ defmodule Ev3.LegoMotor do
 
 	@doc "Execute a motor command"
 	def execute_command(motor, command, params) do
+#		IO.puts("--- Executing motor #{motor.path} #{command} #{inspect params}")
 		apply(module_for(motor), command, [motor | params])
 	end
 
