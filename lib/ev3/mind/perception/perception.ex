@@ -48,7 +48,14 @@ defmodule Ev3.Perception do
 					focus: %{senses: [{:beacon_heading, 1}, {:beacon_distance, 1}], motives: [], intents: []},
 					span: {30, :secs},
 					ttl: {1, :mins},
-					logic: beacon())
+					logic: beacon()),
+				# A stuck perceptor
+				PerceptorConfig.new(
+					name: :stuck,
+					focus: %{senses: [ {:beacon_distance, 1}], motives: [], intents: [:go_forward]},
+					span: {30, :secs},
+					ttl: {1, :mins},
+					logic: stuck())				
 		]
 	end
 
@@ -193,6 +200,36 @@ defmodule Ev3.Perception do
 					how_full > 5 -> Percept.new(about: :hungry, value: :a_little)
 					true -> Percept.new(about: :hungry, value: :very)
 				end
+			(_,_) -> nil
+		end
+	end
+
+	@doc "Is the robot stuck?"
+	def stuck() do 
+	fn # Stuck if tried to go forward for a while and distance has not changed"
+	(%Percept{about: {:beacon_distance, 1}, value: distance}, %{percepts: percepts, intents: intents}) ->
+			attempts = count(
+			intents,
+			:go_forward,
+			15_000,
+			fn(_value) -> true end)
+			if attempts > 3 do
+				average_distance = average(
+					percepts,
+					{:beacon_distance, 1},
+					15_000,
+					fn(value) -> value end,
+					1000
+				)
+				change = abs(average_distance - distance)
+				if change < 2 do
+					Percept.new(about: :stuck, value: true)
+				else
+					nil
+				end
+			else
+				nil
+			end
 			(_,_) -> nil
 		end
 	end

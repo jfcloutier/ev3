@@ -97,8 +97,8 @@ defmodule Ev3.Actuation do
 		fn(intent, motors) ->
 			how_long = round(intent.value * 1000)
 			Script.new(:turning_right, motors)
-			|> Script.add_step(:left_wheel, :set_speed, [:rps, 1])
-			|> Script.add_step(:right_wheel, :set_speed, [:rps, -1])
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, 0.5])
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, -0.5])
 			|> Script.add_step(:all, :run_for, [how_long])
 		end
   end
@@ -107,8 +107,8 @@ defmodule Ev3.Actuation do
 		fn(intent, motors) ->
 			how_long = round(intent.value * 1000)
 			Script.new(:turning_left, motors)
-			|> Script.add_step(:right_wheel, :set_speed, [:rps, 1])
-			|> Script.add_step(:left_wheel, :set_speed, [:rps, -1])
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, 0.5])
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, -0.5])
 			|> Script.add_step(:all, :run_for, [how_long])
 		end
   end

@@ -23,6 +23,13 @@ defmodule Ev3.MemoryUtils do
 		Enum.filter(memories, &(&1.about == about and (when_last_true(&1) + past) >= msecs))
 	end
 
+	@doc "Count applicable memories"
+	def count(memories, about, past, test) do
+		select_memories(memories, about: about, since: past)
+		|> Enum.filter(&(test.(&1.value)))
+		|> Enum.count()
+	end								 
+
 	@doc "Is the latest memory about something, if any, pass a given test?"
 	def latest_memory?(memories, about, test) do
 		case Enum.find(memories, &(&1.about == about)) do
@@ -52,8 +59,8 @@ defmodule Ev3.MemoryUtils do
 	end
 
 	@doc "Get the average value for selected memories"
-	def average(memories, about, valuation, default \\ nil) do
-		list = Enum.filter(memories, &(&1.about == about))
+	def average(memories, about, past, valuation, default \\ nil) do
+		list = select_memories(memories, about: about, since: past)
 		case sum(list, valuation, default) do
 			nil -> nil
 			n -> n / Enum.count(list)
