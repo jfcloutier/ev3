@@ -11,6 +11,7 @@ defmodule Ev3.CNS do
 	alias Ev3.Intent
 	require Logger
 	use GenServer
+	import Ev3.Utils
 
   @name __MODULE__
 	@dispatcher :dispatcher
@@ -24,49 +25,41 @@ defmodule Ev3.CNS do
 
 	@doc "Handle notification of a new perception"
 	def notify_perceived(percept) do
-		Logger.debug("Percept #{inspect percept.about} #{inspect percept.value}")
 		GenServer.cast(@name, {:notify_perceived, percept})
 	end
 
 	@doc "Handle notification of a new motive"
 	def notify_motivated(motive) do
-		Logger.debug("Motive #{motive.about} #{inspect motive.value}")
 		GenServer.cast(@name, {:notify_motivated, motive})
 	end
 
 	@doc "Handle notification of a new intent"
 	def notify_intended(intent) do
-		Logger.debug("Intent #{intent.about}")
 		GenServer.cast(@name, {:notify_intended, intent})
 	end
 
 		@doc "Handle notification of an intent realized"
 	def notify_realized(intent) do
-	  Logger.debug("Intent realized #{intent.about} #{inspect intent.value}")
 		GenServer.cast(@name, {:notify_realized, intent})
 	end
 
 	@doc "Handle notification of an new or extended memory change"
 	def notify_memorized(memorization, %Percept{} = percept) do
-		Logger.info("Memorized ===> #{memorization} PERCEPT #{inspect percept.about} = #{inspect percept.value}")
 		GenServer.cast(@name, {:notify_memorized, memorization, percept})
 	end
 
 	@doc "Handle notification of a  motive"
 	def notify_memorized(memorization, %Motive{} = motive) do
-		Logger.info("Memorized ===> #{memorization} MOTIVE #{motive.about} #{inspect motive.value}")
 		GenServer.cast(@name, {:notify_memorized, memorization, motive})
 	end
 
 	@doc "Handle notification of an intent"
 	def notify_memorized(memorization, %Intent{} = intent) do
-		Logger.info("Memorized ===> #{memorization}: INTENT #{intent.about} #{inspect intent.value}")
 		GenServer.cast(@name, {:notify_memorized, memorization, intent})
 	end
 
 	@doc "A component is overwhelmed"
 	def notify_overwhelmed(component_type, name) do
-		Logger.warn("OVERWHELMED: #{component_type}")
 		GenServer.cast(@name, {:notify_overwhelmed, component_type, name})
 	end
 
@@ -76,35 +69,41 @@ defmodule Ev3.CNS do
 		{:ok, _pid} = GenEvent.start_link(name: @dispatcher)
     register_handlers()
 		spawn(fn() -> tick_tock() end)
-    {:ok, []}
+    {:ok, %{when_started: now()}}
 	end
 	
 	def handle_cast({:notify_perceived, percept}, state) do
+		Logger.debug("Percept #{inspect percept.about} #{inspect percept.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:perceived, percept})
 		{:noreply, state}
 	end	
 
 	def handle_cast({:notify_motivated, motive}, state) do
+		Logger.debug("Motive #{motive.about} #{inspect motive.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:motivated, motive})
 		{:noreply, state}
 	end
 	
 	def handle_cast({:notify_intended, intent}, state) do
+		Logger.debug("Intent #{intent.about} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:intended, intent})
 		{:noreply, state}
 	end
 	
 	def handle_cast({:notify_realized, intent}, state) do
+	  Logger.debug("Intent realized #{intent.about} #{inspect intent.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:realized, intent})
 		{:noreply, state}
 	end
 	
 	def handle_cast({:notify_memorized, memorization, data}, state) do
+		Logger.debug("Memorized ===> #{memorization} #{inspect type(data)} #{inspect data.about} = #{inspect data.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:memorized, memorization, data})
 		{:noreply, state}
 	end
 
 	def handle_cast({:notify_overwhelmed, component_type, name}, state) do
+		Logger.warn("OVERWHELMED: #{component_type} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:overwhelmed, component_type, name})
 		{:noreply, state}
 	end
@@ -122,6 +121,18 @@ defmodule Ev3.CNS do
 
 
 	### Private
+
+	defp delta(%{when_started: time}) do
+		(now() - time) / 1000
+	end
+
+	defp type(memory) do
+		case memory do
+			%Percept{} -> "PERCEPT"
+			%Motive{} -> "MOTIVE"
+			%Intent{} -> "INTENT"
+		end
+	end
 
 	defp register_handlers() do
 		# Add monitored handlers. Any crash will cause a message to be sent to the CNS.

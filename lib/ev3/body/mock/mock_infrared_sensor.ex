@@ -2,7 +2,7 @@ defmodule Ev3.Mock.InfraredSensor do
 	@moduledoc "A mock infrared sensor"
 
 	@behaviour Ev3.Sensing
-  @max_beacon_channels 4
+  @max_beacon_channels 1 #4
 
 	def new() do
 		%Ev3.Device{class: :sensor,

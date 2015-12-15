@@ -62,10 +62,7 @@ defmodule Ev3.Actuation do
 
 	defp going_forward() do
 		fn(intent, motors) ->
-			rps_speed = case intent.value.speed do
-										:fast -> 3
-										:slow -> 1
-									end
+			rps_speed = speed(intent.value.speed)
 			how_long = round(intent.value.time * 1000)
 			Script.new(:going_forward, motors)
 			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed])
@@ -75,16 +72,22 @@ defmodule Ev3.Actuation do
 		end
 	end
 
+	defp speed(kind) do
+		case kind do
+			:very_fast -> 3
+			:fast -> 2
+			:slow -> 0.5
+			:very_slow -> 0.3
+		end
+	end
+
 	defp going_backward() do
 		fn(intent, motors) ->
-			rps_speed = case intent.value.speed do
-										:fast -> 3
-										:slow -> 1
-									end
+			rps_speed = speed(intent.value.speed)
 			how_long = round(intent.value.time * 1000)
 			Script.new(:going_backward, motors)
-			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed])
-			|> Script.add_step(:left_wheel, :set_speed, [:rps, rps_speed])
+			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed * -1])
+			|> Script.add_step(:left_wheel, :set_speed, [:rps, rps_speed * -1])
 			|> Script.add_step(:all, :run_for, [how_long])
 #			|> Script.add_wait(how_long)
 		end

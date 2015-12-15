@@ -9,20 +9,13 @@ defmodule Ev3.Perception do
 	@doc "Give the configurations of all perceptors to be activated"
 	def perceptor_configs() do
 		[
-				# A getting darker or lighter perceptor
+				# A getting lighter/darker perceptor
 				PerceptorConfig.new(
-					name: :darker,
+					name: :light,
 					focus: %{senses: [:ambient], motives: [], intents: []},
-					span: {3, :secs},
+					span: {10, :secs},
 					ttl: {30, :secs},
-					logic: darker()),
-				# A getting lighter perceptor
-				PerceptorConfig.new(
-					name: :lighter,
-					focus: %{senses: [:ambient], motives: [], intents: []},
-					span: {3, :secs},
-					ttl: {30, :secs},
-					logic: lighter()),
+					logic: light()),
 				# A collision perceptor based on proximity sensing
 				PerceptorConfig.new(
 					name: :collision,
@@ -48,7 +41,14 @@ defmodule Ev3.Perception do
 					focus: %{senses: [:ambient, :color], motives: [], intents: []},
 					span: {30, :secs},
 					ttl: {2, :mins},
-					logic: food())
+					logic: food()),
+				# A beacon perceptor
+				PerceptorConfig.new(
+					name: :beacon,
+					focus: %{senses: [{:beacon_heading, 1}, {:beacon_distance, 1}], motives: [], intents: []},
+					span: {30, :secs},
+					ttl: {1, :mins},
+					logic: beacon())
 		]
 	end
 
@@ -69,17 +69,22 @@ defmodule Ev3.Perception do
 		end
 	end
 
-	def lighter() do
+	def light() do
 		fn
 		(_percept, %{percepts: []}) -> nil
 		(%Percept{about: :ambient, value: val}, %{percepts: percepts}) ->
-				if latest_memory?(
+				latest_ambient = last_memory(
 							percepts,
-							:ambient,
-							fn(value) -> value > val end) do
-					Percept.new(about: :lighter, value: val)
-				else
-					nil	  
+							:ambient)
+				cond do
+					latest_ambient == nil -> 
+						Percept.new(about: :light, value: :same)	  
+					latest_ambient.value > val -> 
+						Percept.new(about: :light, value: :lighter)	  
+					latest_ambient.value < val -> 
+						Percept.new(about: :light, value: :darker)	  
+					true -> 
+						Percept.new(about: :light, value: :same)	  
 				end
 		end
 	end
@@ -87,7 +92,7 @@ defmodule Ev3.Perception do
 	def food() do
 		fn						 
 		(_percept, %{percepts: []}) -> nil
-			(%Percept{about: :color, value: :green}, %{percepts: percepts}) ->
+			(%Percept{about: :color, value: :blue}, %{percepts: percepts}) ->
 			if latest_memory?(
 						percepts,
 						:ambient,
@@ -98,7 +103,7 @@ defmodule Ev3.Perception do
 				IO.puts "!!!! FOOD a little !!!!"
 				Percept.new(about: :food, value: :little)
 			end
-			(%Percept{about: :color, value: color}, %{percepts: percepts}) ->
+			(%Percept{about: :color, value: _color}, _memories) ->
 			Percept.new(about: :food, value: :none)
 		  (_, _) -> nil
 		end
@@ -133,7 +138,7 @@ defmodule Ev3.Perception do
 				else
 					nil
 				end
-			(%Percept{about: :touch, value: :pressed}, %{percepts: percepts}) ->
+			(%Percept{about: :touch, value: :pressed}, _memories) ->
 					Percept.new(about: :collision, value: :now)
 			(_, _) -> nil
 		end
@@ -177,8 +182,8 @@ defmodule Ev3.Perception do
 				30_000,
 				fn(value) ->
 					case value do
-						:lots -> 3
-						:some -> 1
+						:lots -> 5
+						:some -> 3
 					end
 				end,
 				0
@@ -190,6 +195,35 @@ defmodule Ev3.Perception do
 				end
 			(_,_) -> nil
 		end
+	end
+
+	@doc "Where's the beacons?"
+	def beacon() do
+		fn
+		(%Percept{about: {:beacon_distance, 1}, value: value}, _memories) ->
+				cond do
+					value < 0 ->
+						Percept.new(about: :distance, value: :unknown)
+					value == 100 ->
+						Percept.new(about: :distance, value: :very_far)
+					value > 50 ->
+						Percept.new(about: :distance, value: :far)
+					value > 10 ->
+						Percept.new(about: :distance, value: :close)
+					true ->
+						Percept.new(about: :distance, value: :very_close)
+				end
+		(%Percept{about: {:beacon_heading, 1}, value: value}, _memories) ->
+				cond do
+					value < -10 ->
+						Percept.new(about: :direction, value: {:left, abs(value)})
+					value > 10 ->
+						Percept.new(about: :direction, value: {:right, abs(value)})
+					true ->
+						Percept.new(about: :direction, value: {:ahead, abs(value)})
+			  end
+	  (_,_) -> nil
+	  end
 	end
 
 end

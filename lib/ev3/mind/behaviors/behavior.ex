@@ -9,8 +9,8 @@ defmodule Ev3.Behavior do
 	import Ev3.Utils
 	require Logger
 
-	@max_percept_age 100 # percepts older than 0.1 sec are dropped
-	@down_time 1000
+	@max_percept_age 1000 # percepts older than 1 sec are dropped
+	@down_time 2000
 
 	@doc "Start a behavior from a configuration"
 	def start_link(behavior_config) do
@@ -40,7 +40,12 @@ defmodule Ev3.Behavior do
 		Agent.update(
 			name,
 			fn(state) ->
-					transit_on(percept, state)
+				case transit_on(percept, state) do
+					%{fsm_state: final_state, fsm: %FSM{final_state: final_state}} = end_state ->
+						final_transit(end_state)
+					new_state ->
+						new_state
+				end
 			end
 		)
 	end
@@ -101,9 +106,11 @@ defmodule Ev3.Behavior do
 		surviving_motives = Enum.filter(state.motives, &(&1.about != off_motive.about))
 		case surviving_motives do
 			[] ->
-				Logger.info("STOPPED behavior #{state.name}")
+				Logger.info("STOPPED behavior #{state.name}: #{off_motive.about} if off")
+				final_transit(state)
 				%{state | motives: [], fsm_state: nil}
 			motives ->
+				Logger.info("NOT STOPPED behavior #{state.name} because #{inspect surviving_motives}")
 				%{state | motives: motives}
 		end
 	end
@@ -116,17 +123,33 @@ defmodule Ev3.Behavior do
 		%{state | fsm_state: fsm.initial_state}
 	end
 
+	defp final_transit(%{fsm: fsm} = state) do
+		transition = find_final_transition(fsm)
+		if transition != nil do
+			transition.doing.(nil, state)
+		end
+		%{state | fsm_state: nil}
+	end
+
 	defp find_initial_transition(%FSM{initial_state: initial_state,
 																		transitions: transitions}) do
-		Enum.find(transitions, &(&1.from == nil and &1.to == initial_state and &1.doing != nil))
+		Enum.find(transitions,
+							&(&1.from == nil and &1.to == initial_state and &1.doing != nil)
+		)
+	end
+
+	defp find_final_transition(%FSM{final_state: final_state, transitions: transitions}) do
+		Enum.find(transitions,
+							&(&1.to == final_state and &1.doing != nil)
+		)
 	end
 
 	defp transit_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
 		state
 	end
 
-	defp transit_on(_percept, %{name: name, responsive: false} = state) do
-		Logger.info("-- NOT RESPONSIVE: #{name}")
+	defp transit_on(_percept, %{name: _name, responsive: false} = state) do
+#		Logger.info("-- NOT RESPONSIVE: #{name}")
 		state
 	end
 	

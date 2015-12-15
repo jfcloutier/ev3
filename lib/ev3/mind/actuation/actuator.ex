@@ -7,7 +7,6 @@ defmodule Ev3.Actuator do
 	alias Ev3.MotorSpec
 	alias Ev3.LEDSpec
 	alias Ev3.LegoLED
-	alias Ev3.Device
 	alias Ev3.CNS
 	import Ev3.Utils
 

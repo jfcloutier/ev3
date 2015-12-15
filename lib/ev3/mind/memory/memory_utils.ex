@@ -31,6 +31,11 @@ defmodule Ev3.MemoryUtils do
 		end
 	end
 
+	@doc "Find the last memory about something"
+	def last_memory(memories, about) do 
+	   Enum.find(memories, &(&1.about == about))
+	end
+	
 	@doc "Is there a memory about something in the past that passes a given test?"
 	def any_memory?(memories, about, past, test) do
 		select_memories(memories, about: about, since: past)

@@ -21,6 +21,12 @@ defmodule Ev3.PerceptorsHandler do
 		{:ok, state}
 	end
 
+	def handle_event({:overwhelmed, :actuator, name}, state) do
+		process_actuator_overwhelmed(name, state)
+		{:ok, state}
+	end
+
+
 	def handle_event(_event, state) do
 #		Logger.debug("#{__MODULE__} ignored #{inspect event}")
 		{:ok, state}
@@ -46,5 +52,15 @@ defmodule Ev3.PerceptorsHandler do
 					[:link])
 			end)
 	end
+
+	defp process_actuator_overwhelmed(actuator_name, %{perceptor_configs: perceptor_configs}) do
+		Logger.info("Actuator #{actuator_name} is overwhelmed. Idling perception")
+		perceptor_configs
+		|> Enum.each(
+			fn(perceptor_config) ->
+				Perceptor.actuator_overwhelmed(perceptor_config.name)
+			end)
+	end
+
 
 end
