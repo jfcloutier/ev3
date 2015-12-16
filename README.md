@@ -8,10 +8,11 @@ You can do whatever you want.
 
 The goals of this project are:
 
-+ To give Elixir coders access to the EV3 via [EV3DEV](http://ev3dev.org) -- DONE --
-+ To implement a function domain language for interacting with the EV3 brick --DONE --
-+ To take full advantage of processes and OTP to ease the implementation of complex control software --TBD--
-+ To have fun!
++ Give Elixir coders access to the EV3 via [EV3DEV](http://ev3dev.org) -- DONE --
++ Implement a function domain language for interacting with the EV3 brick --DONE --
++ Take full advantage of processes and OTP to implement a "society of mind" model, with perception, motivation, behavior and actuation. --DONE--
++ Implement a robot control panel in Elm and Phoenix. --TBD--
++ Have fun! -- so far so good --
 
 This project was inspired by [Torben Hoffmann](http://www.elixirconf.eu/elixirconf2015/torben-hoffmann). Thanks Torben!
 
@@ -19,7 +20,7 @@ This project was inspired by [Torben Hoffmann](http://www.elixirconf.eu/elixirco
 
 * You will need a [Lego Mindstorms EV3 kit](http://www.lego.com/en-us/mindstorms/)
 * A micro-SD card with [EV3Dev](http://www.ev3dev.org) on it
-* Some way to communicate with the EV3 brick (Bluetooth or WiFi)
+* Some way to communicate with the EV3 brick (Bluetooth or WiFi - WiFi works on Linux)
 * [Erlang](http://www.erlang.org) and [Elixir](http://http://elixir-lang.org/) installed on both you computer and the EV3
 
 Go to my [blog](http://jfcloutier.github.io/robotex/) for further instructions, pointers and examples.

@@ -89,7 +89,6 @@ defmodule Ev3.Actuation do
 			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed * -1])
 			|> Script.add_step(:left_wheel, :set_speed, [:rps, rps_speed * -1])
 			|> Script.add_step(:all, :run_for, [how_long])
-#			|> Script.add_wait(how_long)
 		end
 	end
 
