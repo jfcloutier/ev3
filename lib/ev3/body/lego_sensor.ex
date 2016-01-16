@@ -23,7 +23,11 @@ defmodule Ev3.LegoSensor do
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_sensor("#{@sys_path}/#{&1}")))
 		else
-			[Ev3.Mock.TouchSensor.new(), Ev3.Mock.ColorSensor.new(), Ev3.Mock.InfraredSensor.new()]
+			[Ev3.Mock.TouchSensor.new(),
+       Ev3.Mock.ColorSensor.new(),
+       Ev3.Mock.InfraredSensor.new(),
+       Ev3.Mock.UltrasonicSensor.new(),
+       Ev3.Mock.GyroSensor.new()]
 		end
   end
 
@@ -105,12 +109,16 @@ defmodule Ev3.LegoSensor do
 				:touch -> Ev3.TouchSensor
 				:color -> Ev3.ColorSensor
 				:infrared -> Ev3.InfraredSensor
+        :ultrasonic -> Ev3.UltrasonicSensor
+        :gyro -> Ev3.GyroSensor
 			end
 		else
 			case sensor.type do
 				:touch -> Ev3.Mock.TouchSensor
 				:color -> Ev3.Mock.ColorSensor
 				:infrared -> Ev3.Mock.InfraredSensor
+        :ultrasonic -> Ev3.Mock.UltrasonicSensor
+        :gyro -> Ev3.Mock.GyroSensor
 			end
 		end
 	end

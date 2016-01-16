@@ -3,6 +3,7 @@ defmodule Ev3.Script do
 
 	alias Ev3.LegoMotor
 	alias Ev3.LegoLED
+  alias Ev3.LegoSound
 
 	defstruct name: nil, steps: [], devices: nil
 	
@@ -75,6 +76,8 @@ defmodule Ev3.Script do
 							LegoMotor.execute_command(device, command, params)
 						:led ->
 							LegoLED.execute_command(device, command, params)
+            :sound ->
+              LegoSound.execute_command(device, command, params)
 					end
 				Map.put(acc, device_name, updated_device)
 			end

@@ -23,6 +23,7 @@ defmodule Ev3.LegoLED do
 		end
   end
 
+  @doc "Find an led device by position and color"
 	def led(position: position, color: color) do
 		leds()
 		|> Enum.find(&(position(&1) == position and color(&1) == color))
@@ -58,6 +59,7 @@ defmodule Ev3.LegoLED do
 	def execute_command(led, command, params) do
 #		IO.puts("--- Executing LED #{led.path} #{command} #{inspect params}")
 		spawn_link(fn() -> apply(module_for(led), command, [led | params]) end) # call to LEDs seems to be time-consuming
+    led
 	end
 
 

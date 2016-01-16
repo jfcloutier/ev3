@@ -4,9 +4,12 @@ defmodule Ev3.Actuator do
 	require Logger
 	alias Ev3.LegoMotor
 	alias Ev3.Script
+  alias Ev3.Device
 	alias Ev3.MotorSpec
 	alias Ev3.LEDSpec
+  alias Ev3.SoundSpec
 	alias Ev3.LegoLED
+  alias Ev3.LegoSound
 	alias Ev3.CNS
 	import Ev3.Utils
 
@@ -16,12 +19,16 @@ defmodule Ev3.Actuator do
 	@doc "Start an actuator from a configuration"
 	def start_link(actuator_config) do
 		Logger.info("Starting #{__MODULE__} #{actuator_config.name}")
-		state = if actuator_config.type == :motor do
-							%{actuator_config: actuator_config,
-								devices: find_motors(actuator_config.specs)}
-						else
-							%{actuator_config: actuator_config,
-								devices: find_leds(actuator_config.specs)}
+		state = case actuator_config.type do
+              :motor ->
+							  %{actuator_config: actuator_config,
+								  devices: find_motors(actuator_config.specs)}
+			        :led ->
+							  %{actuator_config: actuator_config,
+								  devices: find_leds(actuator_config.specs)}
+              :sound ->
+                %{actuator_config: actuator_config,
+                  devices: find_sound_players(actuator_config.specs)}
 						end
 		Agent.start_link(fn() -> state end, [name: actuator_config.name])
 	end
@@ -68,7 +75,7 @@ defmodule Ev3.Actuator do
 				if motor == nil do
 					Logger.warn("Motor not found matching #{inspect motor_spec} in #{inspect all_motors}")
 				end
-				Map.put(acc, motor_spec.name, motor)
+				Map.put(acc, motor_spec.name, update_props(motor, motor_spec.props))
 			end)
 		found
 	end
@@ -84,9 +91,35 @@ defmodule Ev3.Actuator do
 				if led == nil do
 					Logger.warn("LED not found matching #{inspect led_spec} in #{inspect all_leds}")
 				end
-				Map.put(acc, led_spec.name, led)
+				Map.put(acc, led_spec.name, update_props(led, led_spec.props))
 			end)
 		found
 	end
+
+  defp find_sound_players(sound_specs) do
+    all_sound_players = LegoSound.sound_players()
+    found = Enum.reduce(
+      sound_specs,
+      %{},
+      fn(sound_spec, acc) ->
+        sound_player = Enum.find(all_sound_players,
+                                 &(SoundSpec.matches?(sound_spec, &1)))
+        if sound_player == nil do
+          Logger.warn("Sound player not found matching #{inspect sound_spec} in #{inspect all_sound_players}")
+        end
+        Map.put(acc, sound_spec.name, update_props(sound_player, sound_spec.props))
+      end)
+    found
+  end
+
+  defp update_props(device, props) do
+    Enum.reduce(
+      Map.keys(props),
+      device,
+      fn(key, dev) ->
+        %Device{dev | props: Map.put(dev.props, key, Map.get(props, key, nil))}
+      end
+    )
+  end
 
 end

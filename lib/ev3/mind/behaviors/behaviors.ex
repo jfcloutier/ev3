@@ -21,7 +21,7 @@ defmodule Ev3.Behaviors do
 									 final_state: :ended,
 									 transitions: [
 										 %Transition{to: :started,
-																 doing: turn_on_green_leds()},																 
+																 doing: start_roaming()},																 
 										 %Transition{from: [:started],
 																 on: :time_elapsed,
 																 to: :roaming,
@@ -63,7 +63,7 @@ defmodule Ev3.Behaviors do
 									 final_state: :ended,
 									 transitions: [
 										 %Transition{to: :started,
-																 doing: turn_on_green_leds() },																 
+																 doing: start_foraging() },																 
 										 %Transition{from: [:started, :on_track],
 																 on: :distance,
 																 to: :on_track,
@@ -150,6 +150,18 @@ defmodule Ev3.Behaviors do
 		] 
 	end
 
+  ### Private
+
+  defp generate_intent(about, value \\ nil) do
+    Intent.new(about: about, value: value)
+    |> CNS.notify_intended()
+  end
+
+  defp generate_strong_intent(about, value \\ nil) do
+    Intent.new_strong(about: about, value: value)
+    |> CNS.notify_intended()
+  end
+
 	defp nothing() do
 		fn(_percept, _state) ->
 			Logger.info("Doing NOTHING")
@@ -168,6 +180,14 @@ defmodule Ev3.Behaviors do
 		end
 	end
 
+  defp start_roaming() do
+		fn(_percept, _state) ->
+			Logger.info("START ROAMING")
+      turn_on_green_leds()
+      generate_strong_intent(:say_curious)
+    end
+  end
+
 	defp roam() do
 		fn(percept, _state) ->
 			Logger.info("ROAMING from #{percept.about} = #{inspect percept.value}")
@@ -177,10 +197,10 @@ defmodule Ev3.Behaviors do
 											 1 -> :turn_left
 											 2 -> :turn_right
 										 end
-				CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(2)))
+        generate_intent(turn_where, :random.uniform(2))
 			end
 			how_long = :random.uniform(3) # secs
-			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: how_long}))
+      generate_intent(:go_forward,  %{speed: :fast, time: how_long})
 		end
 	end
 
@@ -191,7 +211,7 @@ defmodule Ev3.Behaviors do
 										 1 -> :turn_left
 										 2 -> :turn_right
 									 end
-			CNS.notify_intended(Intent.new(about: turn_where, value: 2))
+      generate_strong_intent(turn_where, 2)
 		end
 	end
 
@@ -199,12 +219,12 @@ defmodule Ev3.Behaviors do
 		fn(percept, _state) ->
 			Logger.info("BACKING OFF from #{percept.about} = #{inspect percept.value}")
 			how_long = 3 + :random.uniform(4) # secs
-			CNS.notify_intended(Intent.new_strong(about: :go_backward, value: %{speed: :slow, time: how_long}))
+      generate_strong_intent(:go_backward,  %{speed: :slow, time: how_long})
 			turn_where = case :random.uniform(2) do
 										 1 -> :turn_left
 										 2 -> :turn_right
 									 end
-			CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(4) - 1))
+			generate_intent(turn_where, :random.uniform(4) - 1)
 		end 
 	end
 
@@ -218,7 +238,7 @@ defmodule Ev3.Behaviors do
 								:close -> :slow
 								:very_close -> :very_slow
 							end
-			CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: speed, time: 1}))
+			generate_intent(:go_forward, %{speed: speed, time: 1})
 		end 
 	end
 
@@ -231,7 +251,7 @@ defmodule Ev3.Behaviors do
 										 :right -> {:turn_right, value / 60}
 										 :ahead -> {:turn_right, 0}
 									 end
-			CNS.notify_intended(Intent.new(about: turn_where, value: how_much))
+			generate_intent(turn_where, how_much)
 			
 		(%Percept{about: :distance, value: _value} = percept, _state) ->
 			Logger.info("CHANGING COURSE from #{percept.about} = #{inspect percept.value}")
@@ -240,28 +260,39 @@ defmodule Ev3.Behaviors do
 										 2 -> :turn_right
 									 end
 			how_much = round(:random.uniform(5) / 3)
-			CNS.notify_intended(Intent.new(about: turn_where, value: how_much))
+			generate_intent(turn_where, how_much)
 		end
 	end
+
+  defp start_foraging() do
+		fn(percept, _state) ->
+      Logger.info("START FORAGIN")
+      turn_on_green_leds()
+      generate_strong_intent(:say_hungry)
+    end
+  end
 
 	defp eat() do
 		fn(%Percept{about: :food, value: value}, _state) ->
 			Logger.info("EATING from food = #{inspect value}")
 			orange_lights()
-			CNS.notify_intended(Intent.new_strong(about: :stop, value: nil))
+      generate_strong_intent(:say_food)
+			generate_strong_intent(:stop)
 			how_much = case value do
 									 :plenty -> :lots
 									 :little -> :some
 								 end
-			CNS.notify_intended(Intent.new(about: :eat, value: how_much))
+      generate_strong_intent(:eating_noises)
+			generate_strong_intent(:eat, how_much)
 		end
 	end
 			
 	defp panic() do
 		fn(_percept, _state) ->
 			Logger.info("PANICKING!")
+      generate_strong_intent(:say_scared)
 			red_lights()
-			CNS.notify_intended(Intent.new_strong(about: :go_backward, value: %{speed: :slow, time: 2}))
+			generate_intent(:go_backward, %{speed: :slow, time: 2})
 			for _n <- [1 .. :random.uniform(5)] do
 				intend_to_change_course()
 			end
@@ -280,25 +311,23 @@ defmodule Ev3.Behaviors do
 									 1 -> :turn_left
 									 2 -> :turn_right
 								 end
-		CNS.notify_intended(Intent.new(about: turn_where, value: :random.uniform(2)))
-#		CNS.notify_intended(Intent.new(about: :go_forward, value: %{speed: :fast, time: 2}))
+		generate_intent(turn_where, :random.uniform(2))
 	end
 
   defp red_lights() do
 		Logger.info("TURNING ON RED LIGHTS")
-		CNS.notify_intended(Intent.new_strong(about: :red_lights, value: :on))
+		generate_intent(:red_lights, :on)
 	end
 			
 
 	defp green_lights() do
 		Logger.info("TURNING ON GREEN LIGHTS")
-		CNS.notify_intended(Intent.new_strong(about: :green_lights, value: :on))
+		generate_intent(:green_lights, :on)
 	end
 
 	defp orange_lights() do
 		Logger.info("TURNING ON ORANGE LIGHTS")
-		CNS.notify_intended(Intent.new_strong(about: :orange_lights, value: :on))
+		generate_intent(:orange_lights, :on)
 	end
 
-	
 end

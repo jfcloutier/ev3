@@ -6,6 +6,7 @@ defmodule Ev3.Actuation do
 	alias Ev3.ActuatorConfig
 	alias Ev3.MotorSpec
 	alias Ev3.LEDSpec
+  alias Ev3.SoundSpec
 	alias Ev3.Activation
 	alias Ev3.Script
 	
@@ -54,7 +55,24 @@ defmodule Ev3.Actuation do
 																				 action: red_lights()},
 														 %Activation{intent: :orange_lights,
 																				 action: orange_lights()}
-													 ])
+													 ]),
+        ActuatorConfig.new(name: :sounds,
+                           type: :sound,
+                           specs: [
+                             %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: "en-sc"}}
+                           ],
+                           activations: [
+                             %Activation{intent: :say_hungry,
+                                         action: say_hungry()},
+                             %Activation{intent: :say_scared,
+                                         action: say_scared()},
+                             %Activation{intent: :say_curious,
+                                         action: say_curious()},
+                             %Activation{intent: :say_food,
+                                         action: say_food()},
+                             %Activation{intent: :eating_noises,
+                                         action: eating_noises()}
+                             ])                        
 		]
 	end
 
@@ -170,5 +188,42 @@ defmodule Ev3.Actuation do
 			|> Script.add_step(:all, :set_brightness, [value])
 		end
 	end
-	
+
+	# Sounds
+
+  defp say_hungry() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_hungry, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["I am hungry"])
+    end
+  end
+  
+  defp say_scared() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_scared, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["I am scared"])
+    end
+  end
+  
+  defp say_curious() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_curious, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["Let's roam around"])
+    end
+  end
+  
+  defp say_food() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_food, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["Woo hoo food!"])
+    end
+  end
+  
+  defp eating_noises() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_eating, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["Nom de nom de nom"])
+    end
+  end
+  
 end

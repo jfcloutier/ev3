@@ -1,7 +1,8 @@
 defmodule Ev3.MotorSpec do
 	@moduledoc "Struct for motor specifications"
 
-	defstruct name: nil, port: nil
+  # properties name and props are required to be a *Spec
+	defstruct name: nil, port: nil, props: %{}
 
 	@doc "Does a motor match a motor spec?"
 	def matches?(motor_spec, device) do
