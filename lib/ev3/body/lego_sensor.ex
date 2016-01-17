@@ -124,7 +124,7 @@ defmodule Ev3.LegoSensor do
 	end
 
   defp init_sensor(path) do
-		port_name = read_sys(path, "port_name")
+		port_name = read_sys(path, "address")
     driver_name = read_sys(path, "driver_name")
     [_, type_name] = Regex.run(@driver_regex, driver_name)
     type = case type_name do

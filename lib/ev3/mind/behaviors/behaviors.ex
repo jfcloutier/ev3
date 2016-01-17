@@ -265,7 +265,7 @@ defmodule Ev3.Behaviors do
 	end
 
   defp start_foraging() do
-		fn(percept, _state) ->
+		fn(_percept, _state) ->
       Logger.info("START FORAGIN")
       turn_on_green_leds()
       generate_strong_intent(:say_hungry)

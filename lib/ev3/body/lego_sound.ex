@@ -3,10 +3,8 @@ defmodule Ev3.LegoSound do
 
   require Logger
   alias Ev3.Device
-  alias Ev3.SoundSpec
 
   @sys_path "/sound"
-  @espeak "espeak"
 
   @doc "Get the available sound players"
   def sound_players() do
@@ -31,14 +29,14 @@ defmodule Ev3.LegoSound do
     sound_player
   end
 
+  @doc "The sound player says out loud the given words"
   def speak(sound_player, words) do
-    args =  ["-a", "#{volume_level(sound_player)}", "-s", "#{speed_level(sound_player)}", "-v", "#{voice(sound_player)}", words]
-    all_args = if Ev3.testing? do
-                 args
-               else
-                 args ++ ["--stdout | aplay"]
-               end
-    System.cmd(@espeak, all_args)
+    if Ev3.testing? do
+      args =  ["-a", "#{volume_level(sound_player)}", "-s", "#{speed_level(sound_player)}", "-v", "#{voice(sound_player)}", words]
+      System.cmd("espeak", args)
+    else
+      :os.cmd('espeak -a #{volume_level(sound_player)} -s #{speed_level(sound_player)} -v #{voice(sound_player)} "#{words}" --stdout | aplay')
+    end 
   end
 
   ### Private

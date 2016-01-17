@@ -215,7 +215,7 @@ defmodule Ev3.Actuation do
   defp say_food() do
     fn(_intent, sound_players) ->
       Script.new(:say_food, sound_players)
-      |> Script.add_step(:loud_speech, :speak, ["Woo hoo food!"])
+      |> Script.add_step(:loud_speech, :speak, ["Food! I found food!"])
     end
   end
   

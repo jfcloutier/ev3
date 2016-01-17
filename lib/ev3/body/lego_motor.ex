@@ -94,7 +94,7 @@ defmodule Ev3.LegoMotor do
 	### PRIVATE
 
   defp init_motor(path) do
-		port_name = read_sys(path, "port_name")
+		port_name = read_sys(path, "address")
     driver_name = read_sys(path, "driver_name")
     [_, type_letter] = Regex.run(@driver_regex, driver_name)
     type = case type_letter do
