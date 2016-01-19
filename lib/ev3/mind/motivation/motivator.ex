@@ -4,10 +4,12 @@ defmodule Ev3.Motivator do
 	require Logger
 	alias Ev3.Memory
 
+  @down_time 2000
+
 	@doc "Start a motivator from a configuration"
 	def start_link(motivator_config) do
 		Logger.info("Starting #{__MODULE__} #{motivator_config.name}")
-		Agent.start_link(fn() -> %{motivator_config: motivator_config} end,
+		Agent.start_link(fn() -> %{motivator_config: motivator_config, responsive: true} end,
 										 [name: motivator_config.name])
 	end
 
@@ -16,14 +18,18 @@ defmodule Ev3.Motivator do
 		Agent.get_and_update(
 			name,
 			fn(state) ->
-				config = state.motivator_config
-				reaction = if percept.about in config.focus.senses do
-										 memories = Memory.since(config.span, senses: config.focus.senses, motives: config.focus.motives, intents: config.focus.intents)
-										 config.logic.(percept, memories)  # returns a motive or nil
-									 else
-										 nil
-									 end
-				{reaction, state}
+        if state.responsive do
+				  config = state.motivator_config
+				  reaction = if percept.about in config.focus.senses do
+										   memories = Memory.since(config.span, senses: config.focus.senses, motives: config.focus.motives, intents: config.focus.intents)
+										   config.logic.(percept, memories)  # returns a motive or nil
+									   else
+										   nil
+									   end
+				  {reaction, state}
+        else
+          {nil ,state}
+        end
 			end)
 	end
 	

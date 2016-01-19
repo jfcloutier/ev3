@@ -23,6 +23,7 @@ defmodule Ev3 do
     result = Supervisor.start_link(children, opts)
 		RobotSupervisor.start_execution()
 		RobotSupervisor.start_perception()
+    RobotSupervisor.start_internal_clock()
 		result
   end
 

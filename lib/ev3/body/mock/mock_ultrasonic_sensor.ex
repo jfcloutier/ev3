@@ -12,10 +12,10 @@ defmodule Ev3.Mock.UltrasonicSensor do
   ### Sensing
 
   def senses(_) do
-    [:distance_cm]
+    [:distance]
   end
 
-  def read(sensor, :distance_cm) do
+  def read(sensor, :distance) do
     distance_cm(sensor)
   end
 

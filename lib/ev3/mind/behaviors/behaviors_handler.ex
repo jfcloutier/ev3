@@ -22,11 +22,6 @@ defmodule Ev3.BehaviorsHandler do
 		{:ok, state}
 	end
 
-	def handle_event({:overwhelmed, :actuator, name}, state) do
-		process_actuator_overwhelmed(name, state)
-		{:ok, state}
-	end
-	
 	def handle_event(_event, state) do
 #		Logger.debug("#{__MODULE__} ignored #{inspect event}")
 		{:ok, state}
@@ -53,15 +48,6 @@ defmodule Ev3.BehaviorsHandler do
 		|> Enum.each(
 			fn(behavior_config) ->
 				Behavior.react_to_motive(behavior_config.name, motive)
-			end)
-	end
-
-	defp process_actuator_overwhelmed(actuator_name, %{behavior_configs: behavior_configs}) do
-		Logger.info("Actuator #{actuator_name} is overwhelmed. Idling all behaviors")
-		behavior_configs
-		|> Enum.each(
-			fn(behavior_config) ->
-				Behavior.actuator_overwhelmed(behavior_config.name)
 			end)
 	end
 

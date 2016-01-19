@@ -25,19 +25,30 @@ defmodule Ev3.LegoSound do
 
   @doc "Execute a cound command"
   def execute_command(sound_player, command, params) do
-    apply(Ev3.LegoSound, command, [sound_player | params])
+    spawn(fn -> apply(Ev3.LegoSound, command, [sound_player | params]) end)
     sound_player
   end
 
   @doc "The sound player says out loud the given words"
   def speak(sound_player, words) do
+    speak(words, volume_level(sound_player), speed_level(sound_player), voice(sound_player))
+  end
+
+  @doc "Speak out words with a given volume, speed and voice"
+  def speak(words, volume, speed, voice \\ "en") do
     if Ev3.testing? do
-      args =  ["-a", "#{volume_level(sound_player)}", "-s", "#{speed_level(sound_player)}", "-v", "#{voice(sound_player)}", words]
+      args =  ["-a", "#{volume}", "-s", "#{speed}", "-v", "#{voice}", words]
       System.cmd("espeak", args)
     else
-      :os.cmd('espeak -a #{volume_level(sound_player)} -s #{speed_level(sound_player)} -v #{voice(sound_player)} "#{words}" --stdout | aplay')
+      :os.cmd('espeak -a #{volume} -s #{speed} -v #{voice} "#{words}" --stdout | aplay')
     end 
   end
+
+  @doc "Speak words loud and clear"
+  def speak(words) do
+    speak(words, 300, 160)
+  end
+    
 
   ### Private
 

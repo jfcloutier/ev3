@@ -14,50 +14,59 @@ defmodule Ev3.Perception do
 					name: :light,
 					focus: %{senses: [:ambient], motives: [], intents: []},
 					span: {10, :secs},
-					ttl: {30, :secs},
+					ttl: {10, :secs},
 					logic: light()),
-				# A collision perceptor based on proximity sensing
+				# A collision perceptor based on distance sensing
 				PerceptorConfig.new(
 					name: :collision,
-					focus: %{senses: [:proximity, :touch, :collision, :time_elapsed], motives: [], intents: []},
+					focus: %{senses: [:distance, :touch, :collision, :time_elapsed], motives: [], intents: []},
 					span: nil, # no windowing
-					ttl: {30, :secs}, # remember for 30 seconds
+					ttl: {10, :secs}, # remember for 10 seconds
 					logic: collision()),
 				PerceptorConfig.new(
 					name: :danger,
 					focus: %{senses: [:ambient, :collision, :danger, :time_elapsed], motives: [], intents: []},
 					span: {10, :secs}, # only react to what happened in the last 10 seconds
-					ttl: {2, :mins}, # remember for 2 minutes
+					ttl: {30, :secs}, # remember for 30 secs
 					logic: danger()),
 				PerceptorConfig.new(
 					name: :hungry,
 					focus: %{senses: [:time_elapsed], motives: [], intents: [:eat]},
-					span: {10, :mins},
-					ttl: {5, :mins},
+					span: {1, :mins},
+					ttl: {30, :secs},
 					logic: hungry()),
 				# A food perceptor
 				PerceptorConfig.new(
 					name: :food,
 					focus: %{senses: [:ambient, :color], motives: [], intents: []},
-					span: {30, :secs},
-					ttl: {2, :mins},
+					span: {10, :secs},
+					ttl: {30, :secs},
 					logic: food()),
-				# A beacon perceptor
+				# An odor perceptor
 				PerceptorConfig.new(
-					name: :beacon,
+					name: :scent,
 					focus: %{senses: [{:beacon_heading, 1}, {:beacon_distance, 1}], motives: [], intents: []},
-					span: {30, :secs},
-					ttl: {1, :mins},
-					logic: beacon()),
+					span: {10, :secs},
+					ttl: {30, :secs},
+					logic: scent()),
 				# A stuck perceptor
 				PerceptorConfig.new(
 					name: :stuck,
-					focus: %{senses: [ {:beacon_distance, 1}], motives: [], intents: [:go_forward]},
-					span: {30, :secs},
-					ttl: {1, :mins},
+					focus: %{senses: [ {:beacon_distance, 1}, :distance], motives: [], intents: [:go_forward, :go_backward]},
+					span: {10, :secs},
+					ttl: {10, :secs},
 					logic: stuck())				
 		]
 	end
+
+  @doc "Find all senses used for perception"
+  def used_senses() do
+    perceptor_configs()
+    |> Enum.map(&(Map.get(&1.focus, :senses, [])))
+    |> List.flatten()
+    |> MapSet.new()
+    |> MapSet.to_list()
+  end
 
 	### Private
 
@@ -120,26 +129,26 @@ defmodule Ev3.Perception do
 	def collision() do
 		fn
 		(_percept, %{percepts: []}) -> nil
-		(%Percept{about: :proximity, value: n}, %{percepts: percepts}) when n < 10 ->
+		(%Percept{about: :distance, value: n}, %{percepts: percepts}) when n < 10 ->
 				if not any_memory?(
 							percepts,
-							:proximity,
+							:distance,
 							1000,
 							fn(value) -> value > 10 end) do
 					Percept.new(about: :collision, value: :imminent)
 				else
 					nil
 				end
-			(%Percept{about: :proximity, value: val}, %{percepts: percepts}) ->
+			(%Percept{about: :distance, value: val}, %{percepts: percepts}) ->
 				approaching? = latest_memory?(
 					percepts,
-					:proximity,
+					:distance,
 					fn(previous) -> val < previous  end)
 				proximal? = all_memories?(
 					percepts,
-					:proximity,
+					:distance,
 					5000,
-					fn(value) -> value < 50 end)
+					fn(value) -> value < 30 end)
 				if approaching? and proximal? do
 					Percept.new(about: :collision, value: :soon)
 				else
@@ -206,26 +215,38 @@ defmodule Ev3.Perception do
 
 	@doc "Is the robot stuck?"
 	def stuck() do 
-	fn # Stuck if tried to go forward for a while and distance has not changed"
-	(%Percept{about: {:beacon_distance, 1}, value: distance}, %{percepts: percepts, intents: intents}) ->
-			attempts = count(
+	fn # Stuck if tried to go forward or backward for the last 5 secs and distances to beacon or obtacle have not changed"
+	(%Percept{about: {:beacon_distance, 1}, value: beacon_distance}, %{percepts: percepts, intents: intents}) ->
+			forward_attempts = count(
 			intents,
 			:go_forward,
-			15_000,
+			5_000,
 			fn(_value) -> true end)
-			if attempts > 3 do
-				average_distance = average(
+			backward_attempts = count(
+			intents,
+			:go_backward,
+			5_000,
+			fn(_value) -> true end)
+			if (forward_attempts + backward_attempts) > 1 do
+				average_beacon_distance = average(
 					percepts,
 					{:beacon_distance, 1},
-					15_000,
+					5_000,
 					fn(value) -> value end,
 					1000
 				)
-				change = abs(average_distance - distance)
-				if change < 2 do
+				beacon_distance_change = abs(average_beacon_distance - beacon_distance)
+        {low, high} = range(
+          percepts,
+          :distance,
+          5_000,
+          fn(value) -> value end,
+          {0, 1000}
+        )
+				if beacon_distance_change < 3 and (high - low) < 3 do
 					Percept.new(about: :stuck, value: true)
 				else
-					nil
+					Percept.new(about: :stuck, value: false)
 				end
 			else
 				nil
@@ -234,30 +255,33 @@ defmodule Ev3.Perception do
 		end
 	end
 
-	@doc "Where's the beacons?"
-	def beacon() do
+	@doc "Where's the bacon?"
+	def scent() do
 		fn
 		(%Percept{about: {:beacon_distance, 1}, value: value}, _memories) ->
 				cond do
 					value < 0 ->
-						Percept.new(about: :distance, value: :unknown)
+						Percept.new(about: :scent_strength, value: :unknown)
 					value == 100 ->
-						Percept.new(about: :distance, value: :very_far)
+						Percept.new(about: :scent_strength, value: :very_weak)
 					value > 50 ->
-						Percept.new(about: :distance, value: :far)
+						Percept.new(about: :scent_strength, value: :weak)
 					value > 10 ->
-						Percept.new(about: :distance, value: :close)
+						Percept.new(about: :scent_strength, value: :strong)
 					true ->
-						Percept.new(about: :distance, value: :very_close)
+						Percept.new(about: :scent_strength, value: :very_strong)
 				end
-		(%Percept{about: {:beacon_heading, 1}, value: value}, _memories) ->
+		  (%Percept{about: {:beacon_heading, 1}, value: value}, %{percepts: percepts}) ->
+        latest_scent_strength = last_memory(
+							percepts,
+							:scent_strength)
 				cond do
 					value < -10 ->
-						Percept.new(about: :direction, value: {:left, abs(value)})
+						Percept.new(about: :scent_direction, value: {:left, abs(value), latest_scent_strength})
 					value > 10 ->
-						Percept.new(about: :direction, value: {:right, abs(value)})
+						Percept.new(about: :scent_direction, value: {:right, abs(value), latest_scent_strength})
 					true ->
-						Percept.new(about: :direction, value: {:ahead, abs(value)})
+						Percept.new(about: :scent_direction, value: {:ahead, abs(value), latest_scent_strength})
 			  end
 	  (_,_) -> nil
 	  end

@@ -8,8 +8,8 @@ defmodule Ev3.PerceptorConfig do
 	@doc "Make a new perceptor configuration"
 	def new(name: name,
 					focus: %{senses: _senses, motives: _motives, intents: _intents} = focus,
-					span: span,
-					ttl: ttl,
+					span: span, # composed from percepts no older than span msecs
+					ttl: ttl, # how long the percept will be retained in memory in msecs
 					logic: logic) do
 		%Ev3.PerceptorConfig{name: name,
 												 focus: focus,

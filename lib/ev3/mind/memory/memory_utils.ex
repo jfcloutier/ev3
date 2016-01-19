@@ -67,6 +67,23 @@ defmodule Ev3.MemoryUtils do
 		end
 	end
 
+  @doc "Get the numerical range of values for selected memories, or default if none"
+  def range(memories, about, past, valuation, default) do
+    list = select_memories(memories, about: about, since: past)
+    if Enum.count(list) == 0 do
+      default
+    else
+      Enum.reduce(
+        list,
+        {+10_000_000, -10_000_000},
+        fn(memory, {low, high}) ->
+          n = valuation.(memory.value)
+          {min(n, low), max(n, high)}
+        end
+      )
+    end
+  end
+
 	@doc "Summation over selected memories"
 	def summation(memories, about, past, valuation, default \\ nil) do
 		select_memories(memories, about: about, since: past)

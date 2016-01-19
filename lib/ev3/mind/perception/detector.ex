@@ -7,30 +7,65 @@ defmodule Ev3.Detector do
   alias Ev3.Percept
 	alias Ev3.CNS
 
-	@ttl 30000 # detected percept is retained for 30 secs
+	@ttl 10_000 # detected percept is retained for 10 secs
+
+  @down_time 2500
 
 	@doc "Start a detector for all senses of a device, to be linked to its supervisor"
-	def start_link(device) do
-		senses = senses(device)
+	def start_link(device, used_senses) do
+		senses = senses(device, used_senses)
 		name = name(device)
 		{:ok, pid} = Agent.start_link(
 			fn() ->
 				poll_pid = spawn_link(fn() -> poll(name, senses, pause(device)) end)
 				Process.register(poll_pid, String.to_atom("polling #{device.path}"))
-				%{device: device}
+				%{device: device, responsive: true}
 			end,
 			[name: name])
 		Logger.info("#{__MODULE__} started on #{inspect device.type} device")
 		{:ok, pid}
 	end
 
+  @doc "Stop the detection of percepts"
+  def actuator_overwhelmed(name) do
+		Agent.update(
+			name,
+			fn(state) ->
+        if state.responsive do
+				  spawn_link(
+					  fn() -> # make sure to reactivate
+						  :timer.sleep(@down_time)
+						  reactivate(name)
+					  end)
+				  %{state | responsive: false}
+        else
+          state
+        end
+			end)
+  end
+
+  @doc "Resume producing percepts"
+	def reactivate(name) do
+		Agent.update(
+			name,
+			fn(state) ->
+				%{state | responsive: true}
+			end)
+	end
+
+  @doc "Detector's name from the device"
+	def name(device) do
+		String.to_atom(device.path)
+	end
+												 	
 	### Private
 
-	defp senses(device) do
-		case device.class do
-							 :sensor -> LegoSensor.senses(device)
-							 :motor -> LegoMotor.senses(device)
-		end
+	defp senses(device, used_senses) do
+		device_senses = case device.class do
+							        :sensor -> LegoSensor.senses(device)
+							        :motor -> LegoMotor.senses(device)
+		                end
+    Enum.filter(device_senses, &(&1 in used_senses))
 	end
 
 	defp read(device, sense) do
@@ -54,10 +89,6 @@ defmodule Ev3.Detector do
 		end
 	end
 
-	defp name(device) do
-		String.to_atom(device.path)
-	end
-	
 	defp poll(name, senses, pause) do
 		Enum.each(senses,
 			fn(sense) ->
@@ -71,20 +102,25 @@ defmodule Ev3.Detector do
 		Agent.get_and_update(
 			name,
 			fn(state) ->
-				{value, updated_device} = read(state.device, sense)
-				if value != nil do
-					percept = Percept.new(about: sense, value: value)
-					CNS.notify_perceived(%Percept{percept |
-																								 source: name,
-																								 ttl: @ttl,
-																								 resolution: sensitivity(updated_device, sense)})
-					{:ok, %{state |
-									device: updated_device}}
-				else
-					{:ok, %{state | device: updated_device}}
-				end
+        if state.responsive do
+				  {value, updated_device} = read(state.device, sense)
+				  if value != nil do
+					  percept = Percept.new(about: sense, value: value)
+            %Percept{percept |
+										 source: name,
+										 ttl: @ttl,
+										 resolution: sensitivity(updated_device, sense)}
+					  |> CNS.notify_perceived()
+					  {:ok, %{state |
+									  device: updated_device}}
+				  else
+					  {:ok, %{state | device: updated_device}}
+				  end
+        else
+          {:ok, state}
+        end
 			end)
 		:ok
 	end
-													 	
+
 end

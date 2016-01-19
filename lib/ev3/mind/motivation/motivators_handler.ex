@@ -42,5 +42,5 @@ defmodule Ev3.MotivatorsHandler do
 					[:link])
 			end)
 	end
-	
+
 end

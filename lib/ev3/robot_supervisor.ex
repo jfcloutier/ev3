@@ -1,6 +1,5 @@
 defmodule Ev3.RobotSupervisor do
 
-	@name __MODULE__
 	use Supervisor
 	require Logger
 	alias Ev3.CNS
@@ -16,6 +15,10 @@ defmodule Ev3.RobotSupervisor do
 	alias Ev3.Motivation
 	alias Ev3.Behaviors
 	alias Ev3.Actuation
+  alias Ev3.InternalClock
+
+	@name __MODULE__
+  @tick 1000
 
 	### Supervisor Callbacks
 
@@ -31,6 +34,7 @@ defmodule Ev3.RobotSupervisor do
 		children = [	
 			worker(CNS, []),
 			worker(Memory, []),
+      worker(InternalClock, []),
 			supervisor(PerceptorsSupervisor, []),
 			supervisor(DetectorsSupervisor, []),
 			supervisor(MotivatorsSupervisor, []),
@@ -56,7 +60,18 @@ defmodule Ev3.RobotSupervisor do
 		start_motivators()
 	end
 
+  def start_internal_clock() do
+    Logger.info("Starting internal clock")
+    spawn(fn() -> tick_tock() end)
+  end
+
 	### Private
+
+  defp tick_tock() do
+		:timer.sleep(@tick)
+		InternalClock.tick()
+		tick_tock()
+	end
 
 	defp start_perceptors() do
 		Perception.perceptor_configs()
@@ -64,8 +79,9 @@ defmodule Ev3.RobotSupervisor do
 	end
 
 	defp start_detectors() do
-		devices = LegoSensor.sensors() ++ LegoMotor.motors()
-		Enum.each(devices, &(DetectorsSupervisor.start_detector(&1)))		
+		sensing_devices = LegoSensor.sensors() ++ LegoMotor.motors()
+    used_senses = all_used_senses()
+		Enum.each(sensing_devices, &(DetectorsSupervisor.start_detector(&1, used_senses)))		
 	end
 
   defp start_motivators() do
@@ -83,5 +99,11 @@ defmodule Ev3.RobotSupervisor do
 		|> Enum.each(&(ActuatorsSupervisor.start_actuator(&1)))
 	end
 
+  defp all_used_senses() do
+    MapSet.new(
+      Perception.used_senses ++ Motivation.used_senses() ++ Behaviors.used_senses())
+    |> MapSet.to_list()
+  end
+  
 end
 	

@@ -3,7 +3,7 @@ defmodule Ev3.Perceptor do
 
 	alias Ev3.Memory
 	require Logger
-	@down_time 2100
+	@down_time 2000
 
 	@doc "Start a perceptor from a configuration"
 	def start_link(perceptor_config) do
@@ -19,29 +19,6 @@ defmodule Ev3.Perceptor do
 			fn(state) ->
 				percept_or_nil = analysis(percept, state)
 				{percept_or_nil, state}
-			end)
-	end
-
-	@doc "Actuator is overwhelmed. Need to stop producing percepts for a while"
-	def actuator_overwhelmed(name) do
-		Agent.update(
-			name,
-			fn(state) ->
-				spawn_link(
-					fn() -> # make sure to reactivate
-						:timer.sleep(@down_time)
-						reactivate(name)
-					end)
-				%{state | responsive: false}
-			end)
-	end
-
-	@doc "Resume producing percepts"
-	def reactivate(name) do
-		Agent.update(
-			name,
-			fn(state) ->
-				%{state | responsive: true}
 			end)
 	end
 

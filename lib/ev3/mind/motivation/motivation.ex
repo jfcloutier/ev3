@@ -35,6 +35,16 @@ defmodule Ev3.Motivation do
 		]
 	end
 
+  @doc "Find all senses used for motivation"
+  def used_senses() do
+    motivator_configs()
+    |> Enum.map(&(Map.get(&1.focus, :senses, [])))
+    |> List.flatten()
+    |> MapSet.new()
+    |> MapSet.to_list()
+  end
+
+
 	@doc "Curiosity motivation"
 	def curiosity() do
 		fn

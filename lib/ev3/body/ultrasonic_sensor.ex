@@ -10,35 +10,35 @@ defmodule Ev3.UltrasonicSensor do
  	### Ev3.Sensing behaviour
 
   def senses(_) do
-    [:distance_cm]
+    [:distance] # distance is in centimeters
   end
 
   def read(sensor, sense) do
     do_read(sensor, sense)
   end
 
-  defp do_read(sensor, :distance_cm) do
-    distance_cm(sensor)
+  defp do_read(sensor, :distance) do
+    distance(sensor)
   end
 
   def pause(_) do
     500
   end
 
-  def sensitivity(_sensor, :distance_cm) do
-    1
+  def sensitivity(_sensor, :distance) do
+    2
   end
 
   ####
 
   @doc "Get distance in centimeters - 0 to 2550"
-  def distance_cm(sensor) do
-    updated_sensor = set_distance_cm_mode(sensor)
+  def distance(sensor) do
+    updated_sensor = set_distance_mode(sensor)
     value = get_attribute(updated_sensor, "value0", :integer)
-    {value, updated_sensor}
+    {round(value / 10), updated_sensor}
   end
 
-  defp set_distance_cm_mode(sensor) do
+  defp set_distance_mode(sensor) do
     LegoSensor.set_mode(sensor, @distance_cm)
   end
 

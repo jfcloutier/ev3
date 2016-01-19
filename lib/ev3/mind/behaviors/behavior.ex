@@ -23,55 +23,46 @@ defmodule Ev3.Behavior do
 										 [name: behavior_config.name])
 	end
 
-	@doc "A behavior responds to a motive by starting or stopping the fsm"
+	@doc "A named behavior responds to a motive by starting or stopping the fsm, if responsive"
 	def react_to_motive(name, %Motive{} = motive) do
 		Agent.update(
 			name,
 			fn(state) ->
-				if Motive.on?(motive) do
-						start(motive, state) # if applicable
-				else
-						stop(motive, state) # if applicable
-				end
-			end)
+        if state.responsive do
+				  if Motive.on?(motive) do
+					  start(motive, state) # if applicable
+				  else
+					  stop(motive, state) # if applicable
+				  end
+        else
+          state
+        end
+			end,
+      10000 # 5000 is sometimes not enough
+    )
 	end
 
+  @doc "A named behavior responds to a percept if responsive"
 	def react_to_percept(name, %Percept{} = percept) do
 		Agent.update(
 			name,
 			fn(state) ->
+        if state.responsive do
 				case transit_on(percept, state) do
 					%{fsm_state: final_state, fsm: %FSM{final_state: final_state}} = end_state ->
 						final_transit(end_state)
 					new_state ->
 						new_state
 				end
-			end
+        else
+          state
+        end
+			end,
+      10000
 		)
 	end
 
-	def actuator_overwhelmed(name) do
-		Agent.update(
-			name,
-			fn(state) ->
-				spawn_link(
-					fn() -> # make sure to reactivate
-						:timer.sleep(@down_time)
-						reactivate(name)
-					end)
-				%{state | responsive: false}
-			end)
-	end
-
-	def reactivate(name) do
-		Agent.update(
-			name,
-			fn(state) ->
-				%{state | responsive: true}
-			end)
-	end
-
-	### Private
+ 	### Private
 
 	defp percept_fresh?(percept) do
 		(now() - percept.since) < @max_percept_age
@@ -147,11 +138,6 @@ defmodule Ev3.Behavior do
 	defp transit_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
 		state
 	end
-
-	defp transit_on(_percept, %{name: _name, responsive: false} = state) do
-#		Logger.info("-- NOT RESPONSIVE: #{name}")
-		state
-	end
 	
 	defp transit_on(percept, state) do
 		case find_transition(percept, state) do
@@ -192,4 +178,3 @@ defmodule Ev3.Behavior do
 	end
 	
 end
-	

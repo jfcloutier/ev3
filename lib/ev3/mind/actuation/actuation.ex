@@ -68,6 +68,10 @@ defmodule Ev3.Actuation do
                                          action: say_scared()},
                              %Activation{intent: :say_curious,
                                          action: say_curious()},
+                             %Activation{intent: :say_uh_oh,
+                                         action: say_uh_oh()},
+                             %Activation{intent: :say_stuck,
+                                         action: say_stuck()},
                              %Activation{intent: :say_food,
                                          action: say_food()},
                              %Activation{intent: :eating_noises,
@@ -94,6 +98,7 @@ defmodule Ev3.Actuation do
 		case kind do
 			:very_fast -> 3
 			:fast -> 2
+      :normal -> 1
 			:slow -> 0.5
 			:very_slow -> 0.3
 		end
@@ -208,7 +213,21 @@ defmodule Ev3.Actuation do
   defp say_curious() do
     fn(_intent, sound_players) ->
       Script.new(:say_curious, sound_players)
-      |> Script.add_step(:loud_speech, :speak, ["Let's roam around"])
+      |> Script.add_step(:loud_speech, :speak, ["Let's check things out"])
+    end
+  end
+  
+  defp say_uh_oh() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_uh_oh, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["Uh oh!"])
+    end
+  end
+  
+  defp say_stuck() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_stuck, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["I am stuck"])
     end
   end
   

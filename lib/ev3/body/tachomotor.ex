@@ -25,7 +25,7 @@ defmodule Ev3.Tachomotor do
 	end
 
 	def pause(_) do
-		500
+		1000
 	end
 
 	def sensitivity(_motor, sense) do

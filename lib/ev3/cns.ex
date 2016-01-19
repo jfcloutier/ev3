@@ -1,8 +1,10 @@
 defmodule Ev3.CNS do
 	@moduledoc "A resilient event manager that acts as the robot's central nervous system"
 
+  alias Ev3.DetectorsHandler
 	alias Ev3.PerceptorsHandler
 	alias Ev3.MemoryHandler
+  alias Ev3.InternalClockHandler
 	alias Ev3.ActuatorsHandler
 	alias Ev3.BehaviorsHandler
 	alias Ev3.MotivatorsHandler
@@ -15,7 +17,6 @@ defmodule Ev3.CNS do
 
   @name __MODULE__
 	@dispatcher :dispatcher
-	@tick 1000
 
 	@doc "Start the event manager and register the event handlers"
 	def start_link() do
@@ -59,8 +60,8 @@ defmodule Ev3.CNS do
 	end
 
 	@doc "A component is overwhelmed"
-	def notify_overwhelmed(component_type, name) do
-		GenServer.cast(@name, {:notify_overwhelmed, component_type, name})
+	def notify_overwhelmed(component_type, actuator_name) do
+		GenServer.cast(@name, {:notify_overwhelmed, component_type, actuator_name})
 	end
 
 	### Callbacks
@@ -68,7 +69,6 @@ defmodule Ev3.CNS do
 	def init(_) do
 		{:ok, _pid} = GenEvent.start_link(name: @dispatcher)
     register_handlers()
-		spawn(fn() -> tick_tock() end)
     {:ok, %{when_started: now()}}
 	end
 	
@@ -103,14 +103,8 @@ defmodule Ev3.CNS do
 	end
 
 	def handle_cast({:notify_overwhelmed, component_type, name}, state) do
-		Logger.warn("OVERWHELMED: #{component_type} at #{delta(state)}")
+		Logger.warn("OVERWHELMED: #{component_type} #{name} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:overwhelmed, component_type, name})
-		{:noreply, state}
-	end
-
-	def handle_info(:tick, state) do
-		percept = Percept.new_transient(about: :time_elapsed, value: @tick)
-		GenEvent.notify(@dispatcher, {:perceived, percept})
 		{:noreply, state}
 	end
 
@@ -137,17 +131,13 @@ defmodule Ev3.CNS do
 	defp register_handlers() do
 		# Add monitored handlers. Any crash will cause a message to be sent to the CNS.
 		:ok = GenEvent.add_mon_handler(@dispatcher, MemoryHandler, [])
-		:ok = GenEvent.add_mon_handler(@dispatcher, PerceptorsHandler, [])
-		:ok = GenEvent.add_mon_handler(@dispatcher, MotivatorsHandler, [])
-		:ok = GenEvent.add_mon_handler(@dispatcher, BehaviorsHandler, [])
+    :ok = GenEvent.add_mon_handler(@dispatcher, InternalClockHandler, [])
 		:ok = GenEvent.add_mon_handler(@dispatcher, ActuatorsHandler, [])
+		:ok = GenEvent.add_mon_handler(@dispatcher, BehaviorsHandler, [])
+		:ok = GenEvent.add_mon_handler(@dispatcher, MotivatorsHandler, [])
+		:ok = GenEvent.add_mon_handler(@dispatcher, PerceptorsHandler, [])
+		:ok = GenEvent.add_mon_handler(@dispatcher, DetectorsHandler, [])
 	end
 
-	defp tick_tock() do
-		:timer.sleep(@tick)
-		send(@name, :tick)
-		tick_tock()
-	end
-		
 
 end

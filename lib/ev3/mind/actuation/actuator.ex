@@ -14,7 +14,7 @@ defmodule Ev3.Actuator do
 	import Ev3.Utils
 
 	@max_intent_age 1000 # intents older than 1 sec are dropped
-
+  @strong_intent_factor 3 # multiples max intent age for strong intents
 
 	@doc "Start an actuator from a configuration"
 	def start_link(actuator_config) do
@@ -37,7 +37,7 @@ defmodule Ev3.Actuator do
 		Agent.update(
 			name,
 			fn(state) ->
-				if intent.strong or intent_fresh?(intent) do
+				if intent_fresh?(intent) do
 					state.actuator_config.activations
 					|> Enum.filter_map(
 						fn(activation) -> activation.intent == intent.about end,
@@ -61,7 +61,8 @@ defmodule Ev3.Actuator do
 	### Private
 
 	defp intent_fresh?(intent) do
-		(now() - intent.since) < @max_intent_age
+    factor = if intent.strong, do: @strong_intent_factor, else: 1 # strong intents persist longer
+		(now() - intent.since) * factor < @max_intent_age
 	end
 
 	defp find_motors(motor_specs) do

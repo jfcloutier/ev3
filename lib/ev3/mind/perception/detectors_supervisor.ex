@@ -12,10 +12,10 @@ defmodule Ev3.DetectorsSupervisor do
 		Supervisor.start_link(@name, [], [name: @name])
 	end
 
-	@doc "Start a supervised detector worker for all senses of a sensor"
-	def start_detector(sensor) do
-#		Logger.debug("Starting Detector on sensor #{sensor.path}") 
-		{:ok, _pid} = Supervisor.start_child(@name, [sensor])
+	@doc "Start a supervised detector worker for all used senses of a sensing device"
+	def start_detector(sensing_device, used_senses) do
+#		Logger.debug("Starting Detector on #{sensing_device.path}") 
+		{:ok, _pid} = Supervisor.start_child(@name, [sensing_device, used_senses])
 	end
 
 	## Callbacks
