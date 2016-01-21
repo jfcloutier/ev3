@@ -8,7 +8,7 @@ defmodule Ev3.InfraredSensor do
 	@proximity "IR-PROX"
 	@seek "IR-SEEK"
   @remote "IR-REMOTE"
-  @max_beacon_channels  1 #4
+  @max_beacon_channels 4
 	
 	### Ev3.Sensing behaviour
 	
