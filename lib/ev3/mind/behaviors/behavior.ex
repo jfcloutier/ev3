@@ -6,11 +6,11 @@ defmodule Ev3.Behavior do
 	alias Ev3.Motive
 	alias Ev3.Transition
 	alias Ev3.FSM
-	import Ev3.Utils
+  alias Ev3.CNS
 	require Logger
 
-	@max_percept_age 1000 # percepts older than 1 sec are dropped
-	@down_time 2000
+	@max_percept_age 1000 # percepts older than 1 sec are stale
+	@max_motive_age 3000 # motives older than 3 secs are stale
 
 	@doc "Start a behavior from a configuration"
 	def start_link(behavior_config) do
@@ -18,8 +18,7 @@ defmodule Ev3.Behavior do
 		Agent.start_link(fn() -> %{name: behavior_config.name,
 															 fsm: behavior_config.fsm,
 															 motives: [],
-															 fsm_state: nil,
-															 responsive: true } end,
+															 fsm_state: nil } end,
 										 [name: behavior_config.name])
 	end
 
@@ -28,7 +27,7 @@ defmodule Ev3.Behavior do
 		Agent.update(
 			name,
 			fn(state) ->
-        if state.responsive do
+        if check_freshness(name, motive) do
 				  if Motive.on?(motive) do
 					  start(motive, state) # if applicable
 				  else
@@ -47,13 +46,13 @@ defmodule Ev3.Behavior do
 		Agent.update(
 			name,
 			fn(state) ->
-        if state.responsive do
-				case transit_on(percept, state) do
-					%{fsm_state: final_state, fsm: %FSM{final_state: final_state}} = end_state ->
-						final_transit(end_state)
-					new_state ->
-						new_state
-				end
+        if check_freshness(name, percept) do
+				  case transit_on(percept, state) do
+					  %{fsm_state: final_state, fsm: %FSM{final_state: final_state}} = end_state ->
+						  final_transit(end_state)
+					  new_state ->
+						  new_state
+				  end
         else
           state
         end
@@ -63,10 +62,6 @@ defmodule Ev3.Behavior do
 	end
 
  	### Private
-
-	defp percept_fresh?(percept) do
-		(now() - percept.since) < @max_percept_age
-	end
 
 	defp inhibited?(%{motives: motives} = _state) do
 		Enum.all?(motives, &Memory.inhibited?(&1.about))
@@ -145,12 +140,7 @@ defmodule Ev3.Behavior do
 				state
 			transition ->
 				if not inhibited?(state) do
-					if percept_fresh?(percept) do
 						apply_transition(transition, percept, state)
-					else
-						Logger.warn("STALE: Behavior #{state.name} not reacting to percept #{percept.about} = #{inspect percept.value}")
-						state
-					end
 				else
 					Logger.info("-- INHIBITED: behavior #{state.name}")
 					state
@@ -176,5 +166,27 @@ defmodule Ev3.Behavior do
 		action.(percept, state)
 		%{state | fsm_state: transition.to}
 	end
-	
+
+  defp check_freshness(name, %Percept{} = percept) do
+    age = Percept.age(percept)
+    if age > @max_percept_age do
+      Logger.info("STALE percept #{inspect percept.about} #{age}")
+      CNS.notify_overwhelmed(:behavior, name)
+      false
+    else
+      true
+    end
+  end
+
+  defp check_freshness(name, %Motive{} = motive) do
+    age = Motive.age(motive)
+    if 	age > @max_motive_age do
+      Logger.info("STALE motive #{inspect motive.about} #{age}")
+      CNS.notify_overwhelmed(:behavior, name)
+      false
+    else
+      true
+    end
+  end
+
 end

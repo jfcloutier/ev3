@@ -38,5 +38,10 @@ defmodule Ev3.Percept do
 		and percept1.value == percept2.value
 		and percept1.source == percept2.source
 	end
+
+  @doc "The age of the percept"
+  def age(percept) do
+    now() - percept.until
+  end
 	
 end

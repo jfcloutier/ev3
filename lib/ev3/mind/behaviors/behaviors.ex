@@ -168,12 +168,12 @@ defmodule Ev3.Behaviors do
   end
   
   defp generate_intent(about, value, strong? \\ false) do
-    intent = if strong? do
-               Intent.new(about: about, value: value)
-             else
-               Intent.new_strong(about: about, value: value)
-             end
-    CNS.notify_intended(intent)
+    if strong? do
+      Intent.new_strong(about: about, value: value)
+    else
+      Intent.new(about: about, value: value)
+    end
+    |> CNS.notify_intended()
   end
 
 	defp nothing() do
@@ -225,7 +225,7 @@ defmodule Ev3.Behaviors do
 										 1 -> :turn_left
 										 2 -> :turn_right
 									 end
-      generate_intent(turn_where, 2, true)
+      generate_intent(turn_where, 4)
 		end
 	end
 
@@ -238,13 +238,13 @@ defmodule Ev3.Behaviors do
   end
 
   defp intend_backoff(strong?) do
-		how_long = 2 + :random.uniform(2) # secs
+		how_long = 4 + :random.uniform(6) # secs
     generate_intent(:go_backward,  %{speed: :slow, time: how_long}, strong?)
 		turn_where = case :random.uniform(2) do
 									 1 -> :turn_left
 									 2 -> :turn_right
 								 end
-		generate_intent(turn_where, :random.uniform(3) + 1, strong?)
+		generate_intent(turn_where, :random.uniform(5) + 4, strong?)
   end    
 
 
@@ -338,7 +338,7 @@ defmodule Ev3.Behaviors do
 									   1 -> :turn_left
 									   2 -> :turn_right
 								   end
-		    generate_intent(turn_where, :random.uniform(2) + 2, true)
+		    generate_intent(turn_where, :random.uniform(5) + 2, true)
       end
 		end
 	end

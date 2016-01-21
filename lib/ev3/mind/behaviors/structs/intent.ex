@@ -14,11 +14,24 @@ defmodule Ev3.Intent do
 								 value: params}
 	end
 
+  @doc "Create a strong intent"
 	def new_strong(about: about, value: params) do
 		%Ev3.Intent{about: about,
-								since: now(),
-								value: params,
-								strong: true}
+								 since: now(),
+								 value: params,
+                 strong: true}
 	end
 
+
+
+  @doc "The age of an intent"
+  def age(intent) do
+    now() - intent.since
+  end
+
+  @doc "Describe the strength of an intent"
+  def strength(intent) do
+    if intent.strong, do: :strong, else: :weak
+  end
+  
 end

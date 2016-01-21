@@ -9,8 +9,6 @@ defmodule Ev3.Detector do
 
 	@ttl 10_000 # detected percept is retained for 10 secs
 
-  @down_time 2500
-
 	@doc "Start a detector for all senses of a device, to be linked to its supervisor"
 	def start_link(device, used_senses) do
 		senses = senses(device, used_senses)
@@ -27,25 +25,18 @@ defmodule Ev3.Detector do
 	end
 
   @doc "Stop the detection of percepts"
-  def actuator_overwhelmed(name) do
+  def pause_detection(name) do
+    Logger.info("Pausing detector #{name}")
 		Agent.update(
 			name,
 			fn(state) ->
-        if state.responsive do
-				  spawn_link(
-					  fn() -> # make sure to reactivate
-						  :timer.sleep(@down_time)
-						  reactivate(name)
-					  end)
 				  %{state | responsive: false}
-        else
-          state
-        end
 			end)
   end
 
   @doc "Resume producing percepts"
-	def reactivate(name) do
+	def resume_detection(name) do
+    Logger.info("Resuming detector #{name}")
 		Agent.update(
 			name,
 			fn(state) ->

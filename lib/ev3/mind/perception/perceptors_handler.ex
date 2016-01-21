@@ -21,12 +21,32 @@ defmodule Ev3.PerceptorsHandler do
 		{:ok, state}
 	end
 
+  def handle_event(:faint, state) do
+		process_faint(state)
+		{:ok, state}
+	end
+
+  def handle_event(:revive, state) do
+		process_revive(state)
+		{:ok, state}
+	end
+
 	def handle_event(_event, state) do
 #		Logger.debug("#{__MODULE__} ignored #{inspect event}")
 		{:ok, state}
 	end
 
 	### Private
+
+  defp process_faint(%{perceptor_configs: perceptor_configs}) do
+    perceptor_configs
+    |> Enum.each(&(Perceptor.pause_perception(&1.name)))
+  end
+
+  defp process_revive(%{perceptor_configs: perceptor_configs}) do
+    perceptor_configs
+    |> Enum.each(&(Perceptor.resume_perception(&1.name)))
+  end
 
 	defp process_percept(percept, %{perceptor_configs: perceptor_configs}) do
 		perceptor_configs

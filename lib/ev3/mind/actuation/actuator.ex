@@ -11,48 +11,48 @@ defmodule Ev3.Actuator do
 	alias Ev3.LegoLED
   alias Ev3.LegoSound
 	alias Ev3.CNS
-	import Ev3.Utils
+  alias Ev3.Intent
 
-	@max_intent_age 1000 # intents older than 1 sec are dropped
-  @strong_intent_factor 3 # multiples max intent age for strong intents
-
+	@max_intent_age 2000 # intents older than 1 sec are stale
+  @strong_intent_factor 2 # strong intents last longer before becoming stale
+  
 	@doc "Start an actuator from a configuration"
 	def start_link(actuator_config) do
 		Logger.info("Starting #{__MODULE__} #{actuator_config.name}")
-		state = case actuator_config.type do
-              :motor ->
-							  %{actuator_config: actuator_config,
-								  devices: find_motors(actuator_config.specs)}
-			        :led ->
-							  %{actuator_config: actuator_config,
-								  devices: find_leds(actuator_config.specs)}
-              :sound ->
-                %{actuator_config: actuator_config,
-                  devices: find_sound_players(actuator_config.specs)}
-						end
-		Agent.start_link(fn() -> state end, [name: actuator_config.name])
+		Agent.start_link(
+      fn() ->
+        case actuator_config.type do
+          :motor ->
+						%{actuator_config: actuator_config,
+							devices: find_motors(actuator_config.specs)}
+			    :led ->
+						%{actuator_config: actuator_config,
+							devices: find_leds(actuator_config.specs)}
+          :sound ->
+            %{actuator_config: actuator_config,
+              devices: find_sound_players(actuator_config.specs)}
+				end
+      end,
+      [name: actuator_config.name])
 	end
 
 	def realize_intent(name, intent) do
 		Agent.update(
 			name,
 			fn(state) ->
-				if intent_fresh?(intent) do
-					state.actuator_config.activations
-					|> Enum.filter_map(
-						fn(activation) -> activation.intent == intent.about end,
-						fn(activation) -> activation.action end)
-					|> Enum.each( # execute activated actions sequentially
-						fn(action) ->
-							script = action.(intent, state.devices)
-							Script.execute(state.actuator_config.type, script)
-							CNS.notify_realized(intent) # This will have the intent stored in memory. Unrealized intents are not retained in memory.
-						end)
-				else
-					Logger.warn("STALE: Actuator #{name} not realizing weak intent #{intent.about} #{inspect intent.value}")
-					CNS.notify_overwhelmed(:actuator, name)
-				end
-				state
+        if check_freshness(name, intent) do
+				  state.actuator_config.activations
+				  |> Enum.filter_map(
+					  fn(activation) -> activation.intent == intent.about end,
+					  fn(activation) -> activation.action end)
+				  |> Enum.each( # execute activated actions sequentially
+					  fn(action) ->
+						  script = action.(intent, state.devices)
+						  Script.execute(state.actuator_config.type, script)
+						  CNS.notify_realized(intent) # This will have the intent stored in memory. Unrealized intents are not retained in memory.
+					  end)
+        end
+        state
 			end,
 			30_000
 		)
@@ -60,10 +60,17 @@ defmodule Ev3.Actuator do
 
 	### Private
 
-	defp intent_fresh?(intent) do
-    factor = if intent.strong, do: @strong_intent_factor, else: 1 # strong intents persist longer
-		(now() - intent.since) * factor < @max_intent_age
-	end
+	defp check_freshness(name, intent) do
+    age = Intent.age(intent)
+    factor = if intent.strong, do: @strong_intent_factor, else: 1
+    if age > @max_intent_age * factor do
+      Logger.info("STALE #{Intent.strength(intent)} intent #{inspect intent.about} #{age}")
+      CNS.notify_overwhelmed(:actuator, name)
+      false
+    else
+      true
+    end
+  end
 
 	defp find_motors(motor_specs) do
 		all_motors = LegoMotor.motors()

@@ -46,5 +46,10 @@ defmodule Ev3.Motive do
 	def inhibits_all?(motive) do
 		:all in motive.inhibits
 	end
-			
+
+	@doc "The age of the motive"
+  def age(motive) do
+    now() - motive.since
+  end
+
 end							

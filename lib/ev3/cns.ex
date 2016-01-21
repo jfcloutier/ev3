@@ -17,6 +17,7 @@ defmodule Ev3.CNS do
 
   @name __MODULE__
 	@dispatcher :dispatcher
+  @faint_duration 2500
 
 	@doc "Start the event manager and register the event handlers"
 	def start_link() do
@@ -61,37 +62,42 @@ defmodule Ev3.CNS do
 
 	@doc "A component is overwhelmed"
 	def notify_overwhelmed(component_type, actuator_name) do
-		GenServer.cast(@name, {:notify_overwhelmed, component_type, actuator_name})
+		GenServer.cast(@name, {:overwhelmed, component_type, actuator_name})
 	end
+
+  @doc "Revive from fainting"
+  def notify_revive() do
+    GenServer.cast(@name, :notify_revive)
+  end
 
 	### Callbacks
 
 	def init(_) do
 		{:ok, _pid} = GenEvent.start_link(name: @dispatcher)
     register_handlers()
-    {:ok, %{when_started: now()}}
+    {:ok, %{when_started: now(), overwhelmed: false}}
 	end
 	
 	def handle_cast({:notify_perceived, percept}, state) do
-		Logger.debug("Percept #{inspect percept.about} #{inspect percept.value} at #{delta(state)}")
+		Logger.info("Percept #{inspect percept.about} #{inspect percept.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:perceived, percept})
 		{:noreply, state}
 	end	
 
 	def handle_cast({:notify_motivated, motive}, state) do
-		Logger.debug("Motive #{motive.about} #{inspect motive.value} at #{delta(state)}")
+		Logger.info("Motive #{motive.about} #{inspect motive.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:motivated, motive})
 		{:noreply, state}
 	end
 	
 	def handle_cast({:notify_intended, intent}, state) do
-		Logger.debug("Intent #{intent.about} at #{delta(state)}")
+		Logger.info("Intent #{intent.about} #{Intent.strength(intent)} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:intended, intent})
 		{:noreply, state}
 	end
 	
 	def handle_cast({:notify_realized, intent}, state) do
-	  Logger.debug("Intent realized #{intent.about} #{inspect intent.value} at #{delta(state)}")
+	  Logger.info("Intent #{Intent.strength(intent)} realized #{intent.about} #{inspect intent.value} at #{delta(state)}")
 		GenEvent.notify(@dispatcher, {:realized, intent})
 		{:noreply, state}
 	end
@@ -102,11 +108,27 @@ defmodule Ev3.CNS do
 		{:noreply, state}
 	end
 
-	def handle_cast({:notify_overwhelmed, component_type, name}, state) do
-		Logger.warn("OVERWHELMED: #{component_type} #{name} at #{delta(state)}")
-		GenEvent.notify(@dispatcher, {:overwhelmed, component_type, name})
-		{:noreply, state}
+	def handle_cast({:overwhelmed, component_type, name}, state) do
+    Logger.info("OVERWHELMED - #{component_type} #{name} at #{delta(state)}")
+    if not state.overwhelmed do
+      Logger.info("FAINTING at #{delta(state)}")
+		  GenEvent.notify(@dispatcher, :faint)
+			spawn_link(
+				fn() -> # make sure to revive
+					:timer.sleep(@faint_duration)
+					notify_revive()
+				end)
+		  {:noreply, %{state | overwhelmed: true}}
+    else
+      {:noreply, state}
+    end
 	end
+
+  def handle_cast(:notify_revive, state) do
+    Logger.info("REVIVING at #{delta(state)}")
+    GenEvent.notify(@dispatcher, :revive)
+    {:noreply, %{state | overwhelmed: false}}
+  end
 
 	def handle_info({:gen_event_EXIT, crashed_handler, error}, state) do
 		Logger.error("#{crashed_handler} crashed. Restarting #{__MODULE__}.")		

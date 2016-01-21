@@ -7,7 +7,6 @@ defmodule Ev3.InternalClock do
   import Ev3.Utils
 
   @name __MODULE__
-  @down_time 2500
 
   def start_link() do
     {:ok, pid} = Agent.start_link(
@@ -26,7 +25,7 @@ defmodule Ev3.InternalClock do
       fn(state) ->
         if state.responsive do
           tock = now()
-          Percept.new_transient(about: :time_elapsed, value: state.tock - tock)
+          Percept.new_transient(about: :time_elapsed, value: tock - state.tock)
           |> CNS.notify_perceived()
           Logger.info("tick")
           %{state | tock: tock}
@@ -36,26 +35,19 @@ defmodule Ev3.InternalClock do
       end)
   end
 
-    @doc "Stop the detection of percepts"
-  def actuator_overwhelmed() do
+    @doc "Stop the generation of clock tick percepts for a set duration (msecs)"
+  def pause() do
 		Agent.update(
 			@name,
 			fn(state) ->
-        if state.responsive do
-				  spawn_link(
-					  fn() -> # make sure to reactivate
-						  :timer.sleep(@down_time)
-						  reactivate()
-					  end)
+        Logger.info("Pausing clock")
 				  %{state | responsive: false}
-        else
-          state
-        end
 			end)
   end
 
   @doc "Resume producing percepts"
-	def reactivate() do
+	def resume() do
+    Logger.info("Resuming clock")
 		Agent.update(
 			@name,
 			fn(state) ->

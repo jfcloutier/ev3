@@ -15,8 +15,13 @@ defmodule Ev3.DetectorsHandler do
 		{:ok, %{}}
 	end
 
-  def handle_event({:overwhelmed, :actuator, _actuator_name}, state) do
-		process_actuator_overwhelmed()
+  def handle_event(:faint, state) do
+		process_faint()
+		{:ok, state}
+	end
+
+  def handle_event(:revive, state) do
+		process_revive()
 		{:ok, state}
 	end
 
@@ -28,12 +33,19 @@ defmodule Ev3.DetectorsHandler do
 
   ### Private
 
-	defp process_actuator_overwhelmed() do
-		# Logger.info("Actuator #{actuator_name} is overwhelmed. Idling detection")
+	defp process_faint() do
 		LegoSensor.sensors() ++ LegoMotor.motors()
 		|> Enum.each(
 			fn(device) ->
-				Detector.actuator_overwhelmed(Detector.name(device))
+				Detector.pause_detection(Detector.name(device))
+			end)
+	end
+
+	defp process_revive() do
+		LegoSensor.sensors() ++ LegoMotor.motors()
+		|> Enum.each(
+			fn(device) ->
+				Detector.resume_detection(Detector.name(device))
 			end)
 	end
 

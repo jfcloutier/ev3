@@ -12,22 +12,19 @@ defmodule Ev3.InternalClockHandler do
 		{:ok, %{}}
 	end
 
-  def handle_event({:overwhelmed, :actuator, _actuator_name}, state) do
-		process_actuator_overwhelmed()
+  def handle_event(:faint, state) do
+		InternalClock.pause()
+		{:ok, state}
+	end
+
+  def handle_event(:revive, state) do
+		InternalClock.resume()
 		{:ok, state}
 	end
 
   def handle_event(_event, state) do
     #		Logger.debug("#{__MODULE__} ignored #{inspect event}")
 		{:ok, state}
-	end
-
-
-  ### Private
-
-	defp process_actuator_overwhelmed() do
-		# Logger.info("An actuator is overwhelmed. Idling ticking")
-	  InternalClock.actuator_overwhelmed()
 	end
 
 end
