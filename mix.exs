@@ -18,7 +18,7 @@ defmodule Ev3.Mixfile do
   def application do
     [mod: {Ev3, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger],
-		 env: [{:mock, false}]
+		 env: [{:mock, true}]
 		]
   end
 

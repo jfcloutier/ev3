@@ -206,12 +206,12 @@ defmodule Ev3.Behaviors do
 		fn(percept, _state) ->
 			Logger.info("ROAMING from #{percept.about} = #{inspect percept.value}")
 			green_lights()
-			if :random.uniform(3) == 1 do
+			if :random.uniform(2) == 1 do
 				turn_where = case :random.uniform(2) do
 											 1 -> :turn_left
 											 2 -> :turn_right
 										 end
-        generate_intent(turn_where, :random.uniform(2))
+        generate_intent(turn_where, :random.uniform(10))
 			end
       generate_intent(:go_forward,  %{speed: :normal, time: 1})
 		end
@@ -238,7 +238,7 @@ defmodule Ev3.Behaviors do
   end
 
   defp intend_backoff(strong?) do
-		how_long = 4 + :random.uniform(6) # secs
+		how_long = 10 + :random.uniform(6) # secs
     generate_intent(:go_backward,  %{speed: :slow, time: how_long}, strong?)
 		turn_where = case :random.uniform(2) do
 									 1 -> :turn_left
