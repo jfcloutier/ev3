@@ -70,12 +70,22 @@ defmodule Ev3.CNS do
     GenServer.cast(@name, :notify_revive)
   end
 
+  @doc "Is the robot paused?"
+  def paused?() do
+    GenServer.call(@name, :paused?)
+  end
+
+  @doc "Toggle the robot between paused and active"
+  def toggle_paused() do
+    GenServer.call(@name, :toggle_paused)
+  end
+
 	### Callbacks
 
 	def init(_) do
 		{:ok, _pid} = GenEvent.start_link(name: @dispatcher)
     register_handlers()
-    {:ok, %{when_started: now(), overwhelmed: false}}
+    {:ok, %{when_started: now(), overwhelmed: false, paused: false}}
 	end
 	
 	def handle_cast({:notify_perceived, percept}, state) do
@@ -110,14 +120,10 @@ defmodule Ev3.CNS do
 
 	def handle_cast({:overwhelmed, component_type, name}, state) do
     Logger.info("OVERWHELMED - #{component_type} #{name} at #{delta(state)}")
-    if not state.overwhelmed do
+    if not state.overwhelmed and not state.paused do
       Logger.info("FAINTING at #{delta(state)}")
 		  GenEvent.notify(@dispatcher, :faint)
-			spawn_link(
-				fn() -> # make sure to revive
-					:timer.sleep(@faint_duration)
-					notify_revive()
-				end)
+      set_alarm_clock(@faint_duration)
 		  {:noreply, %{state | overwhelmed: true}}
     else
       {:noreply, state}
@@ -126,7 +132,7 @@ defmodule Ev3.CNS do
 
   def handle_cast(:notify_revive, state) do
     Logger.info("REVIVING at #{delta(state)}")
-    GenEvent.notify(@dispatcher, :revive)
+    if not state.paused, do: GenEvent.notify(@dispatcher, :revive)
     {:noreply, %{state | overwhelmed: false}}
   end
 
@@ -135,8 +141,35 @@ defmodule Ev3.CNS do
 		{:stop, {:handler_died, error}, state}
 	end
 
+  def handle_call(:paused?, _from, state) do
+    {:reply, state.paused, state}
+  end
+
+  def handle_call(:toggle_paused, _from, state) do
+   new_state = toggle_pause(state)
+    {:reply, :ok, new_state}
+  end
+
 
 	### Private
+
+  defp toggle_pause(state) do
+    if state.paused do
+      GenEvent.notify(@dispatcher, :revive)
+      %{state | paused: false, overwhelmed: false}
+    else
+      GenEvent.notify(@dispatcher, :faint)
+      %{state | paused: true}
+    end
+  end
+
+  defp set_alarm_clock(msecs) do
+    spawn_link(
+			fn() -> # make sure to revive
+				:timer.sleep(msecs)
+				notify_revive()
+			end)
+  end
 
 	defp delta(%{when_started: time}) do
 		(now() - time) / 1000

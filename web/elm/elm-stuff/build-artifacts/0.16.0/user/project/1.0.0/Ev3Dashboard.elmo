@@ -1,0 +1,67 @@
+Elm.Ev3Dashboard = Elm.Ev3Dashboard || {};
+Elm.Ev3Dashboard.make = function (_elm) {
+   "use strict";
+   _elm.Ev3Dashboard = _elm.Ev3Dashboard || {};
+   if (_elm.Ev3Dashboard.values) return _elm.Ev3Dashboard.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $Http = Elm.Http.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $StartApp = Elm.StartApp.make(_elm),
+   $Task = Elm.Task.make(_elm);
+   var _op = {};
+   var Model = function (a) {    return {paused: a};};
+   var decodePaused = A2($Json$Decode.object1,Model,A2($Json$Decode._op[":="],"paused",$Json$Decode.bool));
+   var TogglePaused = {ctor: "TogglePaused"};
+   var view = F2(function (address,model) {
+      var changeTo = function (model) {    return $Basics.not(model.paused) ? "Pause" : "Resume";};
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.div,
+              _U.list([]),
+              _U.list([A2($Html.span,_U.list([]),_U.list([$Html.text("Paused: ")]))
+                      ,A2($Html.span,_U.list([]),_U.list([$Html.text($Basics.toString(model.paused))]))]))
+              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,TogglePaused)]),_U.list([$Html.text(changeTo(model))]))]));
+   });
+   var SetPaused = function (a) {    return {ctor: "SetPaused",_0: a};};
+   var fetchPaused = $Effects.task(A2($Task.map,SetPaused,$Task.toMaybe(A2($Http.get,decodePaused,"http://localhost:4000/api/robot/paused"))));
+   var init = function () {    var status = Model(false);return {ctor: "_Tuple2",_0: status,_1: fetchPaused};}();
+   var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
+   var togglePaused = function () {
+      var toggleEffect = $Effects.task(A2($Task.map,
+      NoOp,
+      $Task.toMaybe(A3($Http.post,$Json$Decode.string,"http://localhost:4000/api/robot/togglePaused",$Http.empty))));
+      return $Effects.batch(_U.list([toggleEffect,fetchPaused]));
+   }();
+   var update = F2(function (action,model) {
+      var _p0 = action;
+      switch (_p0.ctor)
+      {case "NoOp": return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+         case "SetPaused": return {ctor: "_Tuple2",_0: A2($Maybe.withDefault,Model(false),_p0._0),_1: $Effects.none};
+         default: return {ctor: "_Tuple2",_0: model,_1: togglePaused};}
+   });
+   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([])});
+   var main = app.html;
+   var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
+   return _elm.Ev3Dashboard.values = {_op: _op
+                                     ,NoOp: NoOp
+                                     ,SetPaused: SetPaused
+                                     ,TogglePaused: TogglePaused
+                                     ,Model: Model
+                                     ,app: app
+                                     ,main: main
+                                     ,init: init
+                                     ,update: update
+                                     ,view: view
+                                     ,togglePaused: togglePaused
+                                     ,fetchPaused: fetchPaused
+                                     ,decodePaused: decodePaused};
+};

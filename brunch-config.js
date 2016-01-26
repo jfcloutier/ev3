@@ -40,7 +40,7 @@ exports.config = {
     // Dependencies and current project directories to watch
     watched: ["deps/phoenix/web/static",
               "deps/phoenix_html/web/static",
-              "web/static", "test/static"],
+              "web/static", "test/static", "web/elm/Ev3Dashboard.elm"],
 
     // Where to compile files to
     public: "priv/static"
@@ -48,6 +48,11 @@ exports.config = {
 
   // Configure your plugins
   plugins: {
+    elmBrunch: {
+      elmFolder: 'web/elm',
+      mainModules: ['Ev3Dashboard.elm'],
+      outputFolder: '../static/vendor'
+    },
     babel: {
       // Do not use ES6 compiler in vendor code
       ignore: [/web\/static\/vendor/]

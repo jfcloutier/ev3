@@ -11,8 +11,8 @@ config :ev3, Ev3.Endpoint,
   debug_errors: true,
   code_reloader: true,
   cache_static_lookup: false,
-	watchers: []
-#  watchers: [node: ["node_modules/brunch/bin/brunch", "watch", "--stdin"]]
+	# watchers: [],
+  watchers: [node: ["node_modules/brunch/bin/brunch", "watch", "--stdin"]]
 
 # Watch static and templates for browser reloading.
 config :ev3, Ev3.Endpoint,
@@ -20,7 +20,8 @@ config :ev3, Ev3.Endpoint,
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif)$},
       ~r{web/views/.*(ex)$},
-      ~r{web/templates/.*(eex)$}
+      ~r{web/templates/.*(eex)$},
+      ~r{web/elm/.*(elm)$}
     ]
   ]
 

@@ -19,8 +19,10 @@ defmodule Ev3.Router do
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", Ev3 do
-  #   pipe_through :api
-  # end
+  scope "/api", Ev3 do
+    pipe_through :api
+
+    get "/robot/paused", RobotController, :paused?
+    post "/robot/togglePaused", RobotController, :toggle_paused
+  end
 end
