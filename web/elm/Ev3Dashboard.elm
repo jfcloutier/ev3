@@ -36,6 +36,8 @@ init =
   in
     (status, fetchPaused)
 
+-- UPDATE
+
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
@@ -45,6 +47,8 @@ update action model =
       (Maybe.withDefault (Model False) maybePaused, Effects.none)
     TogglePaused ->
       (model, togglePaused)
+
+-- VIEW
     
 view : Signal.Address Action -> Model -> Html
 view address model =
