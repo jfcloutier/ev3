@@ -51,12 +51,8 @@ let socket = new Socket("/socket")
 // Finally, pass the token on connect as below. Or remove it
 // from connect if you don't care about authentication.
 
-socket.connect({token: window.userToken})
+// socket.connect({token: window.userToken})
 
-// Now that you are connected, you can join channels with a topic:
-let channel = socket.channel("topic:subtopic", {})
-channel.join()
-  .receive("ok", resp => { console.log("Joined succesffuly", resp) })
-  .receive("error", resp => { console.log("Unabled to join", resp) })
+socket.connect()
 
 export default socket

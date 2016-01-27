@@ -72,12 +72,12 @@ defmodule Ev3.CNS do
 
   @doc "Is the robot paused?"
   def paused?() do
-    GenServer.call(@name, :paused?)
+    GenServer.call(@name, :paused?, 15_000)
   end
 
   @doc "Toggle the robot between paused and active"
   def toggle_paused() do
-    GenServer.call(@name, :toggle_paused)
+    GenServer.call(@name, :toggle_paused, 15_000)
   end
 
 	### Callbacks

@@ -7,11 +7,12 @@ use Mix.Config
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
 config :ev3, Ev3.Endpoint,
+#  url: [host: "192.168.1.136"],
   http: [port: 4000],
   debug_errors: true,
   code_reloader: true,
   cache_static_lookup: false,
-	# watchers: [],
+  # watchers: []
   watchers: [node: ["node_modules/brunch/bin/brunch", "watch", "--stdin"]]
 
 # Watch static and templates for browser reloading.
@@ -20,8 +21,7 @@ config :ev3, Ev3.Endpoint,
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif)$},
       ~r{web/views/.*(ex)$},
-      ~r{web/templates/.*(eex)$},
-      ~r{web/elm/.*(elm)$}
+      ~r{web/templates/.*(eex)$}
     ]
   ]
 

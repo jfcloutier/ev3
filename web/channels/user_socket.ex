@@ -2,7 +2,7 @@ defmodule Ev3.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "rooms:*", Ev3.RoomChannel
+  channel "ev3:*", Ev3.RobotChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

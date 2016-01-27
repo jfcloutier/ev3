@@ -6,6 +6,8 @@ defmodule Ev3 do
 	alias Ev3.Endpoint
 	alias Ev3.RobotSupervisor
 
+  @poll_runtime_delay 5000
+
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
@@ -24,6 +26,7 @@ defmodule Ev3 do
 		RobotSupervisor.start_execution()
 		RobotSupervisor.start_perception()
     RobotSupervisor.start_internal_clock()
+    Process.spawn(fn -> push_runtime_stats() end, [])
 		result
   end
 
@@ -38,5 +41,39 @@ defmodule Ev3 do
 	def testing?() do
 		Application.get_env(:ev3, :mock)
 	end
-	
+
+  @doc "Return ERTS runtime stats"
+  def runtime_stats() do  # In camelCase for Elm's automatic translation
+    stats = mem_stats()
+    %{ramFree: stats.mem_free,
+      ramUsed:  stats.mem_used,
+      swapFree: stats.swap_free,
+      swapUsed: stats.swap_used}
+  end
+
+  @doc "Loop pushing runtime stats every @poll_runtime_delay seconds"
+  def push_runtime_stats() do
+    Endpoint.broadcast!("ev3:runtime", "runtime_stats", runtime_stats())
+    :timer.sleep(@poll_runtime_delay)
+    push_runtime_stats()
+  end
+
+  ### Private
+
+  defp mem_stats() do
+    {res, 0} = System.cmd("free", ["-m"])
+    [_labels, mem, _buffers, swap, _] = String.split(res, "\n")
+    [_, _mem_total, mem_used, mem_free, _, _, _] = String.split(mem) 
+	  [_, _swap_total, swap_used, swap_free] = String.split(swap)
+    %{mem_free: to_int!(mem_free),
+      mem_used: to_int!(mem_used),
+      swap_free: to_int!(swap_free),
+      swap_used: to_int!(swap_used)}
+  end
+
+  defp to_int!(s) do
+    {i, _} = Integer.parse(s)
+    i
+  end
+  
 end

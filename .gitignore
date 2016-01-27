@@ -11,7 +11,9 @@ erl_crash.dump
 
 # Static artifacts
 /node_modules
-
+/web/elm/elm-stuff/*.json
+/web/elm/elm-stuff/packages
+/web/elm/elm-stuff/build-artifacts
 # Since we are building assets from web/static,
 # we ignore priv/static. You may want to comment
 # this depending on your deployment strategy.

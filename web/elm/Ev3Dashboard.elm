@@ -7,10 +7,15 @@ import Effects exposing (Effects, Never)
 import Task exposing (Task, andThen)
 import Http
 import Json.Decode as Json exposing ((:=))
+import String.Interpolate exposing(interpolate)
 
-type Action = NoOp (Maybe String) | SetPaused (Maybe Model) | TogglePaused
+type Action = NoOp (Maybe String) | SetPaused (Maybe Bool) | TogglePaused | SetRuntimeStats RuntimeStats
 
-type alias Model = {paused : Bool}
+type alias RuntimeStats = {ramFree: Int, ramUsed: Int, swapFree: Int, swapUsed: Int}
+                   
+type alias Model = {paused : Bool,
+                    runtime : RuntimeStats
+                   }
 
 app : StartApp.App Model
 app =
@@ -18,24 +23,25 @@ app =
           {init = init
            , update = update
            , view = view
-           , inputs = []
+           , inputs = [incomingRuntimeStats]
           }
 
 main : Signal Html
 main =
   app.html
 
-port tasks: Signal (Task Never ())
-port tasks =
-  app.tasks
-
 init : (Model, Effects Action)
 init =
   let
-    status = Model False
+    status = Model False {ramFree = -1, ramUsed = -1, swapFree = -1, swapUsed = -1}
   in
     (status, fetchPaused)
 
+hostname : String
+hostname =
+  "localhost"
+--  "192.168.1.136"
+ 
 -- UPDATE
 
 update : Action -> Model -> (Model, Effects Action)
@@ -44,16 +50,22 @@ update action model =
     NoOp _ ->
       (model, Effects.none)
     SetPaused maybePaused ->
-      (Maybe.withDefault (Model False) maybePaused, Effects.none)
+      let
+        result =
+          Maybe.withDefault model.paused maybePaused
+      in
+      ({model | paused = result}, Effects.none)
     TogglePaused ->
       (model, togglePaused)
+    SetRuntimeStats runtimeStats ->
+      ({model | runtime = runtimeStats}, Effects.none)
 
 -- VIEW
     
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    changeTo model =
+    pausingLabel model =
       if not model.paused then
         "Pause"
       else
@@ -62,11 +74,23 @@ view address model =
     div []
         [
          div []
+             [div []
                [span [] [text "Paused: "]
                 , span [] [text (toString model.paused)]
+                , div []
+                  [span [] [text "RAM free="]
+                   , span [] [text (toString model.runtime.ramFree)]
+                  , span [] [text " RAM used="]
+                  , span [] [text (toString model.runtime.ramUsed)]
+                  , span [] [text " Swap free="]
+                  , span [] [text (toString model.runtime.swapFree)]
+                  , span [] [text " Swap used="]
+                  , span [] [text (toString model.runtime.swapUsed)]
+                  ]
                ]
+              ]
          , button [onClick address TogglePaused]
-                [text (changeTo model)]
+                [text (pausingLabel model)]
         ]
 
 -- EFFECTS
@@ -75,24 +99,33 @@ view address model =
 togglePaused: Effects Action
 togglePaused =
   let
-    toggleEffect = (Http.post Json.string "http://localhost:4000/api/robot/togglePaused" Http.empty
+    togglePausedEffect = (Http.post Json.string (interpolate "http://{0}:4000/api/robot/togglePaused" [hostname]) Http.empty
                 |> Task.toMaybe
                 |> Task.map NoOp
                 |> Effects.task)
   in
-    Effects.batch [toggleEffect, fetchPaused]
+    Effects.batch [togglePausedEffect, fetchPaused]
 
 fetchPaused : Effects Action
 fetchPaused =
-  Http.get decodePaused "http://localhost:4000/api/robot/paused"
+  Http.get decodePaused (interpolate "http://{0}:4000/api/robot/paused" [hostname])
       |> Task.toMaybe
       |> Task.map SetPaused  
       |> Effects.task
 
-decodePaused: Json.Decoder Model
+decodePaused: Json.Decoder Bool
 decodePaused =
-  Json.object1 Model ("paused" := Json.bool)
-  
+  "paused" := Json.bool
 
+-- PORTS
 
-  
+port tasks : Signal (Task Never ())
+port tasks =
+  app.tasks -- From effects
+
+port runtimeStats : Signal RuntimeStats -- From channels
+
+-- SIGNALS IN FROM CHANNELS
+                    
+incomingRuntimeStats: Signal Action
+incomingRuntimeStats = Signal.map SetRuntimeStats runtimeStats

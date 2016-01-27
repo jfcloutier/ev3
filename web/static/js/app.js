@@ -18,8 +18,21 @@ import "deps/phoenix_html/web/static/js/phoenix_html"
 // Local files can be imported directly using relative
 // paths "./socket" or full ones "web/static/js/socket".
 
-// import socket from "./socket"
+import socket from "./socket"
 
 // ELM
 var elmDiv = document.getElementById('elm-main')
-  , elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv);
+, initialState = {runtimeStats: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0}}
+, elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv, initialState);
+
+// Now that you are connected, you can join channels with a topic:
+let rt_channel = socket.channel("ev3:runtime", {})
+rt_channel.join()
+  .receive("ok", resp => { console.log("ev3:runtime channel joined succesffuly", resp) })
+  .receive("error", resp => { console.log("Unabled to join channel ev3:runtime", resp) })
+
+rt_channel.on('runtime_stats', data => {
+    console.log('Runtime stats', data)
+    elmApp.ports.runtimeStats.send(data)
+})
+
