@@ -12,7 +12,7 @@ config :ev3, Ev3.Endpoint,
   debug_errors: true,
   code_reloader: true,
   cache_static_lookup: false,
-  # watchers: []
+#  watchers: []
   watchers: [node: ["node_modules/brunch/bin/brunch", "watch", "--stdin"]]
 
 # Watch static and templates for browser reloading.

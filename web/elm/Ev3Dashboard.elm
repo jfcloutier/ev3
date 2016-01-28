@@ -2,20 +2,18 @@ module Ev3Dashboard where
 
 import Html exposing (..)
 import StartApp
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class, attribute)
 import Effects exposing (Effects, Never)
-import Task exposing (Task, andThen)
-import Http
-import Json.Decode as Json exposing ((:=))
-import String.Interpolate exposing(interpolate)
+import Task exposing (Task)
 
-type Action = NoOp (Maybe String) | SetPaused (Maybe Bool) | TogglePaused | SetRuntimeStats RuntimeStats
+import Ev3Status exposing (StatusAction (Status))
 
-type alias RuntimeStats = {ramFree: Int, ramUsed: Int, swapFree: Int, swapUsed: Int}
+type alias Action =
+            StatusAction
                    
-type alias Model = {paused : Bool,
-                    runtime : RuntimeStats
+type alias Model = {status: Ev3Status.Model
                    }
+
 
 app : StartApp.App Model
 app =
@@ -23,109 +21,62 @@ app =
           {init = init
            , update = update
            , view = view
-           , inputs = [incomingRuntimeStats]
+           , inputs = inputs
           }
 
 main : Signal Html
 main =
   app.html
 
-init : (Model, Effects Action)
-init =
-  let
-    status = Model False {ramFree = -1, ramUsed = -1, swapFree = -1, swapUsed = -1}
-  in
-    (status, fetchPaused)
+-- MODEL
 
-hostname : String
-hostname =
-  "localhost"
---  "192.168.1.136"
+init: (Model, Effects Action)
+init =
+  ({status = Ev3Status.initModel
+   },
+   Effects.batch([Ev3Status.initEffect
+                 ]))
+
+-- VIEW
+
+view: Signal.Address Action -> Model -> Html
+view address model =
+  div[class "container-fluid", attribute "role" "main"]
+     [Ev3Status.view address model.status
+     ]
  
+-- UPDATE
+
 -- UPDATE
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    NoOp _ ->
-      (model, Effects.none)
-    SetPaused maybePaused ->
+    Status a ->
       let
-        result =
-          Maybe.withDefault model.paused maybePaused
+        (newStatus, effects) = Ev3Status.update a model.status
       in
-      ({model | paused = result}, Effects.none)
-    TogglePaused ->
-      (model, togglePaused)
-    SetRuntimeStats runtimeStats ->
-      ({model | runtime = runtimeStats}, Effects.none)
-
--- VIEW
-    
-view : Signal.Address Action -> Model -> Html
-view address model =
-  let
-    pausingLabel model =
-      if not model.paused then
-        "Pause"
-      else
-        "Resume"
-  in
-    div []
-        [
-         div []
-             [div []
-               [span [] [text "Paused: "]
-                , span [] [text (toString model.paused)]
-                , div []
-                  [span [] [text "RAM free="]
-                   , span [] [text (toString model.runtime.ramFree)]
-                  , span [] [text " RAM used="]
-                  , span [] [text (toString model.runtime.ramUsed)]
-                  , span [] [text " Swap free="]
-                  , span [] [text (toString model.runtime.swapFree)]
-                  , span [] [text " Swap used="]
-                  , span [] [text (toString model.runtime.swapUsed)]
-                  ]
-               ]
-              ]
-         , button [onClick address TogglePaused]
-                [text (pausingLabel model)]
-        ]
-
--- EFFECTS
-
-
-togglePaused: Effects Action
-togglePaused =
-  let
-    togglePausedEffect = (Http.post Json.string (interpolate "http://{0}:4000/api/robot/togglePaused" [hostname]) Http.empty
-                |> Task.toMaybe
-                |> Task.map NoOp
-                |> Effects.task)
-  in
-    Effects.batch [togglePausedEffect, fetchPaused]
-
-fetchPaused : Effects Action
-fetchPaused =
-  Http.get decodePaused (interpolate "http://{0}:4000/api/robot/paused" [hostname])
-      |> Task.toMaybe
-      |> Task.map SetPaused  
-      |> Effects.task
-
-decodePaused: Json.Decoder Bool
-decodePaused =
-  "paused" := Json.bool
+        ({ model | status = newStatus}, effects)
 
 -- PORTS
 
-port tasks : Signal (Task Never ())
+port tasks : Signal (Task Never ()) 
 port tasks =
   app.tasks -- From effects
 
-port runtimeStats : Signal RuntimeStats -- From channels
+  -- Status ports
 
--- SIGNALS IN FROM CHANNELS
-                    
-incomingRuntimeStats: Signal Action
-incomingRuntimeStats = Signal.map SetRuntimeStats runtimeStats
+port runtimeStats : Signal Ev3Status.RuntimeStats -- From channels
+
+-- INPUTS
+
+inputs: List (Signal Action)
+inputs =
+  [statusInputs
+  ]
+
+  -- Status inputs
+
+statusInputs: Signal StatusAction
+statusInputs =
+  Signal.map Status <| Signal.map Ev3Status.SetRuntimeStats runtimeStats

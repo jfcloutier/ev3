@@ -12,11 +12,7 @@
   </head>
 
   <body>
-    <div class="container" role="main">
-
       <%= @inner %>
-
-    </div> <!-- /container -->
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
   </body>
 </html>

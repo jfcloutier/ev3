@@ -31,6 +31,7 @@ rt_channel.join()
   .receive("ok", resp => { console.log("ev3:runtime channel joined succesffuly", resp) })
   .receive("error", resp => { console.log("Unabled to join channel ev3:runtime", resp) })
 
+// In Status component
 rt_channel.on('runtime_stats', data => {
     console.log('Runtime stats', data)
     elmApp.ports.runtimeStats.send(data)

@@ -7,20 +7,18 @@ Elm.Ev3Dashboard.make = function (_elm) {
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
+   $Ev3Status = Elm.Ev3Status.make(_elm),
    $Html = Elm.Html.make(_elm),
-   $Html$Events = Elm.Html.Events.make(_elm),
-   $Http = Elm.Http.make(_elm),
-   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $StartApp = Elm.StartApp.make(_elm),
-   $String$Interpolate = Elm.String.Interpolate.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
    var runtimeStats = Elm.Native.Port.make(_elm).inboundSignal("runtimeStats",
-   "Ev3Dashboard.RuntimeStats",
+   "Ev3Status.RuntimeStats",
    function (v) {
       return typeof v === "object" && "ramFree" in v && "ramUsed" in v && "swapFree" in v && "swapUsed" in v ? {_: {}
                                                                                                                ,ramFree: typeof v.ramFree === "number" && isFinite(v.ramFree) && Math.floor(v.ramFree) === v.ramFree ? v.ramFree : _U.badPort("an integer",
@@ -33,80 +31,24 @@ Elm.Ev3Dashboard.make = function (_elm) {
                                                                                                                v.swapUsed)} : _U.badPort("an object with fields `ramFree`, `ramUsed`, `swapFree`, `swapUsed`",
       v);
    });
-   var decodePaused = A2($Json$Decode._op[":="],"paused",$Json$Decode.bool);
-   var hostname = "localhost";
-   var Model = F2(function (a,b) {    return {paused: a,runtime: b};});
-   var RuntimeStats = F4(function (a,b,c,d) {    return {ramFree: a,ramUsed: b,swapFree: c,swapUsed: d};});
-   var SetRuntimeStats = function (a) {    return {ctor: "SetRuntimeStats",_0: a};};
-   var incomingRuntimeStats = A2($Signal.map,SetRuntimeStats,runtimeStats);
-   var TogglePaused = {ctor: "TogglePaused"};
-   var view = F2(function (address,model) {
-      var pausingLabel = function (model) {    return $Basics.not(model.paused) ? "Pause" : "Resume";};
-      return A2($Html.div,
-      _U.list([]),
-      _U.list([A2($Html.div,
-              _U.list([]),
-              _U.list([A2($Html.div,
-              _U.list([]),
-              _U.list([A2($Html.span,_U.list([]),_U.list([$Html.text("Paused: ")]))
-                      ,A2($Html.span,_U.list([]),_U.list([$Html.text($Basics.toString(model.paused))]))
-                      ,A2($Html.div,
-                      _U.list([]),
-                      _U.list([A2($Html.span,_U.list([]),_U.list([$Html.text("RAM free=")]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text($Basics.toString(model.runtime.ramFree))]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" RAM used=")]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text($Basics.toString(model.runtime.ramUsed))]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" Swap free=")]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text($Basics.toString(model.runtime.swapFree))]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" Swap used=")]))
-                              ,A2($Html.span,_U.list([]),_U.list([$Html.text($Basics.toString(model.runtime.swapUsed))]))]))]))]))
-              ,A2($Html.button,_U.list([A2($Html$Events.onClick,address,TogglePaused)]),_U.list([$Html.text(pausingLabel(model))]))]));
-   });
-   var SetPaused = function (a) {    return {ctor: "SetPaused",_0: a};};
-   var fetchPaused = $Effects.task(A2($Task.map,
-   SetPaused,
-   $Task.toMaybe(A2($Http.get,decodePaused,A2($String$Interpolate.interpolate,"http://{0}:4000/api/robot/paused",_U.list([hostname]))))));
-   var init = function () {
-      var status = A2(Model,false,{ramFree: -1,ramUsed: -1,swapFree: -1,swapUsed: -1});
-      return {ctor: "_Tuple2",_0: status,_1: fetchPaused};
-   }();
-   var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
-   var togglePaused = function () {
-      var togglePausedEffect = $Effects.task(A2($Task.map,
-      NoOp,
-      $Task.toMaybe(A3($Http.post,
-      $Json$Decode.string,
-      A2($String$Interpolate.interpolate,"http://{0}:4000/api/robot/togglePaused",_U.list([hostname])),
-      $Http.empty))));
-      return $Effects.batch(_U.list([togglePausedEffect,fetchPaused]));
-   }();
+   var statusInputs = A2($Signal.map,$Ev3Status.Status,A2($Signal.map,$Ev3Status.SetRuntimeStats,runtimeStats));
+   var inputs = _U.list([statusInputs]);
    var update = F2(function (action,model) {
       var _p0 = action;
-      switch (_p0.ctor)
-      {case "NoOp": return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-         case "SetPaused": var result = A2($Maybe.withDefault,model.paused,_p0._0);
-           return {ctor: "_Tuple2",_0: _U.update(model,{paused: result}),_1: $Effects.none};
-         case "TogglePaused": return {ctor: "_Tuple2",_0: model,_1: togglePaused};
-         default: return {ctor: "_Tuple2",_0: _U.update(model,{runtime: _p0._0}),_1: $Effects.none};}
+      var _p1 = A2($Ev3Status.update,_p0._0,model.status);
+      var newStatus = _p1._0;
+      var effects = _p1._1;
+      return {ctor: "_Tuple2",_0: _U.update(model,{status: newStatus}),_1: effects};
    });
-   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([incomingRuntimeStats])});
+   var view = F2(function (address,model) {
+      return A2($Html.div,
+      _U.list([$Html$Attributes.$class("container-fluid"),A2($Html$Attributes.attribute,"role","main")]),
+      _U.list([A2($Ev3Status.view,address,model.status)]));
+   });
+   var init = {ctor: "_Tuple2",_0: {status: $Ev3Status.initModel},_1: $Effects.batch(_U.list([$Ev3Status.initEffect]))};
+   var app = $StartApp.start({init: init,update: update,view: view,inputs: inputs});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
-   return _elm.Ev3Dashboard.values = {_op: _op
-                                     ,NoOp: NoOp
-                                     ,SetPaused: SetPaused
-                                     ,TogglePaused: TogglePaused
-                                     ,SetRuntimeStats: SetRuntimeStats
-                                     ,RuntimeStats: RuntimeStats
-                                     ,Model: Model
-                                     ,app: app
-                                     ,main: main
-                                     ,init: init
-                                     ,hostname: hostname
-                                     ,update: update
-                                     ,view: view
-                                     ,togglePaused: togglePaused
-                                     ,fetchPaused: fetchPaused
-                                     ,decodePaused: decodePaused
-                                     ,incomingRuntimeStats: incomingRuntimeStats};
+   var Model = function (a) {    return {status: a};};
+   return _elm.Ev3Dashboard.values = {_op: _op,Model: Model,app: app,main: main,init: init,view: view,update: update,inputs: inputs,statusInputs: statusInputs};
 };
