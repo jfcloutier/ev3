@@ -5,6 +5,7 @@ import StartApp
 import Html.Attributes exposing (class, attribute)
 import Effects exposing (Effects, Never)
 import Task exposing (Task)
+import List exposing (concat)
 
 import Ev3Status exposing (StatusAction (Status))
 
@@ -42,7 +43,8 @@ init =
 view: Signal.Address Action -> Model -> Html
 view address model =
   div[class "container-fluid", attribute "role" "main"]
-     [Ev3Status.view address model.status
+     [  h1 [class "text-center"] [text "Robot Dashboard"]
+      , Ev3Status.view address model.status
      ]
  
 -- UPDATE
@@ -64,19 +66,22 @@ port tasks : Signal (Task Never ())
 port tasks =
   app.tasks -- From effects
 
-  -- Status ports
+  -- Status ports (from Phoenix channels)
 
-port runtimeStats : Signal Ev3Status.RuntimeStats -- From channels
+port runtimeStats : Signal Ev3Status.RuntimeStats
+
+port activeState : Signal Ev3Status.ActiveState
 
 -- INPUTS
 
 inputs: List (Signal Action)
 inputs =
-  [statusInputs
-  ]
+  concat [statusInputs]
 
   -- Status inputs
 
-statusInputs: Signal StatusAction
+statusInputs: List(Signal StatusAction)
 statusInputs =
-  Signal.map Status <| Signal.map Ev3Status.SetRuntimeStats runtimeStats
+  [(Signal.map Status <| Signal.map Ev3Status.SetRuntimeStats runtimeStats)
+   , (Signal.map Status <| Signal.map Ev3Status.SetActive activeState)
+  ]

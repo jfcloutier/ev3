@@ -22,7 +22,9 @@ import socket from "./socket"
 
 // ELM
 var elmDiv = document.getElementById('elm-main')
-, initialState = {runtimeStats: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0}}
+, initialState = {runtimeStats: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0},
+                  activeState: {active: true}
+                 }
 , elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv, initialState);
 
 // Now that you are connected, you can join channels with a topic:
@@ -35,5 +37,9 @@ rt_channel.join()
 rt_channel.on('runtime_stats', data => {
     console.log('Runtime stats', data)
     elmApp.ports.runtimeStats.send(data)
+})
+rt_channel.on('active_state', data => {
+    console.log('Active state', data)
+    elmApp.ports.activeState.send(data)
 })
 

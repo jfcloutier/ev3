@@ -8,6 +8,7 @@ defmodule Ev3.CNS do
 	alias Ev3.ActuatorsHandler
 	alias Ev3.BehaviorsHandler
 	alias Ev3.MotivatorsHandler
+  alias Ev3.ChannelsHandler
 	alias Ev3.Percept
 	alias Ev3.Motive
 	alias Ev3.Intent
@@ -192,6 +193,7 @@ defmodule Ev3.CNS do
 		:ok = GenEvent.add_mon_handler(@dispatcher, MotivatorsHandler, [])
 		:ok = GenEvent.add_mon_handler(@dispatcher, PerceptorsHandler, [])
 		:ok = GenEvent.add_mon_handler(@dispatcher, DetectorsHandler, [])
+		:ok = GenEvent.add_mon_handler(@dispatcher, ChannelsHandler, [])
 	end
 
 

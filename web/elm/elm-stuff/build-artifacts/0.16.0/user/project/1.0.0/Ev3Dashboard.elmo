@@ -17,6 +17,13 @@ Elm.Ev3Dashboard.make = function (_elm) {
    $StartApp = Elm.StartApp.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
+   var activeState = Elm.Native.Port.make(_elm).inboundSignal("activeState",
+   "Ev3Status.ActiveState",
+   function (v) {
+      return typeof v === "object" && "active" in v ? {_: {}
+                                                      ,active: typeof v.active === "boolean" ? v.active : _U.badPort("a boolean (true or false)",
+                                                      v.active)} : _U.badPort("an object with fields `active`",v);
+   });
    var runtimeStats = Elm.Native.Port.make(_elm).inboundSignal("runtimeStats",
    "Ev3Status.RuntimeStats",
    function (v) {
@@ -31,8 +38,9 @@ Elm.Ev3Dashboard.make = function (_elm) {
                                                                                                                v.swapUsed)} : _U.badPort("an object with fields `ramFree`, `ramUsed`, `swapFree`, `swapUsed`",
       v);
    });
-   var statusInputs = A2($Signal.map,$Ev3Status.Status,A2($Signal.map,$Ev3Status.SetRuntimeStats,runtimeStats));
-   var inputs = _U.list([statusInputs]);
+   var statusInputs = _U.list([A2($Signal.map,$Ev3Status.Status,A2($Signal.map,$Ev3Status.SetRuntimeStats,runtimeStats))
+                              ,A2($Signal.map,$Ev3Status.Status,A2($Signal.map,$Ev3Status.SetActive,activeState))]);
+   var inputs = $List.concat(_U.list([statusInputs]));
    var update = F2(function (action,model) {
       var _p0 = action;
       var _p1 = A2($Ev3Status.update,_p0._0,model.status);
@@ -43,7 +51,8 @@ Elm.Ev3Dashboard.make = function (_elm) {
    var view = F2(function (address,model) {
       return A2($Html.div,
       _U.list([$Html$Attributes.$class("container-fluid"),A2($Html$Attributes.attribute,"role","main")]),
-      _U.list([A2($Ev3Status.view,address,model.status)]));
+      _U.list([A2($Html.h1,_U.list([$Html$Attributes.$class("text-center")]),_U.list([$Html.text("Robot Dashboard")]))
+              ,A2($Ev3Status.view,address,model.status)]));
    });
    var init = {ctor: "_Tuple2",_0: {status: $Ev3Status.initModel},_1: $Effects.batch(_U.list([$Ev3Status.initEffect]))};
    var app = $StartApp.start({init: init,update: update,view: view,inputs: inputs});
