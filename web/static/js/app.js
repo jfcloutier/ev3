@@ -22,8 +22,10 @@ import socket from "./socket"
 
 // ELM
 var elmDiv = document.getElementById('elm-main')
-, initialState = {runtimeStats: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0},
-                  activeState: {active: true}
+, initialState = {runtimeStatsPort: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0},
+                  activeStatePort: {active: true},
+                  perceptPort: {about: "", value: ""},
+                  motivePort: {about: "", on: false, inhibited: false}
                  }
 , elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv, initialState);
 
@@ -36,10 +38,22 @@ rt_channel.join()
 // In Status component
 rt_channel.on('runtime_stats', data => {
     console.log('Runtime stats', data)
-    elmApp.ports.runtimeStats.send(data)
+    elmApp.ports.runtimeStatsPort.send(data)
 })
 rt_channel.on('active_state', data => {
     console.log('Active state', data)
-    elmApp.ports.activeState.send(data)
+    elmApp.ports.activeStatePort.send(data)
+})
+
+// In Perception component
+rt_channel.on('percept', data => {
+    console.log('Percept', data)
+    elmApp.ports.perceptPort.send(data)
+})
+
+// In Motivation component
+rt_channel.on('motive', data => {
+    console.log('motive', data)
+    elmApp.ports.motivePort.send(data)
 })
 
