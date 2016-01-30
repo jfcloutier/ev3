@@ -34,6 +34,31 @@ defmodule Ev3.ChannelsHandler do
 		Endpoint.broadcast!("ev3:runtime", "motive", %{about: stringify(about), on: value == :on, inhibited: Memory.inhibited?(about)})
 		{:ok, state}
 	end
+
+  def handle_event({:behavior_started, name} ,state) do
+    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "started", value: ""})
+    {:ok, state}
+  end
+  
+  def handle_event({:behavior_stopped, name} ,state) do
+    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "stopped", value: ""})
+    {:ok, state}
+  end
+  
+  def handle_event({:overwhelmed, :behavior, name} ,state) do
+    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "overwhelmed", value: ""})
+    {:ok, state}
+  end
+  
+  def handle_event({:behavior_inhibited, name} ,state) do
+    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "inhibited", value: ""})
+    {:ok, state}
+  end
+  
+  def handle_event({:behavior_transited, name, to_state} ,state) do
+    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "transited", value: to_state})
+    {:ok, state}
+  end
   
 	def handle_event(_event, state) do
     #		Logger.debug("#{__MODULE__} ignored #{inspect event}")

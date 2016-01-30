@@ -20,7 +20,10 @@ type Action =
     | SetRuntimeStats RuntimeStats
     | AddPercept Percept
     | SetMotive Motive
+    | SetBehavior BehaviorData
 
+type alias ActiveState = {active: Bool}
+type alias RuntimeStats = {ramFree: Int, ramUsed: Int, swapFree: Int, swapUsed: Int}
 type alias StatusModel = {paused : Bool,
                     active: Bool,
                     runtime : RuntimeStats
@@ -32,12 +35,15 @@ type alias Percept = {about: String, value: String}
 type alias MotivationModel = {motives: Dict String Motive}                   
 type alias Motive = {about: String, on: Bool, inhibited: Bool}
 
+type alias ComportmentModel = {behaviors: Dict String Behavior}
+type alias BehaviorData = {name: String, event: String, value: String}
+type alias Behavior = {name: String, started: Bool, inhibited: Bool, overwhelmed: Bool, state: String}
+
 type alias Model = {status: StatusModel
                    , perception: PerceptionModel
                    , motivation: MotivationModel
+                   , comportment: ComportmentModel
                    }
-type alias ActiveState = {active: Bool}
-type alias RuntimeStats = {ramFree: Int, ramUsed: Int, swapFree: Int, swapUsed: Int}
 
                         
 hostname : String
@@ -65,8 +71,9 @@ init =
   ({status = statusInitModel
     , perception = perceptionInitModel
     , motivation = motivationInitModel
+    , comportment = comportmentInitModel
    },
-   Effects.batch([statusInitEffect, perceptionInitEffect, motivationInitEffect]))
+   Effects.batch([statusInitEffect, perceptionInitEffect, motivationInitEffect, comportmentInitEffect]))
 
 statusInitModel: StatusModel
 statusInitModel =
@@ -79,6 +86,10 @@ perceptionInitModel =
 motivationInitModel: MotivationModel
 motivationInitModel =
   {motives = Dict.empty}
+
+comportmentInitModel: ComportmentModel
+comportmentInitModel =
+  {behaviors = Dict.empty}
   
 statusInitEffect: Effects Action
 statusInitEffect =
@@ -90,12 +101,13 @@ perceptionInitEffect = Effects.none
 motivationInitEffect: Effects Action
 motivationInitEffect = Effects.none
 
-
+comportmentInitEffect: Effects Action
+comportmentInitEffect = Effects.none
 -- VIEW
 
 view: Signal.Address Action -> Model -> Html
 view address model =
-  div[class "container-fluid", attribute "role" "main"]
+  div[class "container", attribute "role" "main"]
        [  h1 [class "text-center"] [text "Robot Dashboard"]
        , div [class "row"]
                [
@@ -103,8 +115,9 @@ view address model =
                ]
        , div [class "row"]
                [
-                div [class "col-md-3"] [perceptionView address model.perception]
-               , div [class "col-md-1"] [motivationView address model.motivation]
+                div [class "col-md-4"] [perceptionView address model.perception]
+               , div [class "col-md-3"] [motivationView address model.motivation]
+               , div [class "col-md-4"] [comportmentView address model.comportment]
                ]
        ]
        
@@ -217,7 +230,6 @@ motivationView address model =
         node "s" [] [text about]
       else
         text about
-      
     viewMotive address motives about =
       tr []
          [
@@ -236,6 +248,46 @@ motivationView address model =
                   ] 
          ]
 
+comportmentView: Signal.Address Action -> ComportmentModel -> Html
+comportmentView address model =
+  let
+    getBehavior name behaviors =
+      Dict.get name behaviors |> Maybe.withDefault (Behavior "" False False False "")
+    inhibitedText bool name =
+      if bool then
+        node "s" [] [text name]
+      else
+        text name
+    statusClass behavior =
+      if behavior.started then
+        if behavior.overwhelmed then
+          "bg-warning"
+        else
+          "bg-success"
+      else
+        "bg-danger"
+    viewBehavior address behaviors name =
+      let
+        behavior = getBehavior name behaviors
+      in
+        tr []
+             [
+              td [] [
+                    strong [class(statusClass behavior)] [inhibitedText (behavior.inhibited) name]
+                   , span [] [text " is ", text (behavior.state)]
+                   ]
+             ]
+  in
+    div []
+        [
+         h2 [] [text "Behaviors"]
+        , table [classList [("table", True), ("table-bordered", True)]]
+                  [
+                   tbody []
+                           (List.map (viewBehavior address model.behaviors) (Dict.keys model.behaviors |> List.sort))
+                  ]
+        ]
+
 -- UPDATE
 
 update : Action -> Model -> (Model, Effects Action)
@@ -244,10 +296,14 @@ update action model =
     (newStatus, statusEffects) = statusUpdate action model.status
     (newPerception, perceptionEffects) = perceptionUpdate action model.perception
     (newMotivation, motivationEffects) = motivationUpdate action model.motivation
+    (newComportment, comportmentEffects) = comportmentUpdate action model.comportment
   in
     (
-     { model | status = newStatus, perception = newPerception, motivation = newMotivation},
-     Effects.batch[statusEffects, perceptionEffects, motivationEffects]
+     { model | status = newStatus
+     , perception = newPerception
+     , motivation = newMotivation
+     , comportment = newComportment},
+     Effects.batch[statusEffects, perceptionEffects, motivationEffects, comportmentEffects]
     )
   
   
@@ -285,11 +341,42 @@ motivationUpdate action model =
     _ ->
       (model, Effects.none)
 
+comportmentUpdate: Action -> ComportmentModel -> (ComportmentModel, Effects Action)
+comportmentUpdate action model =
+  let
+    revive behavior =
+       {behavior | overwhelmed = False}
+    insert dict behavior =
+      Dict.insert behavior.name behavior dict
+    revive_all = 
+      Dict.foldl (\name behavior dict -> revive behavior |> insert dict) Dict.empty model.behaviors 
+  in
+    case action of
+      SetActive activeState ->
+        if activeState.active then
+          ({model | behaviors = revive_all}, Effects.none)
+        else
+          (model, Effects.none)
+      SetBehavior behaviorData ->
+        let
+          behavior = Dict.get behaviorData.name model.behaviors |> Maybe.withDefault (Behavior behaviorData.name False False False "?")
+          updatedBehavior =
+            case behaviorData.event of
+              "started" -> {behavior | started = True}
+              "stopped" -> {behavior | started = False}
+              "overwhelmed" -> {behavior | started = True, inhibited = False, overwhelmed = True}
+              "inhibited" -> {behavior | started = True, inhibited = True}
+              "transited" -> {behavior | started = True, inhibited = False, state = behaviorData.value}
+              _ -> behavior
+        in
+          ({model | behaviors = Dict.insert behavior.name updatedBehavior model.behaviors}, Effects.none)
+      _ -> (model, Effects.none)
+
 -- EFFECTS
 
 -- status
 
-togglePaused: Effects Action
+togglePaused: Effects Action 
 togglePaused =
   let
     togglePausedEffect = (Http.post Json.string (interpolate "http://{0}:4000/api/robot/togglePaused" [hostname]) Http.empty
@@ -317,19 +404,23 @@ port tasks =
   app.tasks -- From effects
 
 -- status
-port runtimeStatsPort : Signal RuntimeStats
-port activeStatePort : Signal ActiveState
+port runtimeStatsPort: Signal RuntimeStats
+port activeStatePort: Signal ActiveState
 
 -- perception
-port perceptPort : Signal Percept
+port perceptPort: Signal Percept
 
 -- motivation
-port motivePort : Signal Motive
+port motivePort: Signal Motive
+
+-- behavior
+port behaviorPort: Signal BehaviorData
+
 -- INPUTS
 
 inputs: List (Signal Action)
 inputs =
-  concat [statusInputs, perceptionInputs, motivationInputs]
+  concat [statusInputs, perceptionInputs, motivationInputs, behaviorInputs]
 
 -- status
 statusInputs: List(Signal Action)
@@ -347,3 +438,8 @@ perceptionInputs =
 motivationInputs: List(Signal Action)
 motivationInputs =
   [Signal.map SetMotive motivePort]
+
+-- behavior
+behaviorInputs: List(Signal Action)
+behaviorInputs =
+  [Signal.map SetBehavior behaviorPort]

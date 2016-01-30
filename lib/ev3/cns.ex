@@ -63,8 +63,28 @@ defmodule Ev3.CNS do
 
 	@doc "A component is overwhelmed"
 	def notify_overwhelmed(component_type, actuator_name) do
-		GenServer.cast(@name, {:overwhelmed, component_type, actuator_name})
+		GenServer.cast(@name, {:notify_overwhelmed, component_type, actuator_name})
 	end
+
+  @doc "A behavior started"
+  def notify_started(:behavior, behavior_name) do
+    GenServer.cast(@name, {:notify_behavior_started, behavior_name})
+  end
+
+  @doc "A behavior stopped"
+  def notify_stopped(:behavior, behavior_name) do
+    GenServer.cast(@name, {:notify_behavior_stopped, behavior_name})
+  end
+
+  @doc "A behavior inhibited"
+  def notify_inhibited(:behavior, behavior_name) do
+    GenServer.cast(@name, {:notify_behavior_inhibited, behavior_name})
+  end
+
+  @doc "A behavior transited to a new state"
+  def notify_transited(:behavior, behavior_name, state_name) do
+    GenServer.cast(@name, {:notify_behavior_transited, behavior_name, state_name})
+  end
 
   @doc "Revive from fainting"
   def notify_revive() do
@@ -119,8 +139,9 @@ defmodule Ev3.CNS do
 		{:noreply, state}
 	end
 
-	def handle_cast({:overwhelmed, component_type, name}, state) do
+	def handle_cast({:notify_overwhelmed, component_type, name}, state) do
     Logger.info("OVERWHELMED - #{component_type} #{name} at #{delta(state)}")
+    GenEvent.notify(@dispatcher, {:overwhelmed, component_type, name})
     if not state.overwhelmed and not state.paused do
       Logger.info("FAINTING at #{delta(state)}")
 		  GenEvent.notify(@dispatcher, :faint)
@@ -130,6 +151,26 @@ defmodule Ev3.CNS do
       {:noreply, state}
     end
 	end
+
+  def handle_cast({:notify_behavior_started, name}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_started, name})
+    {:noreply, state}
+  end
+
+  def handle_cast({:notify_behavior_stopped, name}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_stopped, name})
+    {:noreply, state}
+  end
+
+  def handle_cast({:notify_behavior_inhibited, name}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_inhibited, name})
+    {:noreply, state}
+  end
+
+  def handle_cast({:notify_behavior_transited, name, state_name}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_transited, name, state_name})
+    {:noreply, state}
+  end
 
   def handle_cast(:notify_revive, state) do
     Logger.info("REVIVING at #{delta(state)}")

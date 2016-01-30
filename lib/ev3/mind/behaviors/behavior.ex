@@ -71,6 +71,7 @@ defmodule Ev3.Behavior do
 		if not Memory.inhibited?(on_motive.about) do
 			if not on_motive in state.motives do
 				Logger.info("STARTED behavior #{state.name}")
+        CNS.notify_started(:behavior, state.name)
 				initial_transit(%{state | motives: [on_motive | state.motives]})
 			else
 				state
@@ -94,6 +95,7 @@ defmodule Ev3.Behavior do
 			[] ->
 				Logger.info("STOPPED behavior #{state.name}: #{off_motive.about} if off")
 				final_transit(state)
+        CNS.notify_stopped(:behavior, state.name)
 				%{state | motives: [], fsm_state: nil}
 			motives ->
 				Logger.info("NOT STOPPED behavior #{state.name} because #{inspect surviving_motives}")
@@ -104,6 +106,7 @@ defmodule Ev3.Behavior do
 	defp initial_transit(%{fsm_state: nil, fsm: fsm} = state) do
 		transition = find_initial_transition(fsm)
 		if transition != nil do
+      CNS.notify_transited(:behavior, state.name, transition.to)
 			transition.doing.(nil, state)
 		end
 		%{state | fsm_state: fsm.initial_state}
@@ -112,6 +115,7 @@ defmodule Ev3.Behavior do
 	defp final_transit(%{fsm: fsm} = state) do
 		transition = find_final_transition(fsm)
 		if transition != nil do
+      CNS.notify_transited(:behavior, state.name, transition.to)
 			transition.doing.(nil, state)
 		end
 		%{state | fsm_state: nil}
@@ -140,9 +144,11 @@ defmodule Ev3.Behavior do
 				state
 			transition ->
 				if not inhibited?(state) do
+            CNS.notify_transited(:behavior, state.name, transition.to)
 						apply_transition(transition, percept, state)
 				else
 					Logger.info("-- INHIBITED: behavior #{state.name}")
+          CNS.notify_inhibited(:behavior, state.name)
 					state
 				end
 		end
