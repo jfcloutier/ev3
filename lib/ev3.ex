@@ -5,7 +5,8 @@ defmodule Ev3 do
   require Logger
 	alias Ev3.Endpoint
 	alias Ev3.RobotSupervisor
-
+  alias Ev3.CNS
+  
   @poll_runtime_delay 5000
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
@@ -53,7 +54,7 @@ defmodule Ev3 do
 
   @doc "Loop pushing runtime stats every @poll_runtime_delay seconds"
   def push_runtime_stats() do
-    Endpoint.broadcast!("ev3:runtime", "runtime_stats", runtime_stats())
+    CNS.notify_runtime_stats(runtime_stats())
     :timer.sleep(@poll_runtime_delay)
     push_runtime_stats()
   end

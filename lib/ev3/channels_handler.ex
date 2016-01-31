@@ -8,6 +8,8 @@ defmodule Ev3.ChannelsHandler do
   alias Ev3.Motive
   alias Ev3.Memory
 
+  @dashboard "ev3:dashboard"
+
 	### Callbacks
 
 	def init(_) do
@@ -16,55 +18,59 @@ defmodule Ev3.ChannelsHandler do
 	end
 
   def handle_event(:faint, state) do
-    Endpoint.broadcast!("ev3:runtime", "active_state", %{active: false})
+    Endpoint.broadcast!(@dashboard, "active_state", %{active: false})
 		{:ok, state}
 	end
 
   def handle_event(:revive, state) do
-    Endpoint.broadcast!("ev3:runtime", "active_state", %{active: true})
+    Endpoint.broadcast!(@dashboard, "active_state", %{active: true})
 		{:ok, state}
 	end
 
   def handle_event({:perceived, %Percept{about: about, value: value}}, state) do
-		Endpoint.broadcast!("ev3:runtime", "percept", %{about: stringify(about), value: stringify(value)})
+		Endpoint.broadcast!(@dashboard, "percept", %{about: stringify(about), value: stringify(value)})
 		{:ok, state}
 	end
 
 	def handle_event({:motivated, %Motive{about: about, value: value}}, state) do
-		Endpoint.broadcast!("ev3:runtime", "motive", %{about: stringify(about), on: value == :on, inhibited: Memory.inhibited?(about)})
+		Endpoint.broadcast!(@dashboard, "motive", %{about: stringify(about), on: value == :on, inhibited: Memory.inhibited?(about)})
 		{:ok, state}
 	end
 
   def handle_event({:behavior_started, name} ,state) do
-    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "started", value: ""})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "started", value: ""})
     {:ok, state}
   end
   
   def handle_event({:behavior_stopped, name} ,state) do
-    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "stopped", value: ""})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "stopped", value: ""})
     {:ok, state}
   end
   
   def handle_event({:overwhelmed, :behavior, name} ,state) do
-    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "overwhelmed", value: ""})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "overwhelmed", value: ""})
     {:ok, state}
   end
   
   def handle_event({:behavior_inhibited, name} ,state) do
-    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "inhibited", value: ""})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "inhibited", value: ""})
     {:ok, state}
   end
   
   def handle_event({:behavior_transited, name, to_state} ,state) do
-    Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "transited", value: to_state})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "transited", value: to_state})
     {:ok, state}
   end
 
   def handle_event({:realized, actuator_name, intent}, state) do
-    Endpoint.broadcast!("ev3:runtime", "intent", %{actuator: actuator_name, about: stringify(intent.about), value: "#{stringify(intent.value)}", strong: intent.strong})
+    Endpoint.broadcast!(@dashboard, "intent", %{actuator: actuator_name, about: stringify(intent.about), value: "#{stringify(intent.value)}", strong: intent.strong})
 		{:ok, state}
 	end
 
+  def handle_event({:runtime_stats, stats}, state) do
+    Endpoint.broadcast!(@dashboard, "runtime_stats", stats)
+    {:ok, state}
+  end
   
 	def handle_event(_event, state) do
     #		Logger.debug("#{__MODULE__} ignored #{inspect event}")

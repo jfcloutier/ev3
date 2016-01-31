@@ -319,6 +319,11 @@ actuationView address model =
   let
     getIntent actuator intents =
       Dict.get actuator intents |> Maybe.withDefault (Intent "" "" False)
+    strong_intent_about intent =
+      if intent.strong then
+        strong [] [text intent.about]
+      else
+        text intent.about
     viewIntent address intents actuator =
        tr []
            [
@@ -326,7 +331,7 @@ actuationView address model =
                    strong [] [text actuator]
                  , span [] [
                            text " did "
-                          , text (getIntent actuator intents).about
+                          , strong_intent_about (getIntent actuator intents)
                           , text " "
                           , text (getIntent actuator intents).value]
                      ]

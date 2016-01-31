@@ -32,10 +32,10 @@ var elmDiv = document.getElementById('elm-main')
 , elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv, initialState);
 
 // Now that you are connected, you can join channels with a topic:
-let robot_channel = socket.channel("ev3:runtime", {})
+let robot_channel = socket.channel("ev3:dashboard", {})
 robot_channel.join()
-  .receive("ok", resp => { console.log("ev3:runtime channel joined succesffuly", resp) })
-  .receive("error", resp => { console.log("Unabled to join channel ev3:runtime", resp) })
+  .receive("ok", resp => { console.log("ev3:dashboard channel joined succesffuly", resp) })
+  .receive("error", resp => { console.log("Unabled to join channel ev3:dashboard", resp) })
 
 
 robot_channel.on('runtime_stats', data => {

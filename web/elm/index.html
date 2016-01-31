@@ -11253,7 +11253,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Percepts")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Percepts")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewPercept,address,model.percepts),$List.sort($Dict.keys(model.percepts))))]))]));
@@ -11270,6 +11270,9 @@ Elm.Ev3Dashboard.make = function (_elm) {
    var Model = F5(function (a,b,c,d,e) {    return {status: a,perception: b,motivation: c,comportment: d,actuation: e};});
    var Intent = F3(function (a,b,c) {    return {about: a,value: b,strong: c};});
    var actuationView = F2(function (address,model) {
+      var strong_intent_about = function (intent) {
+         return intent.strong ? A2($Html.strong,_U.list([]),_U.list([$Html.text(intent.about)])) : $Html.text(intent.about);
+      };
       var getIntent = F2(function (actuator,intents) {    return A2($Maybe.withDefault,A3(Intent,"","",false),A2($Dict.get,actuator,intents));});
       var viewIntent = F3(function (address,intents,actuator) {
          return A2($Html.tr,
@@ -11279,14 +11282,14 @@ Elm.Ev3Dashboard.make = function (_elm) {
          _U.list([A2($Html.strong,_U.list([]),_U.list([$Html.text(actuator)]))
                  ,A2($Html.span,
                  _U.list([]),
-                 _U.list([$Html.text(" doing ")
-                         ,$Html.text(A2(getIntent,actuator,intents).about)
+                 _U.list([$Html.text(" did ")
+                         ,strong_intent_about(A2(getIntent,actuator,intents))
                          ,$Html.text(" ")
                          ,$Html.text(A2(getIntent,actuator,intents).value)]))]))]));
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Intents")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Intents")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewIntent,address,model.intents),$List.sort($Dict.keys(model.intents))))]))]));
@@ -11319,7 +11322,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Behaviors")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Behaviors")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewBehavior,address,model.behaviors),$List.sort($Dict.keys(model.behaviors))))]))]));
@@ -11368,7 +11371,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Motives")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Motives")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewMotive,address,model.motives),$List.sort($Dict.keys(model.motives))))]))]));
@@ -11396,20 +11399,20 @@ Elm.Ev3Dashboard.make = function (_elm) {
       var btnColor = function (paused) {    return $Basics.not(paused) ? "btn-success" : "btn-danger";};
       var pausingLabel = function (model) {    return $Basics.not(model.paused) ? "Pause" : "Resume";};
       return A2($Html.div,
-      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([$Html$Attributes.$class("container-fluid")]),
       _U.list([A2($Html.div,
       _U.list([$Html$Attributes.$class("row")]),
       _U.list([A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-2")]),
+              _U.list([$Html$Attributes.$class("col-lg-2")]),
               _U.list([A2($Html.button,
               _U.list([A2($Html$Events.onClick,address,TogglePaused)
                       ,$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "btn",_1: true},{ctor: "_Tuple2",_0: btnColor(model.paused),_1: true}]))]),
               _U.list([$Html.text(pausingLabel(model))]))]))
               ,A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-2")]),
+              _U.list([$Html$Attributes.$class("col-lg-2")]),
               _U.list([A2($Html.img,_U.list([A2($Html$Attributes.attribute,"src",src(model.active))]),_U.list([]))]))
               ,A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-8")]),
+              _U.list([$Html$Attributes.$class("col-lg-8")]),
               _U.list([A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.thead,
@@ -11433,23 +11436,23 @@ Elm.Ev3Dashboard.make = function (_elm) {
    });
    var view = F2(function (address,model) {
       return A2($Html.div,
-      _U.list([$Html$Attributes.$class("container"),A2($Html$Attributes.attribute,"role","main")]),
+      _U.list([$Html$Attributes.$class("container-fluid"),A2($Html$Attributes.attribute,"role","main")]),
       _U.list([A2($Html.div,
               _U.list([$Html$Attributes.$class("row")]),
               _U.list([A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-12")]),
+              _U.list([$Html$Attributes.$class("col-lg-12")]),
               _U.list([A2($Html.h1,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "text-center",_1: true},{ctor: "_Tuple2",_0: "bg-primary",_1: true}]))]),
               _U.list([$Html.text("Robot Dashboard")]))]))]))
               ,A2($Html.div,
               _U.list([$Html$Attributes.$class("row")]),
-              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-md-12")]),_U.list([A2(statusView,address,model.status)]))]))
+              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-12")]),_U.list([A2(statusView,address,model.status)]))]))
               ,A2($Html.div,
               _U.list([$Html$Attributes.$class("row")]),
-              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-md-3")]),_U.list([A2(perceptionView,address,model.perception)]))
-                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-md-2")]),_U.list([A2(motivationView,address,model.motivation)]))
-                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-md-3")]),_U.list([A2(comportmentView,address,model.comportment)]))
-                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-md-4")]),_U.list([A2(actuationView,address,model.actuation)]))]))]));
+              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-3")]),_U.list([A2(perceptionView,address,model.perception)]))
+                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-2")]),_U.list([A2(motivationView,address,model.motivation)]))
+                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-3")]),_U.list([A2(comportmentView,address,model.comportment)]))
+                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-4")]),_U.list([A2(actuationView,address,model.actuation)]))]))]));
    });
    var SetActive = function (a) {    return {ctor: "SetActive",_0: a};};
    var statusInputs = _U.list([A2($Signal.map,SetRuntimeStats,runtimeStatsPort),A2($Signal.map,SetActive,activeStatePort)]);

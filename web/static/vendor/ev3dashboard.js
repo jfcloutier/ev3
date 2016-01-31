@@ -11319,6 +11319,9 @@ Elm.Ev3Dashboard.make = function (_elm) {
    var Model = F5(function (a,b,c,d,e) {    return {status: a,perception: b,motivation: c,comportment: d,actuation: e};});
    var Intent = F3(function (a,b,c) {    return {about: a,value: b,strong: c};});
    var actuationView = F2(function (address,model) {
+      var strong_intent_about = function (intent) {
+         return intent.strong ? A2($Html.strong,_U.list([]),_U.list([$Html.text(intent.about)])) : $Html.text(intent.about);
+      };
       var getIntent = F2(function (actuator,intents) {    return A2($Maybe.withDefault,A3(Intent,"","",false),A2($Dict.get,actuator,intents));});
       var viewIntent = F3(function (address,intents,actuator) {
          return A2($Html.tr,
@@ -11329,7 +11332,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
                  ,A2($Html.span,
                  _U.list([]),
                  _U.list([$Html.text(" did ")
-                         ,$Html.text(A2(getIntent,actuator,intents).about)
+                         ,strong_intent_about(A2(getIntent,actuator,intents))
                          ,$Html.text(" ")
                          ,$Html.text(A2(getIntent,actuator,intents).value)]))]))]));
       });

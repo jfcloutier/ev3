@@ -101,6 +101,11 @@ defmodule Ev3.CNS do
     GenServer.call(@name, :toggle_paused, 15_000)
   end
 
+  @doc "Notified of new runtime stats"
+  def notify_runtime_stats(stats) do
+    GenServer.cast(@name, {:notify_runtime_stats, stats})
+  end
+
 	### Callbacks
 
 	def init(_) do
@@ -176,6 +181,11 @@ defmodule Ev3.CNS do
     Logger.info("REVIVING at #{delta(state)}")
     if not state.paused, do: GenEvent.notify(@dispatcher, :revive)
     {:noreply, %{state | overwhelmed: false}}
+  end
+
+  def handle_cast({:notify_runtime_stats, stats}, state) do
+    GenEvent.notify(@dispatcher, {:runtime_stats, stats})
+    {:noreply, state}
   end
 
 	def handle_info({:gen_event_EXIT, crashed_handler, error}, state) do

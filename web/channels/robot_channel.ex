@@ -5,7 +5,7 @@ defmodule Ev3.RobotChannel do
 
   @runtime_stats_event "runtime_stats"
 
-  def join("ev3:runtime", _message, socket) do
+  def join("ev3:dashboard", _message, socket) do
     send(self(), :after_join)
     {:ok, socket}
   end
