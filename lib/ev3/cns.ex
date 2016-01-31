@@ -42,8 +42,8 @@ defmodule Ev3.CNS do
 	end
 
 		@doc "Handle notification of an intent realized"
-	def notify_realized(intent) do
-		GenServer.cast(@name, {:notify_realized, intent})
+	def notify_realized(actuator_name, intent) do
+		GenServer.cast(@name, {:notify_realized, actuator_name, intent})
 	end
 
 	@doc "Handle notification of an new or extended memory change"
@@ -127,9 +127,9 @@ defmodule Ev3.CNS do
 		{:noreply, state}
 	end
 	
-	def handle_cast({:notify_realized, intent}, state) do
-	  Logger.info("Intent #{Intent.strength(intent)} realized #{intent.about} #{inspect intent.value} at #{delta(state)}")
-		GenEvent.notify(@dispatcher, {:realized, intent})
+	def handle_cast({:notify_realized, actuator_name, intent}, state) do
+	  Logger.info("Intent #{Intent.strength(intent)} realized #{intent.about} #{inspect intent.value} by #{actuator_name} at #{delta(state)}")
+		GenEvent.notify(@dispatcher, {:realized, actuator_name, intent})
 		{:noreply, state}
 	end
 	

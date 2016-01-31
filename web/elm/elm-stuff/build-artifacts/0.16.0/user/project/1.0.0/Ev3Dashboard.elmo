@@ -21,6 +21,20 @@ Elm.Ev3Dashboard.make = function (_elm) {
    $String$Interpolate = Elm.String.Interpolate.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
+   var intentPort = Elm.Native.Port.make(_elm).inboundSignal("intentPort",
+   "Ev3Dashboard.IntentData",
+   function (v) {
+      return typeof v === "object" && "actuator" in v && "about" in v && "value" in v && "strong" in v ? {_: {}
+                                                                                                         ,actuator: typeof v.actuator === "string" || typeof v.actuator === "object" && v.actuator instanceof String ? v.actuator : _U.badPort("a string",
+                                                                                                         v.actuator)
+                                                                                                         ,about: typeof v.about === "string" || typeof v.about === "object" && v.about instanceof String ? v.about : _U.badPort("a string",
+                                                                                                         v.about)
+                                                                                                         ,value: typeof v.value === "string" || typeof v.value === "object" && v.value instanceof String ? v.value : _U.badPort("a string",
+                                                                                                         v.value)
+                                                                                                         ,strong: typeof v.strong === "boolean" ? v.strong : _U.badPort("a boolean (true or false)",
+                                                                                                         v.strong)} : _U.badPort("an object with fields `actuator`, `about`, `value`, `strong`",
+      v);
+   });
    var behaviorPort = Elm.Native.Port.make(_elm).inboundSignal("behaviorPort",
    "Ev3Dashboard.BehaviorData",
    function (v) {
@@ -105,19 +119,56 @@ Elm.Ev3Dashboard.make = function (_elm) {
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Percepts")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Percepts")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewPercept,address,model.percepts),$List.sort($Dict.keys(model.percepts))))]))]));
    });
+   var actuationInitEffect = $Effects.none;
    var comportmentInitEffect = $Effects.none;
    var motivationInitEffect = $Effects.none;
    var perceptionInitEffect = $Effects.none;
+   var actuationInitModel = {intents: $Dict.empty};
    var comportmentInitModel = {behaviors: $Dict.empty};
    var motivationInitModel = {motives: $Dict.empty};
    var perceptionInitModel = {percepts: $Dict.empty};
    var hostname = "localhost";
-   var Model = F4(function (a,b,c,d) {    return {status: a,perception: b,motivation: c,comportment: d};});
+   var Model = F5(function (a,b,c,d,e) {    return {status: a,perception: b,motivation: c,comportment: d,actuation: e};});
+   var Intent = F3(function (a,b,c) {    return {about: a,value: b,strong: c};});
+   var actuationView = F2(function (address,model) {
+      var getIntent = F2(function (actuator,intents) {    return A2($Maybe.withDefault,A3(Intent,"","",false),A2($Dict.get,actuator,intents));});
+      var viewIntent = F3(function (address,intents,actuator) {
+         return A2($Html.tr,
+         _U.list([]),
+         _U.list([A2($Html.td,
+         _U.list([]),
+         _U.list([A2($Html.strong,_U.list([]),_U.list([$Html.text(actuator)]))
+                 ,A2($Html.span,
+                 _U.list([]),
+                 _U.list([$Html.text(" did ")
+                         ,$Html.text(A2(getIntent,actuator,intents).about)
+                         ,$Html.text(" ")
+                         ,$Html.text(A2(getIntent,actuator,intents).value)]))]))]));
+      });
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Intents")]))
+              ,A2($Html.table,
+              _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
+              _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewIntent,address,model.intents),$List.sort($Dict.keys(model.intents))))]))]));
+   });
+   var actuationUpdate = F2(function (action,model) {
+      var intent = function (intentData) {    return A3(Intent,intentData.about,intentData.value,intentData.strong);};
+      var _p4 = action;
+      if (_p4.ctor === "AddIntent") {
+            var _p5 = _p4._0;
+            return {ctor: "_Tuple2",_0: _U.update(model,{intents: A3($Dict.insert,_p5.actuator,intent(_p5),model.intents)}),_1: $Effects.none};
+         } else {
+            return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+         }
+   });
+   var IntentData = F4(function (a,b,c,d) {    return {actuator: a,about: b,value: c,strong: d};});
+   var ActuationModel = function (a) {    return {intents: a};};
    var Behavior = F5(function (a,b,c,d,e) {    return {name: a,started: b,inhibited: c,overwhelmed: d,state: e};});
    var comportmentView = F2(function (address,model) {
       var statusClass = function (behavior) {    return behavior.started ? behavior.overwhelmed ? "bg-warning" : "bg-success" : "bg-danger";};
@@ -134,7 +185,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Behaviors")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Behaviors")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewBehavior,address,model.behaviors),$List.sort($Dict.keys(model.behaviors))))]))]));
@@ -143,21 +194,21 @@ Elm.Ev3Dashboard.make = function (_elm) {
       var insert = F2(function (dict,behavior) {    return A3($Dict.insert,behavior.name,behavior,dict);});
       var revive = function (behavior) {    return _U.update(behavior,{overwhelmed: false});};
       var revive_all = A3($Dict.foldl,F3(function (name,behavior,dict) {    return A2(insert,dict,revive(behavior));}),$Dict.empty,model.behaviors);
-      var _p4 = action;
-      switch (_p4.ctor)
-      {case "SetActive": return _p4._0.active ? {ctor: "_Tuple2",_0: _U.update(model,{behaviors: revive_all}),_1: $Effects.none} : {ctor: "_Tuple2"
+      var _p6 = action;
+      switch (_p6.ctor)
+      {case "SetActive": return _p6._0.active ? {ctor: "_Tuple2",_0: _U.update(model,{behaviors: revive_all}),_1: $Effects.none} : {ctor: "_Tuple2"
                                                                                                                                    ,_0: model
                                                                                                                                    ,_1: $Effects.none};
-         case "SetBehavior": var _p6 = _p4._0;
-           var behavior = A2($Maybe.withDefault,A5(Behavior,_p6.name,false,false,false,"?"),A2($Dict.get,_p6.name,model.behaviors));
+         case "SetBehavior": var _p8 = _p6._0;
+           var behavior = A2($Maybe.withDefault,A5(Behavior,_p8.name,false,false,false,"?"),A2($Dict.get,_p8.name,model.behaviors));
            var updatedBehavior = function () {
-              var _p5 = _p6.event;
-              switch (_p5)
+              var _p7 = _p8.event;
+              switch (_p7)
               {case "started": return _U.update(behavior,{started: true});
                  case "stopped": return _U.update(behavior,{started: false});
                  case "overwhelmed": return _U.update(behavior,{started: true,inhibited: false,overwhelmed: true});
                  case "inhibited": return _U.update(behavior,{started: true,inhibited: true});
-                 case "transited": return _U.update(behavior,{started: true,inhibited: false,state: _p6.value});
+                 case "transited": return _U.update(behavior,{started: true,inhibited: false,state: _p8.value});
                  default: return behavior;}
            }();
            return {ctor: "_Tuple2",_0: _U.update(model,{behaviors: A3($Dict.insert,behavior.name,updatedBehavior,model.behaviors)}),_1: $Effects.none};
@@ -183,7 +234,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
       });
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Motives")]))
+      _U.list([A2($Html.h3,_U.list([]),_U.list([$Html.text("Motives")]))
               ,A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.tbody,_U.list([]),A2($List.map,A2(viewMotive,address,model.motives),$List.sort($Dict.keys(model.motives))))]))]));
@@ -195,6 +246,8 @@ Elm.Ev3Dashboard.make = function (_elm) {
    var statusInitModel = A3(StatusModel,false,true,{ramFree: -1,ramUsed: -1,swapFree: -1,swapUsed: -1});
    var RuntimeStats = F4(function (a,b,c,d) {    return {ramFree: a,ramUsed: b,swapFree: c,swapUsed: d};});
    var ActiveState = function (a) {    return {active: a};};
+   var AddIntent = function (a) {    return {ctor: "AddIntent",_0: a};};
+   var intentInputs = _U.list([A2($Signal.map,AddIntent,intentPort)]);
    var SetBehavior = function (a) {    return {ctor: "SetBehavior",_0: a};};
    var behaviorInputs = _U.list([A2($Signal.map,SetBehavior,behaviorPort)]);
    var SetMotive = function (a) {    return {ctor: "SetMotive",_0: a};};
@@ -209,20 +262,20 @@ Elm.Ev3Dashboard.make = function (_elm) {
       var btnColor = function (paused) {    return $Basics.not(paused) ? "btn-success" : "btn-danger";};
       var pausingLabel = function (model) {    return $Basics.not(model.paused) ? "Pause" : "Resume";};
       return A2($Html.div,
-      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([$Html$Attributes.$class("container-fluid")]),
       _U.list([A2($Html.div,
       _U.list([$Html$Attributes.$class("row")]),
       _U.list([A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-2")]),
+              _U.list([$Html$Attributes.$class("col-lg-2")]),
               _U.list([A2($Html.button,
               _U.list([A2($Html$Events.onClick,address,TogglePaused)
                       ,$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "btn",_1: true},{ctor: "_Tuple2",_0: btnColor(model.paused),_1: true}]))]),
               _U.list([$Html.text(pausingLabel(model))]))]))
               ,A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-2")]),
+              _U.list([$Html$Attributes.$class("col-lg-2")]),
               _U.list([A2($Html.img,_U.list([A2($Html$Attributes.attribute,"src",src(model.active))]),_U.list([]))]))
               ,A2($Html.div,
-              _U.list([$Html$Attributes.$class("col-md-8")]),
+              _U.list([$Html$Attributes.$class("col-lg-8")]),
               _U.list([A2($Html.table,
               _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "table",_1: true},{ctor: "_Tuple2",_0: "table-bordered",_1: true}]))]),
               _U.list([A2($Html.thead,
@@ -246,28 +299,39 @@ Elm.Ev3Dashboard.make = function (_elm) {
    });
    var view = F2(function (address,model) {
       return A2($Html.div,
-      _U.list([$Html$Attributes.$class("container"),A2($Html$Attributes.attribute,"role","main")]),
-      _U.list([A2($Html.h1,_U.list([$Html$Attributes.$class("text-center")]),_U.list([$Html.text("Robot Dashboard")]))
+      _U.list([$Html$Attributes.$class("container-fluid"),A2($Html$Attributes.attribute,"role","main")]),
+      _U.list([A2($Html.div,
+              _U.list([$Html$Attributes.$class("row")]),
+              _U.list([A2($Html.div,
+              _U.list([$Html$Attributes.$class("col-lg-12")]),
+              _U.list([A2($Html.h1,
+              _U.list([$Html$Attributes.classList(_U.list([{ctor: "_Tuple2",_0: "text-center",_1: true},{ctor: "_Tuple2",_0: "bg-primary",_1: true}]))]),
+              _U.list([$Html.text("Robot Dashboard")]))]))]))
               ,A2($Html.div,
               _U.list([$Html$Attributes.$class("row")]),
-              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-md-12")]),_U.list([A2(statusView,address,model.status)]))]))
+              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-12")]),_U.list([A2(statusView,address,model.status)]))]))
               ,A2($Html.div,
               _U.list([$Html$Attributes.$class("row")]),
-              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-md-4")]),_U.list([A2(perceptionView,address,model.perception)]))
-                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-md-3")]),_U.list([A2(motivationView,address,model.motivation)]))
-                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-md-4")]),_U.list([A2(comportmentView,address,model.comportment)]))]))]));
+              _U.list([A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-3")]),_U.list([A2(perceptionView,address,model.perception)]))
+                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-2")]),_U.list([A2(motivationView,address,model.motivation)]))
+                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-3")]),_U.list([A2(comportmentView,address,model.comportment)]))
+                      ,A2($Html.div,_U.list([$Html$Attributes.$class("col-lg-4")]),_U.list([A2(actuationView,address,model.actuation)]))]))]));
    });
    var SetActive = function (a) {    return {ctor: "SetActive",_0: a};};
    var statusInputs = _U.list([A2($Signal.map,SetRuntimeStats,runtimeStatsPort),A2($Signal.map,SetActive,activeStatePort)]);
-   var inputs = $List.concat(_U.list([statusInputs,perceptionInputs,motivationInputs,behaviorInputs]));
+   var inputs = $List.concat(_U.list([statusInputs,perceptionInputs,motivationInputs,behaviorInputs,intentInputs]));
    var SetPaused = function (a) {    return {ctor: "SetPaused",_0: a};};
    var fetchPaused = $Effects.task(A2($Task.map,
    SetPaused,
    $Task.toMaybe(A2($Http.get,decodePaused,A2($String$Interpolate.interpolate,"http://{0}:4000/api/robot/paused",_U.list([hostname]))))));
    var statusInitEffect = fetchPaused;
    var init = {ctor: "_Tuple2"
-              ,_0: {status: statusInitModel,perception: perceptionInitModel,motivation: motivationInitModel,comportment: comportmentInitModel}
-              ,_1: $Effects.batch(_U.list([statusInitEffect,perceptionInitEffect,motivationInitEffect,comportmentInitEffect]))};
+              ,_0: {status: statusInitModel
+                   ,perception: perceptionInitModel
+                   ,motivation: motivationInitModel
+                   ,comportment: comportmentInitModel
+                   ,actuation: actuationInitModel}
+              ,_1: $Effects.batch(_U.list([statusInitEffect,perceptionInitEffect,motivationInitEffect,comportmentInitEffect,actuationInitEffect]))};
    var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
    var togglePaused = function () {
       var togglePausedEffect = $Effects.task(A2($Task.map,
@@ -279,31 +343,34 @@ Elm.Ev3Dashboard.make = function (_elm) {
       return $Effects.batch(_U.list([togglePausedEffect,fetchPaused]));
    }();
    var statusUpdate = F2(function (action,model) {
-      var _p7 = action;
-      switch (_p7.ctor)
-      {case "SetPaused": var result = A2($Maybe.withDefault,model.paused,_p7._0);
+      var _p9 = action;
+      switch (_p9.ctor)
+      {case "SetPaused": var result = A2($Maybe.withDefault,model.paused,_p9._0);
            return {ctor: "_Tuple2",_0: _U.update(model,{paused: result}),_1: $Effects.none};
-         case "SetActive": return {ctor: "_Tuple2",_0: _U.update(model,{active: _p7._0.active}),_1: $Effects.none};
+         case "SetActive": return {ctor: "_Tuple2",_0: _U.update(model,{active: _p9._0.active}),_1: $Effects.none};
          case "TogglePaused": return {ctor: "_Tuple2",_0: model,_1: togglePaused};
-         case "SetRuntimeStats": return {ctor: "_Tuple2",_0: _U.update(model,{runtime: _p7._0}),_1: $Effects.none};
+         case "SetRuntimeStats": return {ctor: "_Tuple2",_0: _U.update(model,{runtime: _p9._0}),_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
    });
    var update = F2(function (action,model) {
-      var _p8 = A2(comportmentUpdate,action,model.comportment);
-      var newComportment = _p8._0;
-      var comportmentEffects = _p8._1;
-      var _p9 = A2(motivationUpdate,action,model.motivation);
-      var newMotivation = _p9._0;
-      var motivationEffects = _p9._1;
-      var _p10 = A2(perceptionUpdate,action,model.perception);
-      var newPerception = _p10._0;
-      var perceptionEffects = _p10._1;
-      var _p11 = A2(statusUpdate,action,model.status);
-      var newStatus = _p11._0;
-      var statusEffects = _p11._1;
+      var _p10 = A2(actuationUpdate,action,model.actuation);
+      var newActuation = _p10._0;
+      var actuationEffects = _p10._1;
+      var _p11 = A2(comportmentUpdate,action,model.comportment);
+      var newComportment = _p11._0;
+      var comportmentEffects = _p11._1;
+      var _p12 = A2(motivationUpdate,action,model.motivation);
+      var newMotivation = _p12._0;
+      var motivationEffects = _p12._1;
+      var _p13 = A2(perceptionUpdate,action,model.perception);
+      var newPerception = _p13._0;
+      var perceptionEffects = _p13._1;
+      var _p14 = A2(statusUpdate,action,model.status);
+      var newStatus = _p14._0;
+      var statusEffects = _p14._1;
       return {ctor: "_Tuple2"
-             ,_0: _U.update(model,{status: newStatus,perception: newPerception,motivation: newMotivation,comportment: newComportment})
-             ,_1: $Effects.batch(_U.list([statusEffects,perceptionEffects,motivationEffects,comportmentEffects]))};
+             ,_0: _U.update(model,{status: newStatus,perception: newPerception,motivation: newMotivation,comportment: newComportment,actuation: newActuation})
+             ,_1: $Effects.batch(_U.list([statusEffects,perceptionEffects,motivationEffects,comportmentEffects,actuationEffects]))};
    });
    var app = $StartApp.start({init: init,update: update,view: view,inputs: inputs});
    var main = app.html;
@@ -317,6 +384,7 @@ Elm.Ev3Dashboard.make = function (_elm) {
                                      ,AddPercept: AddPercept
                                      ,SetMotive: SetMotive
                                      ,SetBehavior: SetBehavior
+                                     ,AddIntent: AddIntent
                                      ,ActiveState: ActiveState
                                      ,RuntimeStats: RuntimeStats
                                      ,StatusModel: StatusModel
@@ -327,6 +395,9 @@ Elm.Ev3Dashboard.make = function (_elm) {
                                      ,ComportmentModel: ComportmentModel
                                      ,BehaviorData: BehaviorData
                                      ,Behavior: Behavior
+                                     ,ActuationModel: ActuationModel
+                                     ,IntentData: IntentData
+                                     ,Intent: Intent
                                      ,Model: Model
                                      ,hostname: hostname
                                      ,app: app
@@ -336,20 +407,24 @@ Elm.Ev3Dashboard.make = function (_elm) {
                                      ,perceptionInitModel: perceptionInitModel
                                      ,motivationInitModel: motivationInitModel
                                      ,comportmentInitModel: comportmentInitModel
+                                     ,actuationInitModel: actuationInitModel
                                      ,statusInitEffect: statusInitEffect
                                      ,perceptionInitEffect: perceptionInitEffect
                                      ,motivationInitEffect: motivationInitEffect
                                      ,comportmentInitEffect: comportmentInitEffect
+                                     ,actuationInitEffect: actuationInitEffect
                                      ,view: view
                                      ,statusView: statusView
                                      ,perceptionView: perceptionView
                                      ,motivationView: motivationView
                                      ,comportmentView: comportmentView
+                                     ,actuationView: actuationView
                                      ,update: update
                                      ,statusUpdate: statusUpdate
                                      ,perceptionUpdate: perceptionUpdate
                                      ,motivationUpdate: motivationUpdate
                                      ,comportmentUpdate: comportmentUpdate
+                                     ,actuationUpdate: actuationUpdate
                                      ,togglePaused: togglePaused
                                      ,fetchPaused: fetchPaused
                                      ,decodePaused: decodePaused
@@ -357,5 +432,6 @@ Elm.Ev3Dashboard.make = function (_elm) {
                                      ,statusInputs: statusInputs
                                      ,perceptionInputs: perceptionInputs
                                      ,motivationInputs: motivationInputs
-                                     ,behaviorInputs: behaviorInputs};
+                                     ,behaviorInputs: behaviorInputs
+                                     ,intentInputs: intentInputs};
 };

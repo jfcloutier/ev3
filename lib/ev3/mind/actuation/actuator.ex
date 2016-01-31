@@ -49,7 +49,7 @@ defmodule Ev3.Actuator do
 					  fn(action) ->
 						  script = action.(intent, state.devices)
 						  Script.execute(state.actuator_config.type, script)
-						  CNS.notify_realized(intent) # This will have the intent stored in memory. Unrealized intents are not retained in memory.
+						  CNS.notify_realized(name, intent) # This will have the intent stored in memory. Unrealized intents are not retained in memory.
 					  end)
         end
         state

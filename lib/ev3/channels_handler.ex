@@ -59,6 +59,12 @@ defmodule Ev3.ChannelsHandler do
     Endpoint.broadcast!("ev3:runtime", "behavior", %{name: name, event: "transited", value: to_state})
     {:ok, state}
   end
+
+  def handle_event({:realized, actuator_name, intent}, state) do
+    Endpoint.broadcast!("ev3:runtime", "intent", %{actuator: actuator_name, about: stringify(intent.about), value: "#{stringify(intent.value)}", strong: intent.strong})
+		{:ok, state}
+	end
+
   
 	def handle_event(_event, state) do
     #		Logger.debug("#{__MODULE__} ignored #{inspect event}")
@@ -71,11 +77,22 @@ defmodule Ev3.ChannelsHandler do
     case x do
       s when is_binary(s) -> s
       y when is_atom(y) or is_number(y) -> to_string(y)
+      m when is_map(m) -> map_to_string(m)
       {a, v1, nil} -> "{#{stringify(a)}, #{stringify(v1)}}"
       {a, v1, v2} -> "{#{stringify(a)}, #{stringify(v1)}, #{stringify(v2)}}"
       {a, v} -> "{#{stringify(a)}, #{stringify(v)}}"
       z -> "#{inspect z}"
     end
   end
+
+  defp map_to_string(m) do
+    Map.keys(m)
+    |> Enum.reduce("",
+      fn(key, acc) ->
+        acc <> "#{key}=#{stringify(Map.get(m,key))} "
+      end
+    )
+  end
+ 
 
 end

@@ -26,7 +26,7 @@ defmodule Ev3.MemoryHandler do
 
 	# Intends are memorized only when realized by actuators
 	# {:intended, intent} events are ignored
-	def handle_event({:realized, intent}, state) do
+	def handle_event({:realized, _actuator_name, intent}, state) do
 		Memory.store(intent)
 		{:ok, state}
 	end

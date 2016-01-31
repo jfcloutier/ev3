@@ -26,7 +26,8 @@ var elmDiv = document.getElementById('elm-main')
                   activeStatePort: {active: true},
                   perceptPort: {about: "", value: ""},
                   motivePort: {about: "", on: false, inhibited: false},
-                  behaviorPort: {name: "", event: "", value: ""}
+                  behaviorPort: {name: "", event: "", value: ""},
+                  intentPort: {actuator: "", about: "", value: "", strong: false}
                  }
 , elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv, initialState);
 
@@ -59,4 +60,9 @@ robot_channel.on('motive', data => {
 robot_channel.on('behavior', data => {
     console.log('behavior', data)
     elmApp.ports.behaviorPort.send(data)
+})
+
+robot_channel.on('intent', data => {
+    console.log('intent', data)
+    elmApp.ports.intentPort.send(data)
 })

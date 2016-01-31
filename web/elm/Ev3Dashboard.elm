@@ -21,6 +21,7 @@ type Action =
     | AddPercept Percept
     | SetMotive Motive
     | SetBehavior BehaviorData
+    | AddIntent IntentData
 
 type alias ActiveState = {active: Bool}
 type alias RuntimeStats = {ramFree: Int, ramUsed: Int, swapFree: Int, swapUsed: Int}
@@ -39,10 +40,15 @@ type alias ComportmentModel = {behaviors: Dict String Behavior}
 type alias BehaviorData = {name: String, event: String, value: String}
 type alias Behavior = {name: String, started: Bool, inhibited: Bool, overwhelmed: Bool, state: String}
 
+type alias ActuationModel = {intents: Dict String Intent}
+type alias IntentData = {actuator: String, about: String, value: String, strong: Bool}
+type alias Intent = {about: String, value: String, strong: Bool}
+                  
 type alias Model = {status: StatusModel
                    , perception: PerceptionModel
                    , motivation: MotivationModel
                    , comportment: ComportmentModel
+                   , actuation: ActuationModel
                    }
 
                         
@@ -72,8 +78,13 @@ init =
     , perception = perceptionInitModel
     , motivation = motivationInitModel
     , comportment = comportmentInitModel
+    , actuation = actuationInitModel
    },
-   Effects.batch([statusInitEffect, perceptionInitEffect, motivationInitEffect, comportmentInitEffect]))
+   Effects.batch([statusInitEffect
+                 , perceptionInitEffect
+                 , motivationInitEffect
+                 , comportmentInitEffect
+                 , actuationInitEffect]))
 
 statusInitModel: StatusModel
 statusInitModel =
@@ -90,6 +101,10 @@ motivationInitModel =
 comportmentInitModel: ComportmentModel
 comportmentInitModel =
   {behaviors = Dict.empty}
+
+actuationInitModel: ActuationModel
+actuationInitModel =
+  {intents = Dict.empty}
   
 statusInitEffect: Effects Action
 statusInitEffect =
@@ -103,21 +118,32 @@ motivationInitEffect = Effects.none
 
 comportmentInitEffect: Effects Action
 comportmentInitEffect = Effects.none
+
+actuationInitEffect: Effects Action
+actuationInitEffect = Effects.none
+
 -- VIEW
 
 view: Signal.Address Action -> Model -> Html
 view address model =
-  div[class "container", attribute "role" "main"]
-       [  h1 [class "text-center"] [text "Robot Dashboard"]
+  div[class "container-fluid", attribute "role" "main"]
+       [div [class "row"]
+        [
+         div [class "col-lg-12"]
+               [
+                h1 [classList [("text-center", True), ("bg-primary", True)]] [text "Robot Dashboard"]
+               ]
+        ]
        , div [class "row"]
                [
-                div [class "col-md-12"] [statusView address model.status]
+                div [class "col-lg-12"] [statusView address model.status]
                ]
        , div [class "row"]
                [
-                div [class "col-md-4"] [perceptionView address model.perception]
-               , div [class "col-md-3"] [motivationView address model.motivation]
-               , div [class "col-md-4"] [comportmentView address model.comportment]
+                div [class "col-lg-3"] [perceptionView address model.perception]
+               , div [class "col-lg-2"] [motivationView address model.motivation]
+               , div [class "col-lg-3"] [comportmentView address model.comportment]
+               , div [class "col-lg-4"] [actuationView address model.actuation]
                ]
        ]
        
@@ -145,22 +171,22 @@ statusView address model =
         else
           "/images/fainted.png"
     in
-      div [class "container"]
+      div [class "container-fluid"]
           [
       div [class "row"]
                    [
-                    div [class "col-md-2"]
+                    div [class "col-lg-2"]
                           [
                            button
                            [onClick address TogglePaused
                            , classList [ ("btn", True), ((btnColor model.paused), True)]]
                            [text (pausingLabel model)]
                           ]
-                   , div [class "col-md-2"]
+                   , div [class "col-lg-2"]
                            [
                             img [attribute "src" (src model.active)] []
                            ]
-                   , div [class "col-md-8"]
+                   , div [class "col-lg-8"]
                            [
                             table [classList [("table", True), ("table-bordered", True)]]
                                     [
@@ -203,7 +229,7 @@ perceptionView address model =
   in
     div []
         [
-         h2 [] [text "Percepts"]
+         h3 [] [text "Percepts"]
         , table [classList [("table", True), ("table-bordered", True)]]
                   [
                    tbody []
@@ -240,7 +266,7 @@ motivationView address model =
   in
     div []
         [
-         h2 [] [text "Motives"]
+         h3 [] [text "Motives"]
          ,  table [classList [("table", True), ("table-bordered", True)]]
                   [
                    tbody []
@@ -280,13 +306,43 @@ comportmentView address model =
   in
     div []
         [
-         h2 [] [text "Behaviors"]
+         h3 [] [text "Behaviors"]
         , table [classList [("table", True), ("table-bordered", True)]]
                   [
                    tbody []
                            (List.map (viewBehavior address model.behaviors) (Dict.keys model.behaviors |> List.sort))
                   ]
         ]
+
+actuationView: Signal.Address Action -> ActuationModel -> Html
+actuationView address model =
+  let
+    getIntent actuator intents =
+      Dict.get actuator intents |> Maybe.withDefault (Intent "" "" False)
+    viewIntent address intents actuator =
+       tr []
+           [
+            td [] [
+                   strong [] [text actuator]
+                 , span [] [
+                           text " did "
+                          , text (getIntent actuator intents).about
+                          , text " "
+                          , text (getIntent actuator intents).value]
+                     ]
+           ]
+  in
+    div []
+        [
+         h3 [] [text "Intents"]
+        , table [classList [("table", True), ("table-bordered", True)]]
+                  [
+                   tbody []
+                           (List.map (viewIntent address model.intents) (Dict.keys model.intents |> List.sort))
+                  ]
+        ]
+
+
 
 -- UPDATE
 
@@ -297,13 +353,19 @@ update action model =
     (newPerception, perceptionEffects) = perceptionUpdate action model.perception
     (newMotivation, motivationEffects) = motivationUpdate action model.motivation
     (newComportment, comportmentEffects) = comportmentUpdate action model.comportment
+    (newActuation, actuationEffects) = actuationUpdate action model.actuation
   in
     (
      { model | status = newStatus
      , perception = newPerception
      , motivation = newMotivation
-     , comportment = newComportment},
-     Effects.batch[statusEffects, perceptionEffects, motivationEffects, comportmentEffects]
+     , comportment = newComportment
+     , actuation = newActuation},
+     Effects.batch[statusEffects
+                  , perceptionEffects
+                  , motivationEffects
+                  , comportmentEffects
+                  , actuationEffects]
     )
   
   
@@ -372,6 +434,18 @@ comportmentUpdate action model =
           ({model | behaviors = Dict.insert behavior.name updatedBehavior model.behaviors}, Effects.none)
       _ -> (model, Effects.none)
 
+actuationUpdate: Action -> ActuationModel -> (ActuationModel, Effects Action)
+actuationUpdate action model =
+  let
+    intent intentData =
+      Intent intentData.about intentData.value intentData.strong
+  in
+    case action of
+      AddIntent intentData ->
+        ({model | intents = Dict.insert intentData.actuator (intent intentData) model.intents}, Effects.none)
+      _ -> (model, Effects.none)
+                
+
 -- EFFECTS
 
 -- status
@@ -416,11 +490,14 @@ port motivePort: Signal Motive
 -- behavior
 port behaviorPort: Signal BehaviorData
 
+-- intent
+port intentPort: Signal IntentData
+
 -- INPUTS
 
 inputs: List (Signal Action)
 inputs =
-  concat [statusInputs, perceptionInputs, motivationInputs, behaviorInputs]
+  concat [statusInputs, perceptionInputs, motivationInputs, behaviorInputs, intentInputs]
 
 -- status
 statusInputs: List(Signal Action)
@@ -443,3 +520,8 @@ motivationInputs =
 behaviorInputs: List(Signal Action)
 behaviorInputs =
   [Signal.map SetBehavior behaviorPort]
+
+-- intent
+intentInputs: List(Signal Action)
+intentInputs =
+  [Signal.map AddIntent intentPort]
