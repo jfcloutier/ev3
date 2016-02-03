@@ -9,22 +9,41 @@ defmodule Ev3.LegoMotor do
   @prefix "motor" 
   @driver_regex ~r/lego-ev3-(\w)-motor/i
 
+  @doc "Is this type of device a motor?"
+  def motor?(device_type) do
+    device_type in [:medium, :large]
+  end
+
 	@doc "Generates a list of all plugged in motor devices"
 	def motors() do
-		if !Ev3.testing?() do
+		case Ev3.platform() do
+      :ev3 ->
 	 		files = case File.ls(@sys_path) do
 								{:ok, files} -> files
 								{:error, reason} ->
 									Logger.warn("Failed getting motor files: #{inspect reason}")
 									[]
 							end
-			files
 			|> Enum.filter(&(String.starts_with?(&1, @prefix)))
 			|> Enum.map(&(init_motor("#{@sys_path}/#{&1}")))
-		else
-			[Ev3.Mock.Tachomotor.new(:large, "outA"),
-			 Ev3.Mock.Tachomotor.new(:large, "outB"),
-			 Ev3.Mock.Tachomotor.new(:medium, "outC")]
+      :brickpi ->
+        ports_config = Ev3.ports_config()
+        ports = Enum.reduce(ports_config,
+                            [],
+                            fn(%{port: port}, acc) -> [port | acc] end)
+	 		  files = case File.ls(@sys_path) do
+								{:ok, files} -> files
+								{:error, reason} ->
+									Logger.warn("Failed getting motor files: #{inspect reason}")
+									[]
+							end
+			  |> Enum.filter(&(String.starts_with?(&1, @prefix)))
+        |> Enum.filter(&(read_sys("#{@sys_path}/#{&1}", "address") in ports))
+        |> Enum.map(&(init_motor("#{@sys_path}/#{&1}")))
+		  :dev ->
+			  [Ev3.Mock.Tachomotor.new(:large, "outA"),
+			   Ev3.Mock.Tachomotor.new(:large, "outB"),
+			   Ev3.Mock.Tachomotor.new(:medium, "outC")]
 		end
   end
 

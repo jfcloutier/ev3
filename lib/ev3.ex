@@ -6,14 +6,19 @@ defmodule Ev3 do
 	alias Ev3.Endpoint
 	alias Ev3.RobotSupervisor
   alias Ev3.CNS
-  
+  alias Ev3.Sysfs
+  alias Ev3.LegoSensor
+
+  @robot_config "robot_config.exs"
   @poll_runtime_delay 5000
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
-
+    if not testing?() and platform() == :brickpi do
+      initialize_brickpi_ports()
+    end
     children = [
       # Start the endpoint when the application starts
       supervisor(Endpoint, []),
@@ -31,6 +36,11 @@ defmodule Ev3 do
 		result
   end
 
+  def ports_config() do
+      {config, _} = Code.eval_file(@robot_config)
+      config
+  end
+
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
   def config_change(changed, _new, removed) do
@@ -42,6 +52,11 @@ defmodule Ev3 do
 	def testing?() do
 		Application.get_env(:ev3, :mock)
 	end
+
+  @doc "The runtime platform. Returns one of :brickpi, :ev3, :dev"
+  def platform() do
+    Application.get_env(:ev3, :platform)
+  end
 
   @doc "Return ERTS runtime stats"
   def runtime_stats() do  # In camelCase for Elm's automatic translation
@@ -75,6 +90,16 @@ defmodule Ev3 do
   defp to_int!(s) do
     {i, _} = Integer.parse(s)
     i
+  end
+
+  defp initialize_brickpi_ports() do
+    Enum.each(
+      ports_config(),
+      fn(%{port: port_name, device: device_type}) ->
+        if LegoSensor.sensor?(device_type) do # motor ports are preset to NXT
+          Sysfs.set_brickpi_port(port_name, device_type)
+        end
+      end)
   end
   
 end

@@ -1,6 +1,14 @@
 defmodule Ev3.Sysfs do
 	@moduledoc "Interface to sysfs device files"
 
+  alias Ev3.LegoMotor
+  alias Ev3.LegoSensor
+  alias Ev3.Device
+
+  require Logger
+  
+  @ports_path "/sys/class/lego-port"
+
 	@doc "Execute a command on a device"
   def execute_command(device, command) do
 		true = command in device.props.commands
@@ -43,6 +51,40 @@ defmodule Ev3.Sysfs do
  @doc "Writing a line to a file"
  def write_sys(dir, file, line) do
 	 File.write!("#{dir}/#{file}", line)
+ end
+
+ @doc "Associate a BrickPi port with an Ev3 motor or sensor" 
+ def set_brickpi_port(port, device_type) do
+   if (port in [:in1, :in2, :in3, :in4] and LegoSensor.sensor?(device_type))
+   or (port in [:outA, :outB, :outC, :outD] and LegoMotor.motor?(device_type)) do
+     port_path = "#{@ports_path}/port#{brickpi_port_number(port)}"
+     Logger.info("#{port_path}/mode <- #{Device.mode(device_type)}")
+     File.write!("#{port_path}/mode", Device.mode(device_type))
+     :timer.sleep(500)
+     if not Device.self_loading_on_brickpi?(device_type) do
+       Logger.info("#{port_path}/set_device <- #{Device.device_code(device_type)}")
+       :timer.sleep(500)
+       File.write!("#{port_path}/set_device", Device.device_code(device_type))
+     end
+     :ok
+   else
+     {:error, "Incompatible or incorrect #{port} and #{device_type}"}
+   end
+ end
+
+ ### PRIVATE
+
+ def brickpi_port_number(port) do
+   case port do
+     :in1 -> 0
+     :in2 -> 1
+     :outA -> 2
+     :outB -> 3
+     :in3 -> 4
+     :in4 -> 5
+     :outC -> 6
+     :outD -> 7
+   end
  end
 
 end

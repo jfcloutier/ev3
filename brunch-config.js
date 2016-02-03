@@ -50,7 +50,7 @@ exports.config = {
   plugins: {
     elmBrunch: {
       elmFolder: 'web/elm',
-        mainModules: ['Ev3Dashboard.elm'],
+        mainModules: ['RobotDashboard.elm'],
       outputFolder: '../static/vendor'
     },
     babel: {

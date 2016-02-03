@@ -29,7 +29,7 @@ var elmDiv = document.getElementById('elm-main')
                   behaviorPort: {name: "", event: "", value: ""},
                   intentPort: {actuator: "", about: "", value: "", strong: false}
                  }
-, elmApp = Elm.embed(Elm.Ev3Dashboard, elmDiv, initialState);
+, elmApp = Elm.embed(Elm.RobotDashboard, elmDiv, initialState);
 
 // Now that you are connected, you can join channels with a topic:
 let robot_channel = socket.channel("ev3:dashboard", {})

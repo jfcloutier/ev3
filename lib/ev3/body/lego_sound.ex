@@ -36,12 +36,15 @@ defmodule Ev3.LegoSound do
 
   @doc "Speak out words with a given volume, speed and voice"
   def speak(words, volume, speed, voice \\ "en") do
-    if Ev3.testing? do
-      args =  ["-a", "#{volume}", "-s", "#{speed}", "-v", "#{voice}", words]
-      System.cmd("espeak", args)
-    else
-      :os.cmd('espeak -a #{volume} -s #{speed} -v #{voice} "#{words}" --stdout | aplay')
-    end 
+    case Ev3.platform() do
+      :ev3 ->
+        :os.cmd('espeak -a #{volume} -s #{speed} -v #{voice} "#{words}" --stdout | aplay')
+      :brickpi ->
+        Logger.warn("Can't speak out: ${words}")
+      :dev ->
+        args =  ["-a", "#{volume}", "-s", "#{speed}", "-v", "#{voice}", words]
+        System.cmd("espeak", args)
+    end
   end
 
   @doc "Speak words loud and clear"

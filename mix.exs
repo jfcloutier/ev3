@@ -18,7 +18,7 @@ defmodule Ev3.Mixfile do
   def application do
     [mod: {Ev3, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger],
-		 env: [{:mock, true}]
+		 env: [{:mock, true}, {:platform, :dev}] # platform in [:brickpi, :ev3, :dev]
 		]
   end
 

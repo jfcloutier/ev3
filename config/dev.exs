@@ -7,7 +7,7 @@ use Mix.Config
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
 config :ev3, Ev3.Endpoint,
-#  url: [host: "192.168.1.136"],
+#  url: [host: "192.168.1.147"],
   http: [port: 4000],
   debug_errors: true,
   code_reloader: true,
