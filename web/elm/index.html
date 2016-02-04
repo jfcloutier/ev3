@@ -11362,7 +11362,7 @@ Elm.RobotConfig.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var hostname = "localhost";
+   var hostname = "192.168.1.105";
    return _elm.RobotConfig.values = {_op: _op,hostname: hostname};
 };Elm.Status = Elm.Status || {};
 Elm.Status.Update = Elm.Status.Update || {};
@@ -11511,11 +11511,11 @@ Elm.Comportment.Update.make = function (_elm) {
                var _p1 = _p2.event;
                switch (_p1)
                {case "started": return _U.update(behavior,{started: true});
-                  case "stopped": return _p2.reflex ? _U.update(behavior,{started: false,reflex: _p2.reflex,state: "nothing"}) : _U.update(behavior,
-                    {started: false,reflex: _p2.reflex});
-                  case "overwhelmed": return _U.update(behavior,{started: true,inhibited: false,overwhelmed: true});
+                  case "stopped": return _p2.reflex ? _U.update(behavior,{started: false,reflex: true,state: "nothing"}) : _U.update(behavior,
+                    {started: false,reflex: false});
+                  case "overwhelmed": return _U.update(behavior,{started: true,overwhelmed: true});
                   case "inhibited": return _U.update(behavior,{started: true,inhibited: true});
-                  case "transited": return _U.update(behavior,{started: true,inhibited: false,reflex: _p2.reflex,state: _p2.value});
+                  case "transited": return _U.update(behavior,{started: true,overwhelmed: false,inhibited: false,reflex: _p2.reflex,state: _p2.value});
                   default: return behavior;}
             }();
             return {ctor: "_Tuple2",_0: _U.update(model,{behaviors: A3($Dict.insert,behavior.name,updatedBehavior,model.behaviors)}),_1: $Effects.none};
@@ -11608,6 +11608,7 @@ Elm.Status.View.make = function (_elm) {
    var _op = {};
    var view = F2(function (address,model) {
       var src = function (active) {    return active ? "/images/active.png" : "/images/fainted.png";};
+      var swapUsed = function (value) {    return _U.cmp(value,0) > 0 ? "danger" : "success";};
       var over = F2(function (value,threshold) {    return _U.cmp(value,threshold) < 0 ? "danger" : "success";});
       var btnColor = function (paused) {    return $Basics.not(paused) ? "btn-success" : "btn-danger";};
       var pausingLabel = function (model) {    return $Basics.not(model.paused) ? "Pause" : "Resume";};
@@ -11645,7 +11646,9 @@ Elm.Status.View.make = function (_elm) {
                               ,A2($Html.td,
                               _U.list([$Html$Attributes.$class(A2(over,model.runtime.swapFree,10))]),
                               _U.list([$Html.text($Basics.toString(model.runtime.swapFree))]))
-                              ,A2($Html.td,_U.list([]),_U.list([$Html.text($Basics.toString(model.runtime.swapUsed))]))]))]))]))]))]))]));
+                              ,A2($Html.td,
+                              _U.list([$Html$Attributes.$class(swapUsed(model.runtime.swapUsed))]),
+                              _U.list([$Html.text($Basics.toString(model.runtime.swapUsed))]))]))]))]))]))]))]));
    });
    return _elm.Status.View.values = {_op: _op,view: view};
 };Elm.Perception = Elm.Perception || {};

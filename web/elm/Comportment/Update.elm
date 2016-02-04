@@ -32,12 +32,12 @@ update action model =
             case behaviorData.event of
               "started" -> {behavior | started = True}
               "stopped" -> if behaviorData.reflex then
-                             {behavior | started = False, reflex = behaviorData.reflex, state = "nothing"}
+                             {behavior | started = False, reflex = True, state = "nothing"}
                            else
-                               {behavior | started = False, reflex = behaviorData.reflex} 
-              "overwhelmed" -> {behavior | started = True, inhibited = False, overwhelmed = True}
+                               {behavior | started = False, reflex = False} 
+              "overwhelmed" -> {behavior | started = True, overwhelmed = True}
               "inhibited" -> {behavior | started = True, inhibited = True}
-              "transited" -> {behavior | started = True, inhibited = False, reflex = behaviorData.reflex, state = behaviorData.value}
+              "transited" -> {behavior | started = True, overwhelmed = False, inhibited = False, reflex = behaviorData.reflex, state = behaviorData.value}
               _ -> behavior
         in
           ({model | behaviors = Dict.insert behavior.name updatedBehavior model.behaviors}, Effects.none)

@@ -24,6 +24,11 @@ view address model =
           "danger"
         else
           "success"
+      swapUsed value =
+        if value > 0 then
+          "danger"
+        else
+          "success"
       src active =
         if active then
           "/images/active.png"
@@ -63,7 +68,7 @@ view address model =
                                                      td [class (over model.runtime.ramFree 10)] [text (toString model.runtime.ramFree)]
                                                     , td [] [text (toString model.runtime.ramUsed)]
                                                     , td [class (over model.runtime.swapFree 10)] [text (toString model.runtime.swapFree)]
-                                                    , td [] [text (toString model.runtime.swapUsed)]
+                                                    , td [class (swapUsed model.runtime.swapUsed)] [text (toString model.runtime.swapUsed)]
                                                     ]
                                               ]
                                     ]
