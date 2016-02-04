@@ -6,6 +6,7 @@ defmodule Ev3.Behavior do
 	alias Ev3.Motive
 	alias Ev3.Transition
 	alias Ev3.FSM
+  alias Ev3.BehaviorConfig
   alias Ev3.CNS
 	require Logger
 
@@ -16,6 +17,7 @@ defmodule Ev3.Behavior do
 	def start_link(behavior_config) do
 		Logger.info("Starting #{__MODULE__} #{behavior_config.name}")
 		Agent.start_link(fn() -> %{name: behavior_config.name,
+                               reflex: BehaviorConfig.reflex?(behavior_config),
 															 fsm: behavior_config.fsm,
 															 motives: [],
 															 fsm_state: nil } end,
@@ -48,7 +50,7 @@ defmodule Ev3.Behavior do
 			fn(state) ->
         if check_freshness(name, percept) do
 				  case transit_on(percept, state) do
-					  %{fsm_state: final_state, fsm: %FSM{final_state: final_state}} = end_state ->
+					  %{reflex: reflex, fsm_state: final_state, fsm: %FSM{final_state: final_state}} = end_state when not reflex ->
 						  final_transit(end_state)
 					  new_state ->
 						  new_state
@@ -71,7 +73,7 @@ defmodule Ev3.Behavior do
 		if not Memory.inhibited?(on_motive.about) do
 			if not on_motive in state.motives do
 				Logger.info("STARTED behavior #{state.name}")
-        CNS.notify_started(:behavior, state.name)
+        CNS.notify_started(:behavior, state.name, state.reflex)
 				initial_transit(%{state | motives: [on_motive | state.motives]})
 			else
 				state
@@ -95,7 +97,7 @@ defmodule Ev3.Behavior do
 			[] ->
 				Logger.info("STOPPED behavior #{state.name}: #{off_motive.about} if off")
 				final_transit(state)
-        CNS.notify_stopped(:behavior, state.name)
+        CNS.notify_stopped(:behavior, state.name, state.reflex)
 				%{state | motives: [], fsm_state: nil}
 			motives ->
 				Logger.info("NOT STOPPED behavior #{state.name} because #{inspect surviving_motives}")
@@ -134,9 +136,21 @@ defmodule Ev3.Behavior do
 		)
 	end
 
-	defp transit_on(_percept, %{fsm_state: nil} = state) do # do nothing if not started
+	defp transit_on(_percept, %{fsm_state: nil, reflex: false} = state) do # do nothing if not started
 		state
 	end
+
+  defp transit_on(percept, %{reflex: true} = state) do
+    case find_transition(percept, state) do
+      nil ->
+        CNS.notify_stopped(:behavior, state.name, true)
+        state
+      %Transition{doing: action} ->
+        CNS.notify_reflexed(:behavior, state.name, {percept.about, percept.value})
+        action.(percept, state)
+        state
+    end
+  end
 	
 	defp transit_on(percept, state) do
 		case find_transition(percept, state) do
@@ -153,6 +167,14 @@ defmodule Ev3.Behavior do
 				end
 		end
 	end
+
+  defp find_transition(percept, %{fsm: fsm, reflex: true}) do
+    fsm.transitions
+		|> Enum.find(fn(transition) ->
+      percept.about == transition.on
+      and transition.condition == nil or transition.condition.(percept.value)
+    end)
+  end
 
 	defp find_transition(percept, %{fsm_state: fsm_state, fsm: fsm} = _state) do
 		fsm.transitions

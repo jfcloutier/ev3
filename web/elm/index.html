@@ -11312,9 +11312,9 @@ Elm.Comportment.Model.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
    var initialModel = {behaviors: $Dict.empty};
-   var Behavior = F5(function (a,b,c,d,e) {    return {name: a,started: b,inhibited: c,overwhelmed: d,state: e};});
-   var defaultBehavior = A5(Behavior,"",false,false,false,"");
-   var BehaviorData = F3(function (a,b,c) {    return {name: a,event: b,value: c};});
+   var Behavior = F6(function (a,b,c,d,e,f) {    return {name: a,started: b,reflex: c,inhibited: d,overwhelmed: e,state: f};});
+   var defaultBehavior = function (name) {    return A6(Behavior,name,false,false,false,false,"");};
+   var BehaviorData = F4(function (a,b,c,d) {    return {name: a,reflex: b,event: c,value: d};});
    var Model = function (a) {    return {behaviors: a};};
    return _elm.Comportment.Model.values = {_op: _op
                                           ,Model: Model
@@ -11506,15 +11506,16 @@ Elm.Comportment.Update.make = function (_elm) {
                                                                                                                       ,_1: $Effects.none};
          } else {
             var _p2 = _p0._0;
-            var behavior = A2($Maybe.withDefault,$Comportment$Model.defaultBehavior,A2($Dict.get,_p2.name,model.behaviors));
+            var behavior = A2($Maybe.withDefault,$Comportment$Model.defaultBehavior(_p2.name),A2($Dict.get,_p2.name,model.behaviors));
             var updatedBehavior = function () {
                var _p1 = _p2.event;
                switch (_p1)
                {case "started": return _U.update(behavior,{started: true});
-                  case "stopped": return _U.update(behavior,{started: false});
+                  case "stopped": return _p2.reflex ? _U.update(behavior,{started: false,reflex: _p2.reflex,state: "nothing"}) : _U.update(behavior,
+                    {started: false,reflex: _p2.reflex});
                   case "overwhelmed": return _U.update(behavior,{started: true,inhibited: false,overwhelmed: true});
                   case "inhibited": return _U.update(behavior,{started: true,inhibited: true});
-                  case "transited": return _U.update(behavior,{started: true,inhibited: false,state: _p2.value});
+                  case "transited": return _U.update(behavior,{started: true,inhibited: false,reflex: _p2.reflex,state: _p2.value});
                   default: return behavior;}
             }();
             return {ctor: "_Tuple2",_0: _U.update(model,{behaviors: A3($Dict.insert,behavior.name,updatedBehavior,model.behaviors)}),_1: $Effects.none};
@@ -11749,17 +11750,26 @@ Elm.Comportment.View.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
    var view = F2(function (address,model) {
+      var is_or_reacted = function (reflex) {    return reflex ? " reacted to " : " is ";};
       var statusClass = function (behavior) {    return behavior.started ? behavior.overwhelmed ? "bg-warning" : "bg-success" : "bg-danger";};
-      var inhibitedText = F2(function (bool,name) {    return bool ? A3($Html.node,"s",_U.list([]),_U.list([$Html.text(name)])) : $Html.text(name);});
-      var getBehavior = F2(function (name,behaviors) {    return A2($Maybe.withDefault,$Comportment$Model.defaultBehavior,A2($Dict.get,name,behaviors));});
+      var formattedText = F3(function (inhibited,reflex,name) {
+         return inhibited ? A3($Html.node,"s",_U.list([]),_U.list([$Html.text(name)])) : reflex ? A2($Html.em,
+         _U.list([]),
+         _U.list([$Html.text(name)])) : $Html.text(name);
+      });
+      var getBehavior = F2(function (name,behaviors) {
+         return A2($Maybe.withDefault,$Comportment$Model.defaultBehavior(name),A2($Dict.get,name,behaviors));
+      });
       var viewBehavior = F3(function (address,behaviors,name) {
          var behavior = A2(getBehavior,name,behaviors);
          return A2($Html.tr,
          _U.list([]),
          _U.list([A2($Html.td,
          _U.list([]),
-         _U.list([A2($Html.strong,_U.list([$Html$Attributes.$class(statusClass(behavior))]),_U.list([A2(inhibitedText,behavior.inhibited,name)]))
-                 ,A2($Html.span,_U.list([]),_U.list([$Html.text(" is "),$Html.text(behavior.state)]))]))]));
+         _U.list([A2($Html.strong,
+                 _U.list([$Html$Attributes.$class(statusClass(behavior))]),
+                 _U.list([A3(formattedText,behavior.inhibited,behavior.reflex,name)]))
+                 ,A2($Html.span,_U.list([]),_U.list([$Html.text(is_or_reacted(behavior.reflex)),$Html.text(behavior.state)]))]))]));
       });
       return A2($Html.div,
       _U.list([]),
@@ -11866,13 +11876,16 @@ Elm.RobotDashboard.make = function (_elm) {
    var behaviorPort = Elm.Native.Port.make(_elm).inboundSignal("behaviorPort",
    "Comportment.Model.BehaviorData",
    function (v) {
-      return typeof v === "object" && "name" in v && "event" in v && "value" in v ? {_: {}
-                                                                                    ,name: typeof v.name === "string" || typeof v.name === "object" && v.name instanceof String ? v.name : _U.badPort("a string",
-                                                                                    v.name)
-                                                                                    ,event: typeof v.event === "string" || typeof v.event === "object" && v.event instanceof String ? v.event : _U.badPort("a string",
-                                                                                    v.event)
-                                                                                    ,value: typeof v.value === "string" || typeof v.value === "object" && v.value instanceof String ? v.value : _U.badPort("a string",
-                                                                                    v.value)} : _U.badPort("an object with fields `name`, `event`, `value`",v);
+      return typeof v === "object" && "name" in v && "reflex" in v && "event" in v && "value" in v ? {_: {}
+                                                                                                     ,name: typeof v.name === "string" || typeof v.name === "object" && v.name instanceof String ? v.name : _U.badPort("a string",
+                                                                                                     v.name)
+                                                                                                     ,reflex: typeof v.reflex === "boolean" ? v.reflex : _U.badPort("a boolean (true or false)",
+                                                                                                     v.reflex)
+                                                                                                     ,event: typeof v.event === "string" || typeof v.event === "object" && v.event instanceof String ? v.event : _U.badPort("a string",
+                                                                                                     v.event)
+                                                                                                     ,value: typeof v.value === "string" || typeof v.value === "object" && v.value instanceof String ? v.value : _U.badPort("a string",
+                                                                                                     v.value)} : _U.badPort("an object with fields `name`, `reflex`, `event`, `value`",
+      v);
    });
    var motivePort = Elm.Native.Port.make(_elm).inboundSignal("motivePort",
    "Motivation.Model.Motive",

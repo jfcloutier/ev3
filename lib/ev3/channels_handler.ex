@@ -37,28 +37,33 @@ defmodule Ev3.ChannelsHandler do
 		{:ok, state}
 	end
 
-  def handle_event({:behavior_started, name} ,state) do
-    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "started", value: ""})
+  def handle_event({:behavior_started, name, reflex} ,state) do
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, reflex: reflex, event: "started", value: ""})
     {:ok, state}
   end
   
-  def handle_event({:behavior_stopped, name} ,state) do
-    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "stopped", value: ""})
+  def handle_event({:behavior_stopped, name, reflex} ,state) do
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, reflex: reflex, event: "stopped", value: ""})
     {:ok, state}
   end
   
   def handle_event({:overwhelmed, :behavior, name} ,state) do
-    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "overwhelmed", value: ""})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, reflex: false, event: "overwhelmed", value: ""})
     {:ok, state}
   end
   
   def handle_event({:behavior_inhibited, name} ,state) do
-    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "inhibited", value: ""})
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, reflex: false, event: "inhibited", value: ""})
     {:ok, state}
   end
   
-  def handle_event({:behavior_transited, name, to_state} ,state) do
-    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, event: "transited", value: to_state})
+  def handle_event({:behavior_transited, name, to_state}, state) do
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: name, reflex: false, event: "transited", value: to_state})
+    {:ok, state}
+  end
+
+  def handle_event({:behavior_reflexed, behavior_name, {percept_name, percept_value}}, state) do
+    Endpoint.broadcast!(@dashboard, "behavior", %{name: behavior_name, reflex: true, event: "transited", value: "#{stringify(percept_name)} #{stringify(percept_value)}"})
     {:ok, state}
   end
 

@@ -67,13 +67,13 @@ defmodule Ev3.CNS do
 	end
 
   @doc "A behavior started"
-  def notify_started(:behavior, behavior_name) do
-    GenServer.cast(@name, {:notify_behavior_started, behavior_name})
+  def notify_started(:behavior, behavior_name, reflex?) do
+    GenServer.cast(@name, {:notify_behavior_started, behavior_name, reflex?})
   end
 
   @doc "A behavior stopped"
-  def notify_stopped(:behavior, behavior_name) do
-    GenServer.cast(@name, {:notify_behavior_stopped, behavior_name})
+  def notify_stopped(:behavior, behavior_name, reflex?) do
+    GenServer.cast(@name, {:notify_behavior_stopped, behavior_name, reflex?})
   end
 
   @doc "A behavior inhibited"
@@ -84,6 +84,11 @@ defmodule Ev3.CNS do
   @doc "A behavior transited to a new state"
   def notify_transited(:behavior, behavior_name, state_name) do
     GenServer.cast(@name, {:notify_behavior_transited, behavior_name, state_name})
+  end
+
+  @doc "A reflex behavior executed"
+  def notify_reflexed(:behavior, behavior_name, {percept_name, percept_value}) do
+    GenServer.cast(@name, {:notify_behavior_reflexed, behavior_name, {percept_name, percept_value}})
   end
 
   @doc "Revive from fainting"
@@ -157,13 +162,13 @@ defmodule Ev3.CNS do
     end
 	end
 
-  def handle_cast({:notify_behavior_started, name}, state) do
-    GenEvent.notify(@dispatcher, {:behavior_started, name})
+  def handle_cast({:notify_behavior_started, name, reflex?}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_started, name, reflex?})
     {:noreply, state}
   end
 
-  def handle_cast({:notify_behavior_stopped, name}, state) do
-    GenEvent.notify(@dispatcher, {:behavior_stopped, name})
+  def handle_cast({:notify_behavior_stopped, name, reflex?}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_stopped, name, reflex?})
     {:noreply, state}
   end
 
@@ -174,6 +179,11 @@ defmodule Ev3.CNS do
 
   def handle_cast({:notify_behavior_transited, name, state_name}, state) do
     GenEvent.notify(@dispatcher, {:behavior_transited, name, state_name})
+    {:noreply, state}
+  end
+
+  def handle_cast({:notify_behavior_reflexed, behavior_name, {percept_name, percept_value}}, state) do
+    GenEvent.notify(@dispatcher, {:behavior_reflexed, behavior_name, {percept_name, percept_value}})
     {:noreply, state}
   end
 

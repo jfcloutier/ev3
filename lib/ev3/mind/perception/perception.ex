@@ -129,6 +129,8 @@ defmodule Ev3.Perception do
 	def collision() do
 		fn
 		(_percept, %{percepts: []}) -> nil
+		(%Percept{about: :touch, value: :pressed}, _memories) ->
+					Percept.new(about: :collision, value: :now)
 		(%Percept{about: :distance, value: n}, %{percepts: percepts}) when n < 10 ->
 				if not any_memory?(
 							percepts,
@@ -137,7 +139,7 @@ defmodule Ev3.Perception do
 							fn(value) -> value > 10 end) do
 					Percept.new(about: :collision, value: :imminent)
 				else
-					nil
+					Percept.new(about: :collision, value: :none)
 				end
 			(%Percept{about: :distance, value: val}, %{percepts: percepts}) ->
 				approaching? = latest_memory?(
@@ -152,10 +154,10 @@ defmodule Ev3.Perception do
 				if approaching? and proximal? do
 					Percept.new(about: :collision, value: :soon)
 				else
-					nil
+					Percept.new(about: :collision, value: :none)
 				end
-			(%Percept{about: :touch, value: :pressed}, _memories) ->
-					Percept.new(about: :collision, value: :now)
+			(%Percept{about: :touch, value: :released}, _memories) ->
+					Percept.new(about: :collision, value: :none)
 			(_, _) -> nil
 		end
 	end

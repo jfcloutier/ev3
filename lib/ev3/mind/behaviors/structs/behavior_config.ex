@@ -1,9 +1,19 @@
 defmodule Ev3.BehaviorConfig do
 	@moduledoc "A behavior's configuration"
 
-	defstruct name: nil, motivated_by: nil, senses: nil, fsm: nil
+	defstruct name: nil, motivated_by: [], senses: [], fsm: nil
 
-	@doc "Make a new behavior configuration"
+  @doc "Make a new reflex behavior configuration"
+	def new(name: name,
+					senses: senses,
+					fsm: fsm) do
+    new(name: name,
+					motivated_by: [],
+					senses: senses,
+					fsm: fsm)
+  end
+
+  @doc "Make a new motivated behavior configuration"
 	def new(name: name,
 					motivated_by: motive_names,
 					senses: senses,
@@ -13,5 +23,10 @@ defmodule Ev3.BehaviorConfig do
 												senses: senses,
 												fsm: fsm}
 	end
+
+  @doc "Does this define a reflex?"
+  def reflex?(config) do
+    config.motivated_by == []
+  end
 
 end

@@ -12,6 +12,39 @@ defmodule Ev3.Behaviors do
 	@doc "Give the configurations of all benaviors to be activated by motives and driven by percepts"
   def behavior_configs() do
 		[
+        # Reflexive behaviors
+        
+        BehaviorConfig.new( # Collision avoidance reflex
+          name: :colliding, # no motivation, start or final state -> it's a reflex
+          senses: [:collision],
+          fsm: %FSM{
+                   transitions: [
+										 %Transition{on: :collision,
+																  condition: fn(value) -> value == :imminent end,
+																  doing: avoid_collision()
+																},
+   									 %Transition{on: :collision,
+																  condition: fn(value) -> value == :now end,
+																  doing: backoff(true)
+																}
+                   ]
+               }
+        ),
+        BehaviorConfig.new( # Getting unstuck
+          name: :getting_unstuck,
+          senses: [:stuck],
+          fsm: %FSM{
+                   transitions: [
+									   %Transition{on: :stuck,
+                                  condition: fn(value) -> value end, # true or false
+																  doing: unstuck()
+															  }
+                   ]
+               }
+        ),
+                            
+        # Motivated behaviors
+        
 				BehaviorConfig.new( # roam around
 					name: :exploring,
 					motivated_by: [:curiosity],
@@ -31,24 +64,6 @@ defmodule Ev3.Behaviors do
 																 on: :time_elapsed,
 																 to: :roaming,
 																 doing: roam()
-																},
-										 %Transition{from: [:roaming],
-																 on: :collision,
-																 to: :roaming,
-																 condition: fn(value) -> value == :imminent end,
-																 doing: avoid_collision()
-																},
-										 %Transition{from: [:roaming],
-																 on: :collision,
-																 to: :roaming,
-																 condition: fn(value) -> value == :now end,
-																 doing: backoff(true)
-																},
-										 %Transition{from: [:roaming],
-																 on: :stuck,
-																 to: :roaming,
-                                 condition: fn(value) -> value end, # true or false
-																 doing: unstuck()
 																},
 										 %Transition{to: :ended,
 																 doing: nothing()}
@@ -86,24 +101,6 @@ defmodule Ev3.Behaviors do
 																 to: :off_track,
 																	condition: fn(value) -> value == :unknown end,
 																	doing: change_course()
-																},
-										 %Transition{from: [:on_track, :off_track],
-																 on: :collision,
-																 to: :off_track,
-																	condition: fn(value) -> value == :imminent end,
-																	doing: avoid_collision()
-																},
-										 %Transition{from: [:on_track, :off_track],
-																 on: :collision,
-																 to: :off_track,
-																	condition: fn(value) -> value == :now end,
-																	doing: backoff(true)
-																},
-										 %Transition{from: [:on_track, :off_track],
-																 on: :stuck,
-																 to: :off_track,
-                                 condition: fn(value) -> value end, # true or false
-																 doing: unstuck()
 																},
 										 %Transition{from: [:on_track, :off_track, :feeding],
 																 on: :food,

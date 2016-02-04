@@ -10,12 +10,15 @@ view: Signal.Address Action -> Model -> Html
 view address model =
   let
     getBehavior name behaviors =
-      Dict.get name behaviors |> Maybe.withDefault Model.defaultBehavior
-    inhibitedText bool name =
-      if bool then
+      Dict.get name behaviors |> Maybe.withDefault (Model.defaultBehavior name)
+    formattedText inhibited reflex name =
+      if inhibited then
         node "s" [] [text name]
       else
-        text name
+        if reflex then
+          em [] [text name]
+        else
+          text name
     statusClass behavior =
       if behavior.started then
         if behavior.overwhelmed then
@@ -24,6 +27,11 @@ view address model =
           "bg-success"
       else
         "bg-danger"
+    is_or_reacted reflex =
+      if reflex then
+        " reacted to "
+      else
+        " is "
     viewBehavior address behaviors name =
       let
         behavior = getBehavior name behaviors
@@ -31,8 +39,8 @@ view address model =
         tr []
              [
               td [] [
-                    strong [class(statusClass behavior)] [inhibitedText (behavior.inhibited) name]
-                   , span [] [text " is ", text (behavior.state)]
+                    strong [class (statusClass behavior)] [formattedText behavior.inhibited behavior.reflex name]
+                   , span [] [text (is_or_reacted behavior.reflex),  text (behavior.state)]
                    ]
              ]
   in

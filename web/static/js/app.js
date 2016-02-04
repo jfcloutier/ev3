@@ -26,7 +26,7 @@ var elmDiv = document.getElementById('elm-main')
                   activeStatePort: {active: true},
                   perceptPort: {about: "", value: ""},
                   motivePort: {about: "", on: false, inhibited: false},
-                  behaviorPort: {name: "", event: "", value: ""},
+                  behaviorPort: {name: "", reflex: false, event: "", value: ""},
                   intentPort: {actuator: "", about: "", value: "", strong: false}
                  }
 , elmApp = Elm.embed(Elm.RobotDashboard, elmDiv, initialState);

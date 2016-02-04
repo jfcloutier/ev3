@@ -37,13 +37,13 @@ main =
 inputs: List (Signal Action)
 inputs =
   [
-    Signal.map(App.Update.StatusAction << Status.Update.SetRuntimeStats) runtimeStatsPort
-  , Signal.map(App.Update.StatusAction << Status.Update.SetActive) activeStatePort
-  , Signal.map(App.Update.PerceptionAction << Perception.Update.AddPercept) perceptPort
-  , Signal.map(App.Update.MotivationAction << Motivation.Update.SetMotive) motivePort
-  , Signal.map(App.Update.ComportmentAction << Comportment.Update.SetBehavior) behaviorPort
-  , Signal.map(App.Update.ComportmentAction << Comportment.Update.ReviveAll) activeStatePort
-  , Signal.map(App.Update.ActuationAction << Actuation.Update.AddIntent) intentPort
+    Signal.map (App.Update.StatusAction << Status.Update.SetRuntimeStats) runtimeStatsPort
+  , Signal.map (App.Update.StatusAction << Status.Update.SetActive) activeStatePort
+  , Signal.map (App.Update.PerceptionAction << Perception.Update.AddPercept) perceptPort
+  , Signal.map (App.Update.MotivationAction << Motivation.Update.SetMotive) motivePort
+  , Signal.map (App.Update.ComportmentAction << Comportment.Update.SetBehavior) behaviorPort
+  , Signal.map (App.Update.ComportmentAction << Comportment.Update.ReviveAll) activeStatePort
+  , Signal.map (App.Update.ActuationAction << Actuation.Update.AddIntent) intentPort
   ]
 
 -- PORTS

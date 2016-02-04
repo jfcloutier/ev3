@@ -35,11 +35,11 @@ defmodule Ev3.RobotSupervisor do
 			worker(CNS, []),
 			worker(Memory, []),
       worker(InternalClock, []),
-			supervisor(PerceptorsSupervisor, []),
-			supervisor(DetectorsSupervisor, []),
-			supervisor(MotivatorsSupervisor, []),
+			supervisor(ActuatorsSupervisor, []),
 			supervisor(BehaviorsSupervisor, []),
-			supervisor(ActuatorsSupervisor, [])
+			supervisor(MotivatorsSupervisor, []),
+			supervisor(DetectorsSupervisor, []),
+			supervisor(PerceptorsSupervisor, [])
 					   ]
 		opts = [strategy: :one_for_one]
 		supervise(children, opts)
@@ -55,7 +55,7 @@ defmodule Ev3.RobotSupervisor do
 	@doc "Start the robot's execution"
 	def start_execution() do
 		Logger.info("Starting execution")
-		start_actuators()
+  	start_actuators()
 		start_behaviors()
 		start_motivators()
 	end

@@ -27,14 +27,17 @@ update action model =
           (model, Effects.none)
       SetBehavior behaviorData ->
         let
-          behavior = Dict.get behaviorData.name model.behaviors |> Maybe.withDefault Model.defaultBehavior
+          behavior = Dict.get behaviorData.name model.behaviors |> Maybe.withDefault (Model.defaultBehavior behaviorData.name)
           updatedBehavior =
             case behaviorData.event of
               "started" -> {behavior | started = True}
-              "stopped" -> {behavior | started = False}
+              "stopped" -> if behaviorData.reflex then
+                             {behavior | started = False, reflex = behaviorData.reflex, state = "nothing"}
+                           else
+                               {behavior | started = False, reflex = behaviorData.reflex} 
               "overwhelmed" -> {behavior | started = True, inhibited = False, overwhelmed = True}
               "inhibited" -> {behavior | started = True, inhibited = True}
-              "transited" -> {behavior | started = True, inhibited = False, state = behaviorData.value}
+              "transited" -> {behavior | started = True, inhibited = False, reflex = behaviorData.reflex, state = behaviorData.value}
               _ -> behavior
         in
           ({model | behaviors = Dict.insert behavior.name updatedBehavior model.behaviors}, Effects.none)
