@@ -7,6 +7,11 @@ defmodule Ev3.Utils do
 		((mega * 1_000_000) + secs) * 1000 + div(micro, 1000)
 	end
 
+  @doc "Supported time units"
+  def units() do
+    [:msecs, :secs, :mins, :hours]
+  end
+
 	@doc "Convert a duration to msecs"
 	def convert_to_msecs(nil), do: nil
 	def convert_to_msecs({count, unit}) do

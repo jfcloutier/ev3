@@ -257,7 +257,7 @@ defmodule Ev3.Perception do
 		end
 	end
 
-	@doc "Where's the bacon?"
+	@doc "Where's the b(e)acon?"
 	def scent() do
 		fn
 		(%Percept{about: {:beacon_distance, 1}, value: value}, _memories) ->

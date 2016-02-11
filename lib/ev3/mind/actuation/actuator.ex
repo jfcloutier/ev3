@@ -82,8 +82,10 @@ defmodule Ev3.Actuator do
 													&(MotorSpec.matches?(motor_spec, &1)))
 				if motor == nil do
 					Logger.warn("Motor not found matching #{inspect motor_spec} in #{inspect all_motors}")
-				end
-				Map.put(acc, motor_spec.name, update_props(motor, motor_spec.props))
+          acc
+				else
+				  Map.put(acc, motor_spec.name, update_props(motor, motor_spec.props))
+        end
 			end)
 		found
 	end
@@ -98,8 +100,10 @@ defmodule Ev3.Actuator do
 													&(LEDSpec.matches?(led_spec, &1)))
 				if led == nil do
 					Logger.warn("LED not found matching #{inspect led_spec} in #{inspect all_leds}")
-				end
-				Map.put(acc, led_spec.name, update_props(led, led_spec.props))
+          acc
+				else
+				  Map.put(acc, led_spec.name, update_props(led, led_spec.props))
+        end
 			end)
 		found
 	end
@@ -114,8 +118,10 @@ defmodule Ev3.Actuator do
                                  &(SoundSpec.matches?(sound_spec, &1)))
         if sound_player == nil do
           Logger.warn("Sound player not found matching #{inspect sound_spec} in #{inspect all_sound_players}")
+          acc
+        else
+          Map.put(acc, sound_spec.name, update_props(sound_player, sound_spec.props))
         end
-        Map.put(acc, sound_spec.name, update_props(sound_player, sound_spec.props))
       end)
     found
   end

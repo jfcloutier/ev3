@@ -26,7 +26,9 @@ view address model =
         , table [classList [("table", True), ("table-bordered", True)]]
                   [
                    tbody []
-                           (List.map (viewPercept address model.percepts) (Dict.keys model.percepts |> List.sort))
+                           (List.map
+                                  (viewPercept address model.percepts)
+                                  (Dict.keys model.percepts |> List.sort))
                   ]
         ]
 

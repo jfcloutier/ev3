@@ -40,7 +40,7 @@ exports.config = {
     // Dependencies and current project directories to watch
     watched: ["deps/phoenix/web/static",
               "deps/phoenix_html/web/static",
-              "web/static", "test/static", "web/elm"],
+              "web/static", "test/static", "web/elm", "web/elm/src"],
 
     // Where to compile files to
     public: "priv/static"
@@ -50,7 +50,7 @@ exports.config = {
   plugins: {
     elmBrunch: {
       elmFolder: 'web/elm',
-        mainModules: ['RobotDashboard.elm'],
+        mainModules: ['src/RobotDashboard.elm'],
       outputFolder: '../static/vendor'
     },
     babel: {
