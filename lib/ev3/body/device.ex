@@ -1,6 +1,5 @@
 defmodule Ev3.Device do
-  @moduledoc "Data specifying a motor, sensor or LED, 
-              and its current state."
+  @moduledoc "Data specifying a motor, sensor or LED."
   
   @doc """
   class - :sensor, :motor or :led
