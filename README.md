@@ -11,8 +11,8 @@ The goals of this project are:
 + Give Elixir coders access to the EV3 via [EV3DEV](http://ev3dev.org) -- DONE --
 + Implement a function domain language for interacting with the EV3 brick --DONE --
 + Take full advantage of processes and OTP to implement a "society of mind" model, with perception, motivation, behavior and actuation. --DONE--
-+ Implement a robot control panel in Elm and Phoenix. --TBD--
-+ Have fun! -- so far so good --
++ Implement a robot control panel in Elm and Phoenix. --DONE--
++ Having fun! -- so far so good --
 
 This project was inspired by [Torben Hoffmann](http://www.elixirconf.eu/elixirconf2015/torben-hoffmann). Thanks Torben!
 
@@ -31,7 +31,7 @@ I use the following shell script to quickly upload and install code on the EV3 b
 
 On my computer's .bashrc file:
 
-`alias deploy-ev3='pushd ~/projects; tar -cf ev3.tar --exclude="*.git" --exclude="*.*~" --exclude=".gitignore" ev3; scp ev3.tar jf@192.168.1.125:~jf/ev3.tar; popd'`
+alias deploy-ev3='pushd ~/projects/ev3; mix compile; node_modules/brunch/bin/brunch build; pushd ~/projects; tar -cf ev3.tar --exclude="*.git" --exclude="*.*~" --exclude=".gitignore" ev3; scp ev3.tar robot@192.168.1.100:~/ev3.tar; popd; popd'
 
 On the EV3 brick, in my .bashrc file:
 
