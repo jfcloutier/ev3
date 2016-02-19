@@ -5,10 +5,10 @@ defmodule Ev3.Device do
   @doc """
   class - :sensor, :motor or :led
   path - sys file path
-	port - the name of the port the device is connected to
-	type - the type of motor, sensor or led
-	props - idiosyncratic properties of the device
-	mock - whether this is a mock device or a real one
+  port - the name of the port the device is connected to
+  type - the type of motor, sensor or led
+  props - idiosyncratic properties of the device
+  mock - whether this is a mock device or a real one
   """
   defstruct class: nil, path: nil, port: nil, type: nil, props: %{}, mock: false
        
