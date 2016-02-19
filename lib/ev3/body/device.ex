@@ -2,8 +2,16 @@ defmodule Ev3.Device do
   @moduledoc "Data specifying a motor, sensor or LED, 
               and its current state."
   
+  @doc """
+  class - :sensor, :motor or :led
+  path - sys file path
+	port - the name of the port the device is connected to
+	type - the type of motor, sensor or led
+	props - idiosyncratic properties of the device
+	mock - whether this is a mock device or a real one
+  """
   defstruct class: nil, path: nil, port: nil, type: nil, props: %{}, mock: false
-        
+       
   def mode(device_type) do
     case device_type do
       :infrared -> "ev3-uart"
