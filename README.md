@@ -12,6 +12,7 @@ The goals of this project are:
 + Implement a function domain language for interacting with the EV3 brick --DONE --
 + Take full advantage of processes and OTP to implement a "society of mind" model, with perception, motivation, behavior and actuation. --DONE--
 + Implement a robot control panel in Elm and Phoenix. --DONE--
++ Get two robots to interact and even cooperate. --TBD--
 + Having fun! -- so far so good --
 
 This project was inspired by [Torben Hoffmann](http://www.elixirconf.eu/elixirconf2015/torben-hoffmann). Thanks Torben!
