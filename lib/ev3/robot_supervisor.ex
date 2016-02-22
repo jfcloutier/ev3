@@ -18,7 +18,6 @@ defmodule Ev3.RobotSupervisor do
   alias Ev3.InternalClock
 
 	@name __MODULE__
-  @tick 1000
 
 	### Supervisor Callbacks
 
@@ -60,19 +59,8 @@ defmodule Ev3.RobotSupervisor do
 		start_motivators()
 	end
 
-  def start_internal_clock() do
-    Logger.info("Starting internal clock")
-    spawn(fn() -> tick_tock() end)
-  end
-
 	### Private
-
-  defp tick_tock() do
-		:timer.sleep(@tick)
-		InternalClock.tick()
-		tick_tock()
-	end
-
+	
 	defp start_perceptors() do
 		Perception.perceptor_configs()
 		|> Enum.each(&(PerceptorsSupervisor.start_perceptor(&1)))

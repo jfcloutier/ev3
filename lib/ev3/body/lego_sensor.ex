@@ -10,11 +10,6 @@ defmodule Ev3.LegoSensor do
 	@driver_regex ~r/lego-ev3-(\w+)/i
 	@mode_switch_delay 100
 
-  @doc "Is this type of device a sensor?"
-  def sensor?(device_type) do
-    device_type in [:touch, :infrared, :color, :ultrasonic, :gyro]
-  end
-
 	@doc "Get the currently connected lego sensors"
   def sensors() do
 		if !Ev3.testing?() do
@@ -34,6 +29,11 @@ defmodule Ev3.LegoSensor do
        Ev3.Mock.UltrasonicSensor.new(),
        Ev3.Mock.GyroSensor.new()]
 		end
+  end
+
+  @doc "Is this type of device a sensor?"
+  def sensor?(device_type) do
+    device_type in [:touch, :infrared, :color, :ultrasonic, :gyro]
   end
 
 	@doc "Get the list of senses from a sensor"

@@ -7,6 +7,7 @@ defmodule Ev3.InternalClock do
   import Ev3.Utils
 
   @name __MODULE__
+  @tick 1000
 
   def start_link() do
     {:ok, pid} = Agent.start_link(
@@ -15,6 +16,10 @@ defmodule Ev3.InternalClock do
       end,
       [name: @name]
     )
+		spawn_link(fn() ->
+			:timer.sleep(@tick)
+			tick_tock()
+		end)
 		Logger.info("#{@name} started")
     {:ok, pid}
   end
@@ -53,6 +58,14 @@ defmodule Ev3.InternalClock do
 			fn(state) ->
 				%{state | responsive: true}
 			end)
+	end
+
+	### Private
+
+	defp tick_tock() do
+		:timer.sleep(@tick)
+		tick()
+		tick_tock()
 	end
 
 end

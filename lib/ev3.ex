@@ -31,7 +31,6 @@ defmodule Ev3 do
     result = Supervisor.start_link(children, opts)
 		RobotSupervisor.start_execution()
 		RobotSupervisor.start_perception()
-    RobotSupervisor.start_internal_clock()
     Process.spawn(fn -> push_runtime_stats() end, [])
 		result
   end
