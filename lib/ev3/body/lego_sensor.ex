@@ -1,5 +1,5 @@
 defmodule Ev3.LegoSensor do
-	@moduledoc "Lego sensor access"
+	@moduledoc "Lego sensor access."
 
 	require Logger
 	import Ev3.Sysfs
