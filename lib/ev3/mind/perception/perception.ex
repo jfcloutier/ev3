@@ -3,8 +3,7 @@ defmodule Ev3.Perception do
 
 	import Ev3.MemoryUtils
 	require Logger
-	alias Ev3.PerceptorConfig
-	alias Ev3.Percept
+	alias Ev3.{PerceptorConfig, Percept}
 
 	@doc "Give the configurations of all perceptors to be activated"
 	def perceptor_configs() do

@@ -4,9 +4,7 @@ defmodule Ev3.PerceptorsHandler do
 	use GenEvent
 	require Logger
 
-	alias Ev3.Perceptor
-	alias Ev3.CNS
-	alias Ev3.Perception
+	alias Ev3.{Perceptor, CNS, Perception}
 
 	### Callbacks
 
@@ -32,8 +30,7 @@ defmodule Ev3.PerceptorsHandler do
 	end
 
 	def handle_event(_event, state) do
-#		Logger.debug("#{__MODULE__} ignored #{inspect event}")
-		{:ok, state}
+		{:ok, state} # ignored
 	end
 
 	### Private

@@ -1,17 +1,9 @@
 defmodule Ev3.CNS do
 	@moduledoc "A resilient event manager that acts as the robot's central nervous system"
 
-  alias Ev3.DetectorsHandler
-	alias Ev3.PerceptorsHandler
-	alias Ev3.MemoryHandler
-  alias Ev3.InternalClockHandler
-	alias Ev3.ActuatorsHandler
-	alias Ev3.BehaviorsHandler
-	alias Ev3.MotivatorsHandler
-  alias Ev3.ChannelsHandler
-	alias Ev3.Percept
-	alias Ev3.Motive
-	alias Ev3.Intent
+  alias Ev3.{DetectorsHandler, PerceptorsHandler, MemoryHandler,InternalClockHandler,
+             ActuatorsHandler, BehaviorsHandler, MotivatorsHandler, ChannelsHandler,
+             Percept, Motive, Intent}
 	require Logger
 	use GenServer
 	import Ev3.Utils

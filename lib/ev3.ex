@@ -3,11 +3,7 @@ defmodule Ev3 do
 	
   use Application
   require Logger
-	alias Ev3.Endpoint
-	alias Ev3.RobotSupervisor
-  alias Ev3.CNS
-  alias Ev3.Sysfs
-  alias Ev3.LegoSensor
+	alias Ev3.{Endpoint, RobotSupervisor, CNS, Sysfs, LegoSensor}
 
   @robot_config "robot_config.exs"
   @poll_runtime_delay 5000

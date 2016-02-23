@@ -1,9 +1,7 @@
 defmodule Ev3.Perceptor do
 	@moduledoc "An analyzer and producer of percepts"
 
-	alias Ev3.Memory
-  alias Ev3.CNS
-  alias Ev3.Percept
+	alias Ev3.{Memory, CNS, Percept}
 	require Logger
   
 	@max_percept_age 1000
@@ -49,7 +47,10 @@ defmodule Ev3.Perceptor do
 
 	defp analysis(name, percept, %{perceptor_config: config, responsive: responsive}) do
 		if responsive and percept.about in config.focus.senses and check_freshness(name, percept) do
-			memories = Memory.since(config.span, senses: config.focus.senses, motives: config.focus.motives, intents: config.focus.intents)
+			memories = Memory.since(config.span,
+                              senses: config.focus.senses,
+                              motives: config.focus.motives,
+                              intents: config.focus.intents)
 			config.logic.(percept, memories)  # produces a percept or nil
 		else
 			nil

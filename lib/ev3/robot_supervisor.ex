@@ -2,20 +2,7 @@ defmodule Ev3.RobotSupervisor do
 
 	use Supervisor
 	require Logger
-	alias Ev3.CNS
-	alias Ev3.Memory
-	alias Ev3.PerceptorsSupervisor
-  alias Ev3.DetectorsSupervisor
-	alias Ev3.LegoSensor
-	alias Ev3.LegoMotor
-	alias Ev3.Perception
-	alias Ev3.MotivatorsSupervisor
-	alias Ev3.BehaviorsSupervisor
-	alias Ev3.ActuatorsSupervisor
-	alias Ev3.Motivation
-	alias Ev3.Behaviors
-	alias Ev3.Actuation
-  alias Ev3.InternalClock
+	alias Ev3.{CNS, Memory, PerceptorsSupervisor, DetectorsSupervisor, LegoSensor, LegoMotor, Perception, MotivatorsSupervisor, BehaviorsSupervisor, ActuatorsSupervisor, Motivation, Behaviors, Actuation, InternalClock}
 
 	@name __MODULE__
 
