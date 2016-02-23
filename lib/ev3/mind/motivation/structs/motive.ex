@@ -1,13 +1,16 @@
 defmodule Ev3.Motive do
-	@moduledoc "A struct for a motive (a unit of intent)"
+	@moduledoc "A struct for a motive (a unit of motivation that's turned on or off)"
 
 	import Ev3.Utils
 
-	# A "memorizable" - must have about, since and value fields
-
-	# inhibits: what motives this one inhibits
-	# value: either :on or :off
-	defstruct about: nil, since: nil, inhibits: [], value: nil, source: nil
+	@doc """
+       about: The name of the motive
+	     value: Either :on or :off
+       since: When the motive got its current value
+       inhibits: The names of the motives this one inhibits
+       source: The source of the motive
+       """
+	defstruct about: nil, value: nil, since: nil, inhibits: [], source: nil
 
 	@doc "Create an motive that's on"
 	def on(name) do
@@ -51,5 +54,7 @@ defmodule Ev3.Motive do
   def age(motive) do
     now() - motive.since
   end
+
+ # A "memorable" - must have about, since and value fields
 
 end							

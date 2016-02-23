@@ -1,11 +1,16 @@
 defmodule Ev3.Intent do
-	@moduledoc "A struct for an intent (a unit of action)"
+	@moduledoc "A struct for an intent (a unit of intention to act)"
 
 	import Ev3.Utils
 
-	# A "memorizable" - must have about, since and value fields
-
-	defstruct about: nil, since: nil, source: nil, value: nil, strong: false
+  @doc """
+       about: The nature of the intent
+       value: The measure of the intent (a number, atom...)
+       since: When the intent was created
+       source: The source of the intent (the name of a behavior)
+       strong: If true, the intent takes longer to become stale
+       """
+	defstruct about: nil, value: nil, since: nil, source: nil, strong: false
 
 	@doc "Create an intent"
 	def new(about: about, value: params) do
@@ -33,5 +38,8 @@ defmodule Ev3.Intent do
   def strength(intent) do
     if intent.strong, do: :strong, else: :weak
   end
+
+  	# A "memorable" - must have about, since and value fields
+
   
 end

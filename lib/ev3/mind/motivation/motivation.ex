@@ -3,9 +3,7 @@ defmodule Ev3.Motivation do
 
 	require Logger
 
-	alias Ev3.MotivatorConfig
-	alias Ev3.Motive
-	alias Ev3.Percept
+	alias Ev3.{MotivatorConfig, Motive, Percept}
 	import Ev3.MemoryUtils
 	
 	@doc "Give the configurations of all motivators. Motivators turn motives on and off"
@@ -53,7 +51,7 @@ defmodule Ev3.Motivation do
 		end
 	end
 	
-	@doc "Feeding motivation"
+	@doc "Hunger motivation"
 	def hunger() do
 		fn
 		(%Percept{about: :hungry, value: :very}, %{percepts: percepts }) ->

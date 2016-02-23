@@ -1,12 +1,19 @@
 defmodule Ev3.Percept do
-  @moduledoc "A struct for a percept (a unit of perception). A percept is either generated from a sensor or synthesized from memorized percepts, motives and commands."
+  @moduledoc "A struct for a percept (a unit of perception)."
 	
 	import Ev3.Utils
 
-	# A "memorizable" - must have about, since and value fields
-	
-	# resolution is the precision of the detector or perceptor. Nil if perfect resolution.
-	defstruct about: nil, since: nil, until: nil, source: nil, ttl: nil, resolution: nil, value: nil, transient: false
+	@doc """
+       about: What is being perceived
+       value: The measurement/value of the perception (a number, atom etc.)
+       since: When the perception happened
+       until: Time at which the perception is still unchanged
+       source: The source of the perception (a detector or perceptor)
+       ttl: How long the percept is to be retained in memory
+       resolution: The precision of the detector or perceptor. Nil if perfect resolution.
+       transient: If true, the percept will not be memorized
+       """
+	defstruct about: nil, value: nil, since: nil, until: nil, source: nil, ttl: nil, resolution: nil, transient: false
 
 	@doc "Create a new percept with sense and value set"
 	def new(about: sense, value: value) do
@@ -43,5 +50,7 @@ defmodule Ev3.Percept do
   def age(percept) do
     now() - percept.until
   end
+
+  # about, since and value are required for the percept to be memorable
 	
 end
