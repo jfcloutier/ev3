@@ -24,7 +24,7 @@ defmodule Ev3.Mock.TouchSensor do
 		{value, sensor}
 	end
 
-	def nudge(_sensor, _sense, previous_value, value) do
+	def nudge(_sensor, _sense, value, previous_value) do
 		case previous_value do
       nil -> value
       _ ->

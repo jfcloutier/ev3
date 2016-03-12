@@ -65,25 +65,21 @@ defmodule Ev3.Mock.InfraredSensor do
 	end
 
   defp nudge_heading(_channel, value, previous_value) do
-    case previous_value do
-      nil -> 25 - :random.uniform(50)
-      _ -> value + previous_value |> max(-25) |> min(25)
+    if previous_value == nil or :random.uniform(10) == 1 do
+      25 - :random.uniform(50)
+    else
+      value + previous_value |> max(-25) |> min(25)
     end
   end
 
 	defp seek_distance(sensor, _channel) do
-		value =
-			if :random.uniform(2) == 2 do
-				:random.uniform(101) - 1
-			else
-				-128
-			end
+		value = :random.uniform(10) - 7
     {value, sensor}
 	end
 
   defp nudge_distance(_channel, value, previous_value) do
     case previous_value do
-      nil -> :random.uniform(101) - 1
+      nil -> 50 + :random.uniform(50)
       _ -> value + previous_value |> max(0) |> min(100)
     end
   end

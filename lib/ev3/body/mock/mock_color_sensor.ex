@@ -57,26 +57,23 @@ defmodule Ev3.Mock.ColorSensor do
 	end
 
   def nudge_color(value, previous_value) do
-    if previous_value == nil or :random.uniform(4) == 1 do
+    if previous_value == nil or :random.uniform(10) == 1 do
       value
     else
       previous_value
     end 
   end
 
-  
 	def ambient_light(sensor) do
-		value = :random.uniform(5)
+		value = :random.uniform(10) - 5
 		{value, sensor}
 	end
 
-  def nudge_ambient_light(_value, nil) do
-    :random.uniform(101) - 1
-  end
-
   def nudge_ambient_light(value, previous_value) do
-    IO.puts("Value = #{value}, Previous = #{previous_value}")
-    (previous_value + value) |> max(0) |> min(100)
+    case previous_value do
+      nil -> 30 + :random.uniform(10)
+      _ -> (previous_value + value) |> max(0) |> min(100)
+    end
   end
   
 	def reflected_light(sensor) do
