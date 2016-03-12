@@ -6,7 +6,8 @@ defmodule Ev3.Mock.UltrasonicSensor do
   def new() do
     %Ev3.Device{class: :sensor,
                 path: "/mock/ultrasonic_sensor",
-                type: :ultrasonic}
+                type: :ultrasonic,
+                mock: true}
   end
 
   ### Sensing
@@ -17,6 +18,10 @@ defmodule Ev3.Mock.UltrasonicSensor do
 
   def read(sensor, :distance) do
     distance_cm(sensor)
+  end
+
+  def nudge(_sensor, :distance, value, previous_value) do
+    nudge_distance_cm(value, previous_value)
   end
 
   def pause(_) do
@@ -30,8 +35,15 @@ defmodule Ev3.Mock.UltrasonicSensor do
   ### Private
 
   defp distance_cm(sensor) do
-    value = :random.uniform(2550)
+    value = 10 - :random.uniform(30)
     {value, sensor}
+  end
+
+  defp nudge_distance_cm(value, previous_value) do
+    case previous_value do
+      nil -> :random.uniform(2550)
+      _ -> (value + previous_value) |> max(0) |> min(2550)
+    end
   end
 
 end

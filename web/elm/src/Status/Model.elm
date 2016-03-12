@@ -4,7 +4,7 @@ type alias ActiveState = {active: Bool}
                        
 type alias RuntimeStats = {ramFree: Int, ramUsed: Int, swapFree: Int, swapUsed: Int}
                         
-type alias Model = {paused : Bool,
+type alias Model = {pauseRequested : Bool,
                     active: Bool,
                     runtime : RuntimeStats
                    }

@@ -6,7 +6,8 @@ defmodule Ev3.Mock.ColorSensor do
 	def new() do
 		 %Ev3.Device{class: :sensor,
 						path: "/mock/color_sensor", 
-						type: :color}
+						type: :color,
+            mock: true  }
 	end
 
 	# Sensing
@@ -20,6 +21,14 @@ defmodule Ev3.Mock.ColorSensor do
 			:color -> color(sensor)
 			:ambient -> ambient_light(sensor)
 			:reflected -> reflected_light(sensor)
+		end
+	end
+
+	def nudge(_sensor, sense, value, previous_value) do
+		case sense do
+			:color -> nudge_color(value, previous_value)
+			:ambient -> nudge_ambient_light(value, previous_value)
+			:reflected -> nudge_reflected_light(value, previous_value)
 		end
 	end
 
@@ -47,14 +56,40 @@ defmodule Ev3.Mock.ColorSensor do
 		{value, sensor}
 	end
 
+  def nudge_color(value, previous_value) do
+    if previous_value == nil or :random.uniform(4) == 1 do
+      value
+    else
+      previous_value
+    end 
+  end
+
+  
 	def ambient_light(sensor) do
-		value = :random.uniform(101) - 1
+		value = :random.uniform(5)
 		{value, sensor}
 	end
 
-		def reflected_light(sensor) do
-		value = :random.uniform(101) - 1
+  def nudge_ambient_light(_value, nil) do
+    :random.uniform(101) - 1
+  end
+
+  def nudge_ambient_light(value, previous_value) do
+    IO.puts("Value = #{value}, Previous = #{previous_value}")
+    (previous_value + value) |> max(0) |> min(100)
+  end
+  
+	def reflected_light(sensor) do
+		value = :random.uniform(5)
 		{value, sensor}
 	end
+
+  def nudge_reflected_light(_value, nil) do
+    :random.uniform(101) - 1
+  end
+
+  def nudge_reflected_light(value, previous_value) do
+    previous_value + value |> max(0) |> min(100)
+  end
 
 end

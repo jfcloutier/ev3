@@ -53,6 +53,11 @@ defmodule Ev3.LegoSensor do
 		end
 	end
 
+	@doc "Nudge the value of a sense from a mock sensor"
+	def nudge(%Device{mock: true} = sensor, sense, value, previous_value) do 
+	    apply(module_for(sensor), :nudge, [sensor, sense, value, previous_value])
+	end
+
 	@doc "Get how long to pause between reading a sense from a sensor. In msecs"
 	def pause(sensor) do
 			apply(module_for(sensor), :pause, [sensor])

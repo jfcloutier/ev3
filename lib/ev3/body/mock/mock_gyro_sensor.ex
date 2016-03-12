@@ -6,7 +6,8 @@ defmodule Ev3.Mock.GyroSensor do
   def new() do
     %Ev3.Device{class: :sensor,
                 path: "/mock/gyro_sensor",
-                type: :gyro}
+                type: :gyro,
+                mock: true}
   end
 
   ### Sensing
@@ -15,14 +16,20 @@ defmodule Ev3.Mock.GyroSensor do
     [:angle, :rotational_speed]
   end
 
-  def read(sensor, :angle) do
-    angle(sensor)
+  def read(sensor, sense) do
+    case sense do
+      :angle -> angle(sensor)
+      :rotational_speed -> rotational_speed(sensor)
+    end
   end
-
-  def read(sensor, :rotational_speed) do
-    rotational_speed(sensor)
+  
+   def nudge(_sensor, sense, value, previous_value) do
+    case sense do
+      :angle -> nudge_angle(value, previous_value)
+      :rotational_speed -> nudge_rotational_speed(value, previous_value)
+    end
   end
-
+  
   def pause(_) do
     500
   end
@@ -34,13 +41,27 @@ defmodule Ev3.Mock.GyroSensor do
   ### Private
 
   def angle(sensor) do
-    value = 32767 - :random.uniform(32767 * 2)
+    value = 50 - :random.uniform(100)
     {value, sensor}
   end
 
+  def nudge_angle(value, previous_value) do
+    case previous_value do
+      nil -> 32767 - :random.uniform(32767 * 2)
+      _ -> value + previous_value |> max(-32767) |> min(32767)
+    end
+  end
+
   def rotational_speed(sensor) do
-   value = 440 - :random.uniform(440 * 2)
+   value = 20 - :random.uniform(40)
     {value, sensor}
+  end
+
+  def nudge_rotational_speed(value, previous_value) do
+    case previous_value do
+      nil -> 440 - :random.uniform(440 * 2)
+      _ -> value + previous_value |> max(-440) |> min(440)
+    end
   end
 
 end

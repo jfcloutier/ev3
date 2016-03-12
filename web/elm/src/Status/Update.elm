@@ -23,14 +23,14 @@ init =
 update: Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    SetPaused maybePaused ->
+    SetPaused maybePauseRequested ->
       let
         result =
-          Maybe.withDefault model.paused maybePaused
+          Maybe.withDefault model.pauseRequested maybePauseRequested
       in
-      ({model | paused = result}, Effects.none)
+      ({model | pauseRequested = result}, Effects.none)
     SwitchPaused ->
-      ({model | paused = not model.paused}, Effects.none)
+      ({model | pauseRequested = not model.pauseRequested}, Effects.none)
     SetActive activeState ->
       ({model | active = activeState.active}, Effects.none)
     TogglePaused ->

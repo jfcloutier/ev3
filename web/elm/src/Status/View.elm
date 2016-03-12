@@ -10,12 +10,12 @@ view: Signal.Address Action -> Model -> Html
 view address model =
     let
       pausingLabel model =
-        if not model.paused then
+        if not model.pauseRequested then
           "Pause"
         else
           "Resume"
-      btnColor paused =
-        if not paused then
+      btnColor pauseRequested =
+        if not pauseRequested then
           "btn-success"
         else
           "btn-danger"
@@ -43,7 +43,7 @@ view address model =
                           [
                            button
                            [onClick address Status.Update.TogglePaused
-                           , classList [ ("btn", True), ((btnColor model.paused), True)]]
+                           , classList [ ("btn", True), ((btnColor model.pauseRequested), True)]]
                            [text (pausingLabel model)]
                           ]
                    , div [class "col-lg-2"]

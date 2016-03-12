@@ -6,6 +6,7 @@ defmodule Ev3.Detector do
 	alias Ev3.LegoMotor
   alias Ev3.Percept
 	alias Ev3.CNS
+  alias Ev3.Device
 
 	@ttl 10_000 # detected percept is retained for 10 secs
 
@@ -17,7 +18,7 @@ defmodule Ev3.Detector do
 			fn() ->
 				poll_pid = spawn_link(fn() -> poll(name, senses, pause(device)) end)
 				Process.register(poll_pid, String.to_atom("polling #{device.path}"))
-				%{device: device, responsive: true}
+				%{device: device, responsive: true, previous_values: %{}}
 			end,
 			[name: name])
 		Logger.info("#{__MODULE__} started on #{inspect device.type} device")
@@ -61,10 +62,17 @@ defmodule Ev3.Detector do
 
 	defp read(device, sense) do
 		case device.class do
-							 :sensor -> LegoSensor.read(device, sense)
-							 :motor -> LegoMotor.read(device, sense)
+			:sensor -> LegoSensor.read(device, sense)
+			:motor -> LegoMotor.read(device, sense)
 		end
 	end
+
+  defp nudge(%Device{mock: true} = mock_device, sense, value, previous_value) do
+    case mock_device.class do
+      :sensor -> LegoSensor.nudge(mock_device, sense, value, previous_value)
+      :motor -> LegoMotor.nudge(mock_device, sense, value, previous_value)
+    end
+  end
 
 	defp sensitivity(device, sense) do
 		case device.class do
@@ -96,14 +104,21 @@ defmodule Ev3.Detector do
         if state.responsive do
 				  {value, updated_device} = read(state.device, sense)
 				  if value != nil do
-					  percept = Percept.new(about: sense, value: value)
+					  percept = if updated_device.mock do
+                        previous_value = Map.get(state.previous_values, sense, nil)
+                        mocked_value = nudge(updated_device, sense, value, previous_value)
+                        Percept.new(about: sense, value: mocked_value)
+                      else
+                        Percept.new(about: sense, value: value)
+                      end
             %Percept{percept |
 										 source: name,
 										 ttl: @ttl,
 										 resolution: sensitivity(updated_device, sense)}
 					  |> CNS.notify_perceived()
 					  {:ok, %{state |
-									  device: updated_device}}
+									  device: updated_device,
+                    previous_values: Map.put(state.previous_values, sense, percept.value)}}
 				  else
 					  {:ok, %{state | device: updated_device}}
 				  end

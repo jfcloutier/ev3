@@ -42,6 +42,7 @@ robot_channel.on('runtime_stats', data => {
     console.log('Runtime stats', data)
     elmApp.ports.runtimeStatsPort.send(data)
 })
+
 robot_channel.on('active_state', data => {
     console.log('Active state', data)
     elmApp.ports.activeStatePort.send(data)

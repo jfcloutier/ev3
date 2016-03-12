@@ -7,7 +7,8 @@ defmodule Ev3.Mock.LED do
 		%Device{class: :led,
 								path: "/mock/led/#{position}:#{color}",
 								type: "#{position}:#{color}",
-								props: %{color: color, position: position, brightness: 0}}
+								props: %{color: color, position: position, brightness: 0},
+                mock: true}
 	end
 
 		@doc "Get left vs right position of the LED"

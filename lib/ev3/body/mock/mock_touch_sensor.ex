@@ -6,7 +6,8 @@ defmodule Ev3.Mock.TouchSensor do
 	def new() do
 		%Ev3.Device{class: :sensor,
 						path: "/mock/touch_sensor", 
-						type: :touch}
+						type: :touch,
+            mock: true}
 	end
 
 	### Sensing
@@ -21,6 +22,18 @@ defmodule Ev3.Mock.TouchSensor do
 			1 -> :pressed
     end
 		{value, sensor}
+	end
+
+	def nudge(_sensor, _sense, previous_value, value) do
+		case previous_value do
+      nil -> value
+      _ ->
+        if :random.uniform(20) == 1 do
+          value
+        else
+          previous_value
+        end
+    end
 	end
 
 	def pause(_) do
