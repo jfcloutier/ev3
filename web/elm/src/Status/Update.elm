@@ -11,7 +11,6 @@ import Status.Model as Model exposing (Model, RuntimeStats, ActiveState)
 type Action =
   NoOp (Maybe String)
     | SetPaused (Maybe Bool)
-    | SwitchPaused
     | SetActive ActiveState
     | TogglePaused
     | SetRuntimeStats RuntimeStats
@@ -29,8 +28,6 @@ update action model =
           Maybe.withDefault model.pauseRequested maybePauseRequested
       in
       ({model | pauseRequested = result}, Effects.none)
-    SwitchPaused ->
-      ({model | pauseRequested = not model.pauseRequested}, Effects.none)
     SetActive activeState ->
       ({model | active = activeState.active}, Effects.none)
     TogglePaused ->
@@ -50,7 +47,7 @@ togglePaused =
                 |> Task.map NoOp
                 |> Effects.task)
   in
-    Effects.batch [togglePausedEffect, switchPaused]
+    Effects.batch [togglePausedEffect, fetchPaused]
 
 fetchPaused: Effects Action
 fetchPaused =
@@ -58,11 +55,6 @@ fetchPaused =
       |> Task.toMaybe
       |> Task.map SetPaused
       |> Effects.task
-
-switchPaused: Effects Action
-switchPaused =
-  Task.succeed SwitchPaused
-  |> Effects.task
 
 decodePaused: Json.Decoder Bool
 decodePaused =
