@@ -18,7 +18,10 @@ defmodule Ev3.Mixfile do
   def application do
     [mod: {Ev3, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger],
-		 env: [{:mock, true}, {:platform, :dev}, {:group, :lego}] # platform in [:brickpi, :ev3, :dev]
+		 env: [{:mock, true},
+					 {:platform, :dev},
+					 {:nodes, [:"marvin@ukemi", :"rodney@ukemi"]}, # iex --sname marvin etc. for testing. Use --name for actual
+					 {:group, :lego}] # platform in [:brickpi, :ev3, :dev]
 #		 env: [{:mock, false}, {:platform, :ev3}] # platform in [:brickpi, :ev3, :dev]
 #		 env: [{:mock, false}, {:platform, :brickpi}] # platform in [:brickpi, :ev3, :dev]
 		]

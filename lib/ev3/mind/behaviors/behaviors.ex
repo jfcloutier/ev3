@@ -42,13 +42,13 @@ defmodule Ev3.Behaviors do
           ]
         }
       ),
-      BehaviorConfig.new( # Reacting to communications for team marvin
+      BehaviorConfig.new( # Reacting to communications for team EV3
         name: :confirming_heard,
         senses: [:heard],
         fsm: %FSM{
           transitions: [
 						%Transition{on: :heard,
-                         condition: fn(value) -> value.team == :marvin end, 
+                         condition: fn(value) -> value.team == :EV3 end, 
 												 doing: confirming_heard()
 											 }
           ]
@@ -313,7 +313,7 @@ defmodule Ev3.Behaviors do
       Logger.info("START FORAGING")
       green_lights()
       generate_intent(:say_hungry)
-			generate_intent(:communicate, %{team: :marvin, info: :hungry})
+			generate_intent(:communicate, %{team: :EV3, info: :hungry})
     end
   end
 
@@ -327,7 +327,7 @@ defmodule Ev3.Behaviors do
 									 :little -> :some
 								 end
       generate_intent(:eating_noises)
-			generate_intent(:communicate, %{team: :marvin, info: :food})
+			generate_intent(:communicate, %{team: :EV3, info: :food})
 			generate_intent(:eat, how_much)
 		end
 	end
@@ -337,7 +337,7 @@ defmodule Ev3.Behaviors do
       red_lights()
 			Logger.info("PANICKING")
       generate_intent(:say_scared)
- 			generate_intent(:communicate, %{team: :marvin, info: :danger})
+ 			generate_intent(:communicate, %{team: :EV3, info: :danger})
 		end
   end
 	
@@ -357,9 +357,8 @@ defmodule Ev3.Behaviors do
 
 	defp confirming_heard() do
 		fn(percept, _state) ->
-			%{source: source, team: team, info: info} = percept.value
-			IO.puts("@@@@@ CONFIRMING HEARD #{inspect percept.value}")
-			generate_intent(:say, "I heard #{info}")
+			%{source: _source, team: team, info: info} = percept.value
+			generate_intent(:say, "I heard #{info} meant for #{team}")
 		end
 	end
 	

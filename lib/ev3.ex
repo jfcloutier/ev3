@@ -11,6 +11,7 @@ defmodule Ev3 do
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
+		connect_to_nodes() # Create P2P cluster
     import Supervisor.Spec, warn: false
     if not testing?() and platform() == :brickpi do
       initialize_brickpi_ports()
@@ -70,6 +71,12 @@ defmodule Ev3 do
   end
 
   ### Private
+
+	defp connect_to_nodes() do
+		Application.get_env(:ev3, :nodes)
+		|> Enum.each(&(Node.connect(&1)))
+		Logger.warn("#{Node.self()} is connected to #{inspect Node.list()}")
+	end
 
   defp mem_stats() do
     {res, 0} = System.cmd("free", ["-m"])

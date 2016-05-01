@@ -34,21 +34,22 @@ defmodule Ev3.PG2Communicator do
 	end
 
 	def handle_cast({:communicate, device, info, team}, state =  %{group: group}) do
-		:pg2.get_members(group)
+		members = :pg2.get_members(group)
+		members
 		|> Enum.each(&(GenServer.cast(&1, {:communication, Node.self(), info, team, device.props.ttl})))
-		Logger.info("COMMUNICATOR communicated #{inspect info} to team #{team}")
+		Logger.info("COMMUNICATOR  #{inspect Node.self()} communicated #{inspect info} to team #{team} in #{inspect members}")
 		{:noreply, state}
 	end
 
 	def handle_cast({:communication, source, info, team, ttl}, state) do # ttl for what's communicated
 		if source != Node.self() do
-			Logger.info("COMMUNICATOR heard #{inspect info} for team #{team} from #{inspect source}")
+			Logger.info("COMMUNICATOR #{inspect Node.self()} heard #{inspect info} for team #{team} from #{inspect source}")
 			percept = Percept.new(about: :heard, value: %{source: source, team: team, info: info})
 			CNS.notify_perceived(%{percept |
 														 ttl: ttl,
 														 source: @name})
 		end
 		{:noreply, state}
-	end
+	end		
 
 end
