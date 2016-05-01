@@ -54,7 +54,7 @@ defmodule Ev3.Perception do
 					focus: %{senses: [ {:beacon_distance, 1}, :distance], motives: [], intents: [:go_forward, :go_backward]},
 					span: {10, :secs},
 					ttl: {10, :secs},
-					logic: stuck())				
+					logic: stuck())
 		]
 	end
 

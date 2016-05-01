@@ -16,7 +16,7 @@ defmodule Ev3.Memory do
 
   ### API
 	
-	@doc "Start the library server"
+	@doc "Start the memory server"
 	def start_link() do
 		Logger.info("Starting #{@name}")
 		GenServer.start_link(@name, [], [name: @name])

@@ -7,78 +7,90 @@ defmodule Ev3.Actuation do
 	alias Ev3.MotorSpec
 	alias Ev3.LEDSpec
   alias Ev3.SoundSpec
+	alias Ev3.CommSpec
 	alias Ev3.Activation
 	alias Ev3.Script
 	
 	@doc "Give the configurations of all actuators to be activated"
   def actuator_configs() do
 		[
-				ActuatorConfig.new(name: :locomotion,
-													 type: :motor,
-													 specs: [  # to find and name motors from specs
-														 %MotorSpec{name: :left_wheel, port: "outA"},
-														 %MotorSpec{name: :right_wheel, port: "outB"}
-													 ],
-													 activations: [ # scripted actions to be taken upon receiving intents
-														 %Activation{intent: :go_forward,
-																				 action: going_forward()},
-														 %Activation{intent: :go_backward,
-																				 action: going_backward()},
-														 %Activation{intent: :turn_right,
-																				 action: turning_right()},
-														 %Activation{intent: :turn_left,
-																				 action: turning_left()},
-														 %Activation{intent: :stop,
-																				 action: stopping()}
-													 ]),
-				ActuatorConfig.new(name: :manipulation,
-													 type: :motor,
-													 specs: [
-														 %MotorSpec{name: :mouth, port: "outC"}
-													 ],
-													 activations: [
-														 %Activation{intent: :eat,
-																				 action: eating()}
-													 ]),
-				ActuatorConfig.new(name: :leds,
-													 type: :led,
-													 specs: [
-														 %LEDSpec{name: :lr, position: :left, color: :red}, #ev3
-														 %LEDSpec{name: :lg, position: :left, color: :green}, #ev3
-														 %LEDSpec{name: :lb, position: :left, color: :blue}, #brickpi
-													   %LEDSpec{name: :rr, position: :right, color: :red}, #ev3
-														 %LEDSpec{name: :rg, position: :right, color: :green}, #ev3
-														 %LEDSpec{name: :rb, position: :right, color: :blue} #brickpi
-													 ],
-													 activations: [
-														 %Activation{intent: :green_lights,
-																				 action: green_lights()},
-														 %Activation{intent: :red_lights,
-																				 action: red_lights()},
-														 %Activation{intent: :orange_lights,
-																				 action: orange_lights()}
-													 ]),
-        ActuatorConfig.new(name: :sounds,
-                           type: :sound,
-                           specs: [
-                             %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: "en-sc"}}
-                           ],
-                           activations: [
-                             %Activation{intent: :say_hungry,
-                                         action: say_hungry()},
-                             %Activation{intent: :say_scared,
-                                         action: say_scared()},
-                             %Activation{intent: :say_curious,
-                                         action: say_curious()},
-                             %Activation{intent: :say_uh_oh,
-                                         action: say_uh_oh()},
-                             %Activation{intent: :say_stuck,
-                                         action: say_stuck()},
-                             %Activation{intent: :say_food,
-                                         action: say_food()},
-                             %Activation{intent: :eating_noises,
-                                         action: eating_noises()}
-                           ])                        
+			ActuatorConfig.new(name: :locomotion,
+												 type: :motor,
+												 specs: [  # to find and name motors from specs
+													 %MotorSpec{name: :left_wheel, port: "outA"},
+													 %MotorSpec{name: :right_wheel, port: "outB"}
+												 ],
+												 activations: [ # scripted actions to be taken upon receiving intents
+													 %Activation{intent: :go_forward,
+																			 action: going_forward()},
+													 %Activation{intent: :go_backward,
+																			 action: going_backward()},
+													 %Activation{intent: :turn_right,
+																			 action: turning_right()},
+													 %Activation{intent: :turn_left,
+																			 action: turning_left()},
+													 %Activation{intent: :stop,
+																			 action: stopping()}
+												 ]),
+			ActuatorConfig.new(name: :manipulation,
+												 type: :motor,
+												 specs: [
+													 %MotorSpec{name: :mouth, port: "outC"}
+												 ],
+												 activations: [
+													 %Activation{intent: :eat,
+																			 action: eating()}
+												 ]),
+			ActuatorConfig.new(name: :leds,
+												 type: :led,
+												 specs: [
+													 %LEDSpec{name: :lr, position: :left, color: :red}, #ev3
+													 %LEDSpec{name: :lg, position: :left, color: :green}, #ev3
+													 %LEDSpec{name: :lb, position: :left, color: :blue}, #brickpi
+													 %LEDSpec{name: :rr, position: :right, color: :red}, #ev3
+													 %LEDSpec{name: :rg, position: :right, color: :green}, #ev3
+													 %LEDSpec{name: :rb, position: :right, color: :blue} #brickpi
+												 ],
+												 activations: [
+													 %Activation{intent: :green_lights,
+																			 action: green_lights()},
+													 %Activation{intent: :red_lights,
+																			 action: red_lights()},
+													 %Activation{intent: :orange_lights,
+																			 action: orange_lights()}
+												 ]),
+      ActuatorConfig.new(name: :sounds,
+                         type: :sound,
+                         specs: [
+                           %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: "en-sc"}}
+                         ],
+                         activations: [
+                           %Activation{intent: :say_hungry,
+                                       action: say_hungry()},
+                           %Activation{intent: :say_scared,
+                                       action: say_scared()},
+                           %Activation{intent: :say_curious,
+                                       action: say_curious()},
+                           %Activation{intent: :say_uh_oh,
+                                       action: say_uh_oh()},
+                           %Activation{intent: :say_stuck,
+                                       action: say_stuck()},
+                           %Activation{intent: :say_food,
+                                       action: say_food()},
+                           %Activation{intent: :eating_noises,
+                                       action: eating_noises()},
+                           %Activation{intent: :say,
+                                       action: say()}
+                         ]),
+      ActuatorConfig.new(name: :communicators,
+												 type: :comm,
+												 specs: [
+													 %CommSpec{name: :marvins, type: :pg2} # could set props.ttl to something other than 30 secs default
+												 ],
+												 activations: [
+													 %Activation{intent: :communicate, # intent value = %{info: info, team: team}
+																			 action: communicate()}
+												 ])													 
 		]
 	end
 
@@ -92,7 +104,7 @@ defmodule Ev3.Actuation do
 			|> Script.add_step(:right_wheel, :set_speed, [:rps, rps_speed])
 			|> Script.add_step(:left_wheel, :set_speed, [:rps, rps_speed])
 			|> Script.add_step(:all, :run_for, [how_long] )
-#			|> Script.add_wait(how_long)
+			#			|> Script.add_wait(how_long)
 		end
 	end
 
@@ -272,11 +284,27 @@ defmodule Ev3.Actuation do
     end
   end
   
+  defp say() do
+    fn(intent, sound_players) ->
+      Script.new(:say, sound_players)
+      |> Script.add_step(:loud_speech, :speak, [intent.value])
+    end
+  end
+  
   defp eating_noises() do
     fn(_intent, sound_players) ->
       Script.new(:say_eating, sound_players)
       |> Script.add_step(:loud_speech, :speak, ["Nom de nom de nom"])
     end
   end
+
+	# communications
+	
+	defp communicate() do
+		fn(intent, communicators) ->
+			Script.new(:communicate, communicators)
+			|> Script.add_step(:marvins, :communicate, [intent.value])
+		end
+	end
   
 end

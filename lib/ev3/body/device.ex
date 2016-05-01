@@ -35,6 +35,34 @@ defmodule Ev3.Device do
     end
   end
 
+	#### TODO
+	
+  def mode(device_type, :nxt) do
+    case device_type do
+      :infrared -> "nxt-i2c"
+      :touch -> "nxt-analog" # works
+      :gyro -> "nxt-analog"
+   #   :color -> "???" # NOT SUPPORTED but EV3 Color sensor works on brickpi
+      :ultrasonic -> "nxt-i2c"
+      :large -> "tacho-motor" # automatically detected
+   #   :medium -> "tacho-motor" # does not exist
+    end
+  end
+    
+  def device_code(device_type, :nxt) do
+    case device_type do
+      :infrared -> "ht-nxt-ir-receiver 0x01" # HiTechnic NXT IRReceiver Sensor
+      :touch -> "lego-nxt-touch"
+      :gyro -> "ht-nxt-gyro"
+    #  :color -> "???" # NXT Color sensor not supported
+      :ultrasonic -> "lego-nxt-us"
+      :large -> "lego-ev3-l-motor"  # automatically detected as Lego EV3 Large motors
+   #   :medium -> "lego-ev3-m-motor" # does not exist
+    end
+  end
+
+
+
   def self_loading_on_brickpi?(device_type) do
     device_type == :touch
   end

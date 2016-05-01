@@ -6,19 +6,19 @@ defmodule Ev3.LegoSound do
 
   @sys_path "/sound"
 
-  @doc "Get the available sound players"
+  @doc "Get the available sound player devices"
   def sound_players() do
     [:speech]
     |> Enum.map(&(init_sound_player("#{&1}", "#{@sys_path}/#{&1}")))
   end
 
-  @doc "Find a sound player by type"
+  @doc "Find a sound player device by type"
   def sound_player(type: type) do
     sound_players()
     |> Enum.find(&(type(&1) == type))
   end
 
-  @doc "Get the type of the sound player"
+  @doc "Get the type of the sound player device"
   def type(sound_player) do
     sound_player.type
   end

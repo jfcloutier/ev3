@@ -8,8 +8,11 @@ defmodule Ev3.Actuator do
 	alias Ev3.MotorSpec
 	alias Ev3.LEDSpec
   alias Ev3.SoundSpec
+	alias Ev3.CommSpec
 	alias Ev3.LegoLED
   alias Ev3.LegoSound
+	alias Ev3.LegoCommunication
+	alias Ev3.CommunicationSpec
 	alias Ev3.CNS
   alias Ev3.Intent
 
@@ -31,6 +34,9 @@ defmodule Ev3.Actuator do
           :sound ->
             %{actuator_config: actuator_config,
               devices: find_sound_players(actuator_config.specs)}
+					:comm ->
+						%{actuator_config: actuator_config,
+							devices: find_communicators(actuator_config.specs)}
 				end
       end,
       [name: actuator_config.name])
@@ -125,6 +131,24 @@ defmodule Ev3.Actuator do
       end)
     found
   end
+
+	defp find_communicators(comm_specs) do
+		all_communicators = LegoCommunication.communicators()		
+		found = Enum.reduce(
+      comm_specs,
+      %{},
+      fn(comm_spec, acc) ->
+        communicator = Enum.find(all_communicators,
+                                 &(CommSpec.matches?(comm_spec, &1)))
+        if communicator == nil do
+          Logger.warn("Communicator not found matching #{inspect comm_spec} in #{inspect all_communicators}")
+          acc
+        else
+          Map.put(acc, comm_spec.name, update_props(communicator, comm_spec.props))
+        end
+      end)
+    found
+	end
 
   defp update_props(device, props) do
     Enum.reduce(
