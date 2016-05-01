@@ -358,7 +358,7 @@ defmodule Ev3.Behaviors do
 	defp confirming_heard() do
 		fn(percept, _state) ->
 			%{source: source, team: team, info: info} = percept.value
-			IO.puts("@@@@ CONFIRMING HEARD #{inspect info} for team #{team} from source #{inspect source}")
+			IO.puts("@@@@@ CONFIRMING HEARD #{inspect percept.value}")
 			generate_intent(:say, "I heard #{info}")
 		end
 	end

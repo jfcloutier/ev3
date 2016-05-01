@@ -41,12 +41,14 @@ defmodule Ev3.PG2Communicator do
 	end
 
 	def handle_cast({:communication, source, info, team, ttl}, state) do # ttl for what's communicated
-		Logger.info("COMMUNICATOR heard #{inspect info} for team #{team} from #{inspect source}")
-		percept = Percept.new(about: :heard, value: %{source: source, team: team, info: info})
-		CNS.notify_perceived(%{percept |
+		if source != Node.self() do
+			Logger.info("COMMUNICATOR heard #{inspect info} for team #{team} from #{inspect source}")
+			percept = Percept.new(about: :heard, value: %{source: source, team: team, info: info})
+			CNS.notify_perceived(%{percept |
 														 ttl: ttl,
 														 source: @name})
-		{:noreply, state}
 		end
+		{:noreply, state}
+	end
 
 end
