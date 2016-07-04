@@ -41,25 +41,25 @@ defmodule Ev3.Mock.GyroSensor do
   ### Private
 
   def angle(sensor) do
-    value = 50 - :random.uniform(100)
+    value = 50 - :rand.uniform(100)
     {value, sensor}
   end
 
   def nudge_angle(value, previous_value) do
     case previous_value do
-      nil -> 32767 - :random.uniform(32767 * 2)
+      nil -> 32767 - :rand.uniform(32767 * 2)
       _ -> value + previous_value |> max(-32767) |> min(32767)
     end
   end
 
   def rotational_speed(sensor) do
-   value = 20 - :random.uniform(40)
+   value = 20 - :rand.uniform(40)
     {value, sensor}
   end
 
   def nudge_rotational_speed(value, previous_value) do
     case previous_value do
-      nil -> 440 - :random.uniform(440 * 2)
+      nil -> 440 - :rand.uniform(440 * 2)
       _ -> value + previous_value |> max(-440) |> min(440)
     end
   end

@@ -1,16 +1,15 @@
-module Comportment.Update where
+module Comportment.Update exposing (..)
 
 import Dict exposing (Dict)
-import Effects exposing (Effects)
 import Comportment.Model as Model exposing (Model, BehaviorData)
 import Status.Model exposing (ActiveState)
 
-type Action =
+type Msg =
   SetBehavior BehaviorData
     | ReviveAll ActiveState
 
-update: Action -> Model -> (Model, Effects Action)
-update action model =
+update: Msg -> Model -> (Model, Cmd Msg)
+update msg model =
   let
     revive behavior =
        {behavior | overwhelmed = False}
@@ -19,12 +18,12 @@ update action model =
     revive_all = 
       Dict.foldl (\name behavior dict -> revive behavior |> insert dict) Dict.empty model.behaviors 
   in
-    case action of
+    case msg of
       ReviveAll activeState ->
         if activeState.active then
-          ({model | behaviors = revive_all}, Effects.none)
+          ({model | behaviors = revive_all}, Cmd.none)
         else
-          (model, Effects.none)
+          (model, Cmd.none)
       SetBehavior behaviorData ->
         let
           behavior = Dict.get behaviorData.name model.behaviors |> Maybe.withDefault (Model.defaultBehavior behaviorData.name)
@@ -40,5 +39,5 @@ update action model =
               "transited" -> {behavior | started = True, overwhelmed = False, inhibited = False, reflex = behaviorData.reflex, state = behaviorData.value}
               _ -> behavior
         in
-          ({model | behaviors = Dict.insert behavior.name updatedBehavior model.behaviors}, Effects.none)
+          ({model | behaviors = Dict.insert behavior.name updatedBehavior model.behaviors}, Cmd.none)
 

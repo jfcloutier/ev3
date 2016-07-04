@@ -1,14 +1,13 @@
-module Perception.Update where
+module Perception.Update exposing (..)
 
 import Dict exposing (Dict)
-import Effects exposing (Effects)
 import Perception.Model as Model exposing (Model, Percept)
 
-type Action =
+type Msg =
             AddPercept Percept
 
-update: Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update: Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
     AddPercept percept ->
-      ({model | percepts = Dict.insert percept.about percept.value model.percepts}, Effects.none)
+      ({model | percepts = Dict.insert percept.about percept.value model.percepts}, Cmd.none)

@@ -46,7 +46,7 @@ defmodule Ev3.LegoCommunication do
 		case type do
 			:pg2 -> Ev3.PG2Communicator
 		  other ->
-				error = "Unknown type #{type} of communicator"
+				error = "Unknown type #{other} of communicator"
 				Logger.error(error)
 				raise error
 		end

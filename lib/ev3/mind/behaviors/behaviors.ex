@@ -9,6 +9,10 @@ defmodule Ev3.Behaviors do
 	alias Ev3.Percept
 	alias Ev3.Intent
 
+  defp team() do
+    Application.get_env(:ev3, :group) # the name of the team is the name of the PG2 group
+  end
+
 	@doc "Give the configurations of all benaviors to be activated by motives and driven by percepts"
   def behavior_configs() do
 		[
@@ -20,11 +24,11 @@ defmodule Ev3.Behaviors do
       fsm: %FSM{
         transitions: [
 					%Transition{on: :collision,
-											 condition: fn(value) -> value == :imminent end,
+											 condition: fn(value, _) -> value == :imminent end,
 										 doing: avoid_collision()
 										 },
    				%Transition{on: :collision,
-											 condition: fn(value) -> value == :now end,
+											 condition: fn(value, _) -> value == :now end,
 										 doing: backoff(true)
 										 }
         ]
@@ -36,19 +40,19 @@ defmodule Ev3.Behaviors do
         fsm: %FSM{
           transitions: [
 						%Transition{on: :stuck,
-                         condition: fn(value) -> value end, # true or false
+                         condition: fn(value, _) -> value end, # true or false
 											 doing: unstuck()
 											 }
           ]
         }
       ),
-      BehaviorConfig.new( # Reacting to communications for team EV3
+      BehaviorConfig.new( # Reacting to communications from team mates
         name: :confirming_heard,
         senses: [:heard],
         fsm: %FSM{
           transitions: [
 						%Transition{on: :heard,
-                         condition: fn(value) -> value.team == :EV3 end, 
+                         condition: fn(value, _) -> value.team == team() end, 
 												 doing: confirming_heard()
 											 }
           ]
@@ -82,6 +86,7 @@ defmodule Ev3.Behaviors do
 					]
 				}
 			),
+      
 			BehaviorConfig.new( # look for food in bright places
 				name: :foraging,
 				motivated_by: [:hunger],
@@ -92,38 +97,42 @@ defmodule Ev3.Behaviors do
 					transitions: [
 						%Transition{to: :started,
 												doing: start_foraging() },																 
-						%Transition{from: [:started, :on_track],
+						%Transition{from: [:started, :on_scent],
 												on: :scent_strength,
-												to: :on_track,
+												to: :on_scent,
 												doing: stay_the_course() # faster or slower according to closer or farther
 											 },
-						%Transition{from: [:off_track],
+						%Transition{from: [:off_scent],
 												on: :scent_direction,
-												to: :on_track,
-												 condition: fn({orientation, _value, _strength}) -> orientation == :ahead end
+												to: :on_scent,
+												 condition: fn({orientation, _value, _strength, channel}, _) ->
+                           channel == 1 and orientation == :ahead end
 											 },
-						%Transition{from: [:on_track, :off_track],
+						%Transition{from: [:on_scent, :off_scent],
 												on: :scent_direction,
-												to: :off_track,
-												 condition: fn({orientation, _value, _strength}) -> orientation != :ahead end,
+												to: :off_scent,
+												 condition: fn({orientation, _value, _strength, channel}, _) ->
+                           channel == 1 and
+                           orientation != :ahead end,
 											 doing: change_course()
 											 },
-						%Transition{from: [:on_track, :off_track],
+						%Transition{from: [:on_scent, :off_scent],
 												on: :scent_strength,
-												to: :off_track,
-												 condition: fn(value) -> value == :unknown end,
+												to: :off_scent,
+												 condition: fn({value, channel}, _) ->
+                           channel == 1 and value == :unknown end,
 											 doing: change_course()
 											 },
-						%Transition{from: [:on_track, :off_track, :feeding],
+						%Transition{from: [:on_scent, :off_scent, :feeding],
 												on: :food,
-												 condition: fn(value) -> value != :none end,
+												 condition: fn(value, _) -> value != :none end,
 											 to: :feeding,
 											 doing: eat()
 											 },
 						%Transition{from: [:feeding],
 												on: :food,
-												 condition: fn(value) -> value == :none end,
-											 to: :off_track,
+												 condition: fn(value, _) -> value == :none end,
+											 to: :off_scent,
 											 doing: backoff(false)
 											 },
 						%Transition{to: :ended,
@@ -132,6 +141,64 @@ defmodule Ev3.Behaviors do
 					]
 				}
 			),
+
+			BehaviorConfig.new( # Track another robot to compete for a food source
+				name: :tracking,
+				motivated_by: [:competition],
+				senses: [:food, :scent_strength, :scent_direction, :collision, :stuck],
+				fsm: %FSM{
+					initial_state: :started,
+					final_state: :ended,
+					transitions: [
+						%Transition{to: :started,
+												doing: start_tracking() },																 
+						%Transition{from: [:started, :on_track],
+												on: :scent_strength,
+												to: :on_track,
+												doing: stay_the_course() # faster or slower according to closer or farther
+											 },
+						%Transition{from: [:off_track],
+												on: :scent_direction,
+												to: :on_track,
+												 condition: fn({orientation, _value, _former_strength, channel}, motives) ->
+                           case find_motive(motives, :competition) do
+                             nil -> false
+                             motive -> Map.get(motive.details, :beacon_channel) == channel
+                               and orientation == :ahead
+                           end
+                         end
+											 },
+						%Transition{from: [:on_track, :off_track],
+												on: :scent_direction,
+												to: :off_track,
+												 condition: fn({orientation, _value, _former_strength, channel}, motives) ->
+                           case find_motive(motives, :competition) do
+                             nil -> false
+                             motive -> Map.get(motive.details, :beacon_channel) == channel
+                               and orientation != :ahead
+                           end
+                         end,
+											   doing: change_course()
+											 },
+						%Transition{from: [:on_track, :off_track],
+												on: :scent_strength,
+												to: :off_scent,
+												 condition: fn({value, channel}, motives) ->
+                           case find_motive(motives, :competition) do
+                             nil -> false
+                             motive -> Map.get(motive.details, :beacon_channel) == channel
+                               and value == :unknown
+                           end
+                         end,
+											   doing: change_course()
+											 },
+						%Transition{to: :ended,
+												doing: turn_on_green_leds()
+											 }
+					]
+				}
+			),
+     
 			BehaviorConfig.new( # now is the time to panic!
 				name: :panicking,
 				motivated_by: [:fear],
@@ -149,7 +216,7 @@ defmodule Ev3.Behaviors do
 						%Transition{from: [:panicking],
 												on: :danger,
 												to: :ended,
-												 condition: fn(value) -> value == :none end,
+												 condition: fn(value, _) -> value == :none end,
 											 doing: nil},
 						%Transition{to: :ended,
 												doing: calm_down()
@@ -207,7 +274,8 @@ defmodule Ev3.Behaviors do
 		fn(_percept, _state) ->
 			Logger.info("START ROAMING")
       green_lights()
-      # generate_intent(:say_curious)
+			generate_intent(:communicate, %{team: team(), info: :roaming})
+       # generate_intent(:say_curious)
     end
   end
 
@@ -215,12 +283,12 @@ defmodule Ev3.Behaviors do
 		fn(percept, _state) ->
 			Logger.info("ROAMING from #{percept.about} = #{inspect percept.value}")
 			green_lights()
-			if :random.uniform(2) == 1 do
-				turn_where = case :random.uniform(2) do
+			if :rand.uniform(2) == 1 do
+				turn_where = case :rand.uniform(2) do
 											 1 -> :turn_left
 											 2 -> :turn_right
 										 end
-        generate_intent(turn_where, :random.uniform(10))
+        generate_intent(turn_where, :rand.uniform(10))
 			end
       generate_intent(:go_forward,  %{speed: :normal, time: 1})
 		end
@@ -230,7 +298,7 @@ defmodule Ev3.Behaviors do
 		fn(percept, _state) ->
 			Logger.info("AVOIDING COLLISION from #{percept.about} = #{inspect percept.value}")
       generate_intent(:say_uh_oh)
-			turn_where = case :random.uniform(2) do
+			turn_where = case :rand.uniform(2) do
 										 1 -> :turn_left
 										 2 -> :turn_right
 									 end
@@ -247,13 +315,13 @@ defmodule Ev3.Behaviors do
   end
 
   defp intend_backoff(strong?) do
-		how_long = 10 + :random.uniform(6) # secs
+		how_long = 10 + :rand.uniform(6) # secs
     generate_intent(:go_backward,  %{speed: :slow, time: how_long}, strong?)
-		turn_where = case :random.uniform(2) do
+		turn_where = case :rand.uniform(2) do
 									 1 -> :turn_left
 									 2 -> :turn_right
 								 end
-		generate_intent(turn_where, :random.uniform(5) + 4, strong?)
+		generate_intent(turn_where, :rand.uniform(5) + 4, strong?)
   end    
 
 
@@ -299,11 +367,11 @@ defmodule Ev3.Behaviors do
 			
 			(%Percept{about: :scent_strength, value: _value} = percept, _state) ->
 				Logger.info("CHANGING COURSE from #{percept.about} = #{inspect percept.value}")
-			turn_where = case :random.uniform(2) do
+			turn_where = case :rand.uniform(2) do
 										 1 -> :turn_left
 										 2 -> :turn_right
 									 end
-			how_much = round(:random.uniform(5) / 3)
+			how_much = round(:rand.uniform(5) / 3)
 			generate_intent(turn_where, how_much)
 		end
 	end
@@ -313,10 +381,19 @@ defmodule Ev3.Behaviors do
       Logger.info("START FORAGING")
       green_lights()
       generate_intent(:say_hungry)
-			generate_intent(:communicate, %{team: :EV3, info: :hungry})
+			generate_intent(:communicate, %{team: team(), info: :foraging})
     end
   end
 
+   defp start_tracking() do
+		fn(_percept, _state) ->
+      Logger.info("START TRACKING")
+      green_lights()
+      generate_intent(:say_tracking)
+			generate_intent(:communicate, %{team: team(), info: :tracking})
+    end
+  end
+ 
 	defp eat() do
 		fn(%Percept{about: :food, value: value}, _state) ->
 			Logger.info("EATING from food = #{inspect value}")
@@ -327,7 +404,7 @@ defmodule Ev3.Behaviors do
 									 :little -> :some
 								 end
       generate_intent(:eating_noises)
-			generate_intent(:communicate, %{team: :EV3, info: :food})
+			generate_intent(:communicate, %{team: team(), info: :eating})
 			generate_intent(:eat, how_much)
 		end
 	end
@@ -337,28 +414,28 @@ defmodule Ev3.Behaviors do
       red_lights()
 			Logger.info("PANICKING")
       generate_intent(:say_scared)
- 			generate_intent(:communicate, %{team: :EV3, info: :danger})
+ 			generate_intent(:communicate, %{team: team(), info: :panicking})
 		end
   end
 	
 	defp panic() do
 		fn(_percept, _state) ->
 			red_lights()
-      for _n <- 1 .. :random.uniform(4) do
+      for _n <- 1 .. :rand.uniform(4) do
 			  generate_intent(:go_backward, %{speed: :fast, time: 1}, true)
-			  turn_where = case :random.uniform(2) do
+			  turn_where = case :rand.uniform(2) do
 											 1 -> :turn_left
 											 2 -> :turn_right
 										 end
-		    generate_intent(turn_where, :random.uniform(5) + 2, true)
+		    generate_intent(turn_where, :rand.uniform(5) + 2, true)
       end
 		end
 	end
 
 	defp confirming_heard() do
 		fn(percept, _state) ->
-			%{source: _source, team: team, info: info} = percept.value
-			generate_intent(:say, "I heard #{info} meant for #{team}")
+			%{info: info} = percept.value
+			generate_intent(:say, "I heard #{info}")
 		end
 	end
 	
@@ -384,5 +461,9 @@ defmodule Ev3.Behaviors do
 		Logger.info("TURNING ON ORANGE LIGHTS")
 		generate_intent(:orange_lights, :on, true)
 	end
+
+  defp find_motive(motives, about) do
+    Enum.find(motives, &(&1.about == about))
+  end
 
 end

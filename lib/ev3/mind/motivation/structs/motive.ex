@@ -4,26 +4,29 @@ defmodule Ev3.Motive do
 	import Ev3.Utils
 
 	@doc """
-       about: The name of the motive
-	     value: Either :on or :off
-       since: When the motive got its current value
-       inhibits: The names of the motives this one inhibits
-       source: The source of the motive
-       """
-	defstruct about: nil, value: nil, since: nil, inhibits: [], source: nil
+  about: The name of the motive
+	value: Either :on or :off
+  details: Details about the motive (a map)
+  since: When the motive got its current value
+  inhibits: The names of the motives this one inhibits
+  source: The source of the motive
+  """
+	defstruct about: nil, value: nil, details: %{}, since: nil, inhibits: [], source: nil
 
 	@doc "Create an motive that's on"
-	def on(name) do
+	def on(name, details \\ %{}) do
 	  %Ev3.Motive{about: name,
                 since: now(),
-							  value: :on}
+							  value: :on,
+                details: details}
   end
 
 	@doc "Create a motive that's off (to turn off an on motive of the same name)"
-	def off(name) do
+	def off(name, details \\ %{}) do
 	  %Ev3.Motive{about: name,
                 since: now(),
-							  value: :off}
+							  value: :off,
+                details: details}
   end
 
 	@doc "Is the motive on?"
@@ -55,6 +58,6 @@ defmodule Ev3.Motive do
     now() - motive.since
   end
 
- # A "memorable" - must have about, since and value fields
+  # A "memorable" - must have about, since and value fields
 
 end							

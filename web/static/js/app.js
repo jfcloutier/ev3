@@ -22,14 +22,14 @@ import socket from "./socket"
 
 // ELM
 var elmDiv = document.getElementById('elm-main')
-, initialState = {runtimeStatsPort: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0},
-                  activeStatePort: {active: true},
-                  perceptPort: {about: "", value: ""},
-                  motivePort: {about: "", on: false, inhibited: false},
-                  behaviorPort: {name: "", reflex: false, event: "", value: ""},
-                  intentPort: {actuator: "", about: "", value: "", strong: false}
-                 }
-, elmApp = Elm.embed(Elm.RobotDashboard, elmDiv, initialState);
+// , initialState = {runtimeStatsPort: {ramFree: 0, ramUsed: 0, swapFree: 0, swapUsed: 0},
+//                   activeStatePort: {active: true},
+//                   perceptPort: {about: "", value: ""},
+//                   motivePort: {about: "", on: false, inhibited: false},
+//                   behaviorPort: {name: "", reflex: false, event: "", value: ""},
+//                   intentPort: {actuator: "", about: "", value: "", strong: false}
+//                  }
+, elmApp = Elm.RobotDashboard.embed(elmDiv);
 
 // Now that you are connected, you can join channels with a topic:
 let robot_channel = socket.channel("ev3:dashboard", {})

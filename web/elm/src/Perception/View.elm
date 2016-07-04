@@ -1,13 +1,13 @@
-module Perception.View where
+module Perception.View exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, attribute, classList)
 import Perception.Model as Model exposing (Model)
-import Perception.Update exposing (Action)
+import Perception.Update exposing (Msg)
 import Dict exposing (Dict)
 
-view: Signal.Address Action -> Model -> Html
-view address model =
+view: Model -> Html Msg
+view model =
   let
     getValue about percepts =
       Dict.get about percepts |> Maybe.withDefault "?"

@@ -1,62 +1,67 @@
-module Status.Update where
+module Status.Update exposing (..)
 
 import Json.Decode as Json exposing ((:=))
 import RobotConfig exposing (hostname)
-import String.Interpolate exposing(interpolate)
-import Http
-import Effects exposing (Effects)
-import Task exposing (Task, andThen)
+import Http exposing (..)
+import Task
 import Status.Model as Model exposing (Model, RuntimeStats, ActiveState)
+import Update.Extra.Infix exposing ((:>))
 
-type Action =
+type Msg =
   NoOp (Maybe String)
     | SetPaused (Maybe Bool)
     | SetActive ActiveState
     | TogglePaused
+    | HTTPCallFailed Http.Error
+    | TogglePauseRequested String
+    | PausedFetched Bool
     | SetRuntimeStats RuntimeStats
 
-init: (Model, Effects Action)
+init: (Model, Cmd Msg)
 init =
   (Model.initialModel, fetchPaused)
 
-update: Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update: Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
     SetPaused maybePauseRequested ->
       let
         result =
           Maybe.withDefault model.pauseRequested maybePauseRequested
       in
-      ({model | pauseRequested = result}, Effects.none)
+      ({model | pauseRequested = result}, Cmd.none)
     SetActive activeState ->
-      ({model | active = activeState.active}, Effects.none)
+      ({model | active = activeState.active}, Cmd.none)
     TogglePaused ->
       (model, togglePaused)
+    HTTPCallFailed error ->
+      (model, Cmd.none)
+    TogglePauseRequested string ->
+      (model, fetchPaused)
+    PausedFetched bool -> -- NEEDED?
+      model ! [] :> update (SetPaused (Just bool))
     SetRuntimeStats runtimeStats ->
-      ({model | runtime = runtimeStats}, Effects.none)
+      ({model | runtime = runtimeStats}, Cmd.none)
     _ ->
-      (model, Effects.none)
+      (model, Cmd.none)
 
 -- EFFECTS
 
-togglePaused: Effects Action 
+togglePaused: Cmd Msg 
 togglePaused =
   let
-    togglePausedEffect = (Http.post Json.string (interpolate "http://{0}:4000/api/robot/togglePaused" [hostname]) Http.empty
-                |> Task.toMaybe
-                |> Task.map NoOp
-                |> Effects.task)
+    url = "http://" ++ hostname ++ ":4000/api/robot/togglePaused"
   in
-    Effects.batch [togglePausedEffect, fetchPaused]
-
-fetchPaused: Effects Action
+      Task.perform HTTPCallFailed TogglePauseRequested (Http.post Json.string url empty)
+          
+fetchPaused: Cmd Msg
 fetchPaused =
-  Http.get decodePaused (interpolate "http://{0}:4000/api/robot/paused" [hostname])
-      |> Task.toMaybe
-      |> Task.map SetPaused
-      |> Effects.task
+  let
+    url =
+      "http://" ++ hostname ++ ":4000/api/robot/paused"
 
-decodePaused: Json.Decoder Bool
-decodePaused =
-  "paused" := Json.bool
+    decodePaused =
+      "paused" := Json.bool
+  in
+    Task.perform HTTPCallFailed PausedFetched (Http.get decodePaused url)
 

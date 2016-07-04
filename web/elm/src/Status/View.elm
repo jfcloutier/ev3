@@ -1,13 +1,13 @@
-module Status.View where
+module Status.View exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, attribute, classList)
 import Html.Events exposing (onClick)
-import Status.Update exposing (Action)
+import Status.Update exposing (Msg)
 import Status.Model as Model exposing (Model)
 
-view: Signal.Address Action -> Model -> Html
-view address model =
+view: Model -> Html Msg
+view model =
     let
       pausingLabel model =
         if not model.pauseRequested then
@@ -42,7 +42,7 @@ view address model =
                     div [class "col-lg-2"]
                           [
                            button
-                           [onClick address Status.Update.TogglePaused
+                           [onClick Status.Update.TogglePaused
                            , classList [ ("btn", True), ((btnColor model.pauseRequested), True)]]
                            [text (pausingLabel model)]
                           ]

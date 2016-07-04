@@ -9,27 +9,34 @@ defmodule Ev3.Motivation do
 	@doc "Give the configurations of all motivators. Motivators turn motives on and off"
   def motivator_configs() do
 		[
-				# A curiosity motivator
-				MotivatorConfig.new(
-					name: :curiosity,
-					focus: %{senses: [:time_elapsed], motives: [], intents: []},
-					span: nil,
-					logic: curiosity()
-				),
-				# A hunger motivator
-				MotivatorConfig.new(
-					name: :hunger,
-					focus: %{senses: [:hungry], motives: [], intents: []},
-					span: nil, # for as long as we can remember
-					logic: hunger(),
-				),
-				# A fear motivator
-				MotivatorConfig.new(
-					name: :fear,
-					focus: %{senses: [:danger], motives: [], intents: []},
-					span: nil, # for as long as we can remember
-					logic: fear()
-				)
+			# A curiosity motivator
+			MotivatorConfig.new(
+				name: :curiosity,
+				focus: %{senses: [:time_elapsed], motives: [], intents: []},
+				span: nil,
+				logic: curiosity()
+			),
+			# A hunger motivator
+			MotivatorConfig.new(
+				name: :hunger,
+				focus: %{senses: [:hungry], motives: [], intents: []},
+				span: nil, # for as long as we can remember
+				logic: hunger(),
+			),
+			# A fear motivator
+			MotivatorConfig.new(
+				name: :fear,
+				focus: %{senses: [:danger], motives: [], intents: []},
+				span: nil, # for as long as we can remember
+				logic: fear()
+			),
+      # Tracking another robot
+      MotivatorConfig.new(
+        name: :tracking,
+        focus: %{senses: [:heard_eating], motives: [:hunger], intents: []},
+        span: nil,
+        logic: tracking()
+      )
 		]
 	end
 
@@ -82,5 +89,25 @@ defmodule Ev3.Motivation do
 				nil
 		end
 	end
-	
+
+  @doc "Tracking motivation"
+  def tracking() do
+    fn
+      (%Percept{about: :other_eating, value: %{current: true, beacon_channel: beacon_channel}}, %{motives: motives}) ->
+      if latest_memory?(
+            motives,
+            :hunger,
+            fn(value) -> value == :on end) do
+        Motive.on(:competition, %{beacon_channel: beacon_channel}) |> Motive.inhibit(:hunger)
+	    else
+        nil
+      end
+      (%Percept{about: :other_eating, value: %{current: false, beacon_channel: beacon_channel}}, _) ->
+        Motive.off(:competition, %{beacon_channel: beacon_channel})
+		  (_,_) ->
+				nil
+    end
+	end
+  
 end
+

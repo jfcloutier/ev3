@@ -1,4 +1,4 @@
-module Status.Model where
+module Status.Model exposing (..)
 
 type alias ActiveState = {active: Bool}
                        

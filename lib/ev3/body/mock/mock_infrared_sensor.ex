@@ -55,37 +55,37 @@ defmodule Ev3.Mock.InfraredSensor do
 	### Private
 
 	defp proximity(sensor) do
-		value = :random.uniform(20)
+		value = :rand.uniform(20)
 		{value, sensor}
 	end
 
 	defp seek_heading(sensor, _channel) do
-		value = 5 - :random.uniform(10)
+		value = 5 - :rand.uniform(10)
     {value, sensor}
 	end
 
   defp nudge_heading(_channel, value, previous_value) do
-    if previous_value == nil or :random.uniform(10) == 1 do
-      25 - :random.uniform(50)
+    if previous_value == nil or :rand.uniform(10) == 1 do
+      25 - :rand.uniform(50)
     else
       value + previous_value |> max(-25) |> min(25)
     end
   end
 
 	defp seek_distance(sensor, _channel) do
-		value = :random.uniform(10) - 7
+		value = :rand.uniform(10) - 7
     {value, sensor}
 	end
 
   defp nudge_distance(_channel, value, previous_value) do
     case previous_value do
-      nil -> 50 + :random.uniform(50)
+      nil -> 50 + :rand.uniform(50)
       _ -> value + previous_value |> max(0) |> min(100)
     end
   end
 
 	defp seek_beacon_on?(sensor, _channel) do
-		value = :random.uniform(2) == 2
+		value = :rand.uniform(2) == 2
 		{value, sensor}
 	end
 
@@ -93,7 +93,7 @@ defmodule Ev3.Mock.InfraredSensor do
     case previous_value do
       nil -> value
       _ ->
-        if :random.uniform(4) == 4 do
+        if :rand.uniform(4) == 4 do
           value
         else
           previous_value
@@ -102,7 +102,7 @@ defmodule Ev3.Mock.InfraredSensor do
   end
 
 	defp remote_buttons(sensor, _channel) do
-		value = case :random.uniform(12) - 1 do
+		value = case :rand.uniform(12) - 1 do
 			1 -> %{red: :up, blue: nil}
 			2 -> %{red: :down, blue: nil}
 			3 -> %{red: nil, blue: :up}

@@ -1,4 +1,4 @@
-module Actuation.Model where
+module Actuation.Model exposing (..)
 
 import Dict exposing (Dict)
 

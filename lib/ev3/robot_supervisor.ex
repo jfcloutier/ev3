@@ -77,7 +77,7 @@ defmodule Ev3.RobotSupervisor do
 
   defp all_used_senses() do
     MapSet.new(
-      Perception.used_senses ++ Motivation.used_senses() ++ Behaviors.used_senses())
+      Perception.used_senses() ++ Motivation.used_senses() ++ Behaviors.used_senses())
     |> MapSet.to_list()
   end
   

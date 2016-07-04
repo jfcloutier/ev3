@@ -1,4 +1,4 @@
-module Motivation.Model where
+module Motivation.Model exposing (..)
 
 import Dict exposing (Dict)
 

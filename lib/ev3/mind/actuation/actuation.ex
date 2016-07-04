@@ -10,6 +10,7 @@ defmodule Ev3.Actuation do
 	alias Ev3.CommSpec
 	alias Ev3.Activation
 	alias Ev3.Script
+  import Ev3.Utils
 	
 	@doc "Give the configurations of all actuators to be activated"
   def actuator_configs() do
@@ -62,11 +63,13 @@ defmodule Ev3.Actuation do
       ActuatorConfig.new(name: :sounds,
                          type: :sound,
                          specs: [
-                           %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: "en-sc"}}
+                           %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: get_personal("voice", "en")}}
                          ],
                          activations: [
                            %Activation{intent: :say_hungry,
                                        action: say_hungry()},
+                          %Activation{intent: :say_tracking,
+                                       action: say_tracking()},
                            %Activation{intent: :say_scared,
                                        action: say_scared()},
                            %Activation{intent: :say_curious,
@@ -85,7 +88,7 @@ defmodule Ev3.Actuation do
       ActuatorConfig.new(name: :communicators,
 												 type: :comm,
 												 specs: [
-													 %CommSpec{name: :marvins, type: :pg2} # could set props.ttl to something other than 30 secs default
+													 %CommSpec{name: :comms, type: :pg2} # could set props.ttl to something other than 30 secs default
 												 ],
 												 activations: [
 													 %Activation{intent: :communicate, # intent value = %{info: info, team: team}
@@ -249,6 +252,13 @@ defmodule Ev3.Actuation do
     end
   end
   
+  defp say_tracking() do
+    fn(_intent, sound_players) ->
+      Script.new(:say_tracking, sound_players)
+      |> Script.add_step(:loud_speech, :speak, ["I am coming after you"])
+    end
+  end
+  
   defp say_scared() do
     fn(_intent, sound_players) ->
       Script.new(:say_scared, sound_players)
@@ -303,7 +313,7 @@ defmodule Ev3.Actuation do
 	defp communicate() do
 		fn(intent, communicators) ->
 			Script.new(:communicate, communicators)
-			|> Script.add_step(:marvins, :communicate, [intent.value])
+			|> Script.add_step(:comms, :communicate, [intent.value])
 		end
 	end
   

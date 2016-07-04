@@ -1,14 +1,14 @@
-module Actuation.View where
+module Actuation.View exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, attribute, classList)
 import Actuation.Model as Model exposing (Model)
-import Actuation.Update exposing (Action)
+import Actuation.Update exposing (Msg)
 import Dict exposing (Dict)
 
 
-view: Signal.Address Action -> Model -> Html
-view address model =
+view:  Model -> Html Msg
+view model =
   let
     getIntent actuator intents =
       Dict.get actuator intents |> Maybe.withDefault Model.defaultIntent

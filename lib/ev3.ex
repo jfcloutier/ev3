@@ -13,9 +13,9 @@ defmodule Ev3 do
   def start(_type, _args) do
 		connect_to_nodes() # Create P2P cluster
     import Supervisor.Spec, warn: false
-    if not testing?() and platform() == :brickpi do
-      initialize_brickpi_ports()
-    end
+#    if not testing?() and platform() == :brickpi do
+#      initialize_brickpi_ports()
+#    end
     children = [
       # Start the endpoint when the application starts
       supervisor(Endpoint, []),
@@ -32,6 +32,7 @@ defmodule Ev3 do
 		result
   end
 
+	# Used when on the BrickPi because it can not discover automatically which devices are connected where
   def ports_config() do
       {config, _} = Code.eval_file(@robot_config)
       config
@@ -94,14 +95,14 @@ defmodule Ev3 do
     i
   end
 
-  defp initialize_brickpi_ports() do
-    Enum.each(
-      ports_config(),
-      fn(%{port: port_name, device: device_type}) ->
-        if LegoSensor.sensor?(device_type) do # motor ports are preset to NXT
-          Sysfs.set_brickpi_port(port_name, device_type)
-        end
-      end)
-  end
+ defp initialize_brickpi_ports() do
+   Enum.each(
+     ports_config(),
+     fn(%{port: port_name, device: device_type}) ->
+       if LegoSensor.sensor?(device_type) do # motor ports are preset to NXT
+         Sysfs.set_brickpi_port(port_name, device_type)
+       end
+     end)
+ end
   
 end

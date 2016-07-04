@@ -72,9 +72,7 @@ defmodule Ev3.LegoLED do
     led
 	end
 
-
-
-	### Private
+	### PRIVATE
 
 	defp module_for(_led) do
 		if !Ev3.testing? do

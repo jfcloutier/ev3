@@ -26,11 +26,8 @@ defmodule Ev3.Web do
     quote do
       use Phoenix.Controller
 
-#      alias Ev3.Repo
-#      import Ecto.Model
-#      import Ecto.Query, only: [from: 2]
-
       import Ev3.Router.Helpers
+      import Ev3.Gettext
     end
   end
 
@@ -45,6 +42,8 @@ defmodule Ev3.Web do
       use Phoenix.HTML
 
       import Ev3.Router.Helpers
+    import Ev3.ErrorHelpers
+      import Ev3.Gettext
     end
   end
 
@@ -57,11 +56,7 @@ defmodule Ev3.Web do
   def channel do
     quote do
       use Phoenix.Channel
-
-#      alias Ev3.Repo
-#     import Ecto.Model
-#    import Ecto.Query, only: [from: 2]
-
+      import Ev3.Gettext
     end
   end
 

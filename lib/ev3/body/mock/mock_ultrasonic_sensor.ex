@@ -35,13 +35,13 @@ defmodule Ev3.Mock.UltrasonicSensor do
   ### Private
 
   defp distance_cm(sensor) do
-    value = 10 - :random.uniform(30)
+    value = 10 - :rand.uniform(30)
     {value, sensor}
   end
 
   defp nudge_distance_cm(value, previous_value) do
     case previous_value do
-      nil -> :random.uniform(2550)
+      nil -> :rand.uniform(2550)
       _ -> (value + previous_value) |> max(0) |> min(2550)
     end
   end

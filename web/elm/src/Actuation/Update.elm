@@ -1,16 +1,15 @@
-module Actuation.Update where
+module Actuation.Update exposing (..)
 
 import Actuation.Model as Model exposing (Model, IntentData)
 import Dict exposing (Dict)
-import Effects exposing (Effects)
 
-type Action = 
+type Msg = 
   AddIntent IntentData
   
-update: Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update: Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
     AddIntent intentData ->
-      ({model | intents = Dict.insert intentData.actuator (Model.intentFromData intentData) model.intents}, Effects.none)
+      ({model | intents = Dict.insert intentData.actuator (Model.intentFromData intentData) model.intents}, Cmd.none)
 
                 

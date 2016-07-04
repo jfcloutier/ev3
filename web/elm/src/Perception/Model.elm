@@ -1,4 +1,4 @@
-module Perception.Model where
+module Perception.Model exposing (..)
 
 import Dict exposing (Dict)
 

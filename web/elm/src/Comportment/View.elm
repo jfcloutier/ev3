@@ -1,13 +1,13 @@
-module Comportment.View where
+module Comportment.View exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, attribute, classList)
 import Comportment.Model as Model exposing (Model)
-import Comportment.Update exposing (Action)
+import Comportment.Update exposing (Msg)
 import Dict exposing (Dict)
 
-view: Signal.Address Action -> Model -> Html
-view address model =
+view: Model -> Html Msg
+view model =
   let
     getBehavior name behaviors =
       Dict.get name behaviors |> Maybe.withDefault (Model.defaultBehavior name)

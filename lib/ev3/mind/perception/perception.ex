@@ -5,6 +5,8 @@ defmodule Ev3.Perception do
 	require Logger
 	alias Ev3.{PerceptorConfig, Percept}
 
+	## NOTE: Inter-robot comm generates these percepts: Percept.new(about: :heard, value: %{source: source, team: team, info: info})
+
 	@doc "Give the configurations of all perceptors to be activated"
 	def perceptor_configs() do
 		[
@@ -44,17 +46,32 @@ defmodule Ev3.Perception do
 				# An odor perceptor
 				PerceptorConfig.new(
 					name: :scent,
-					focus: %{senses: [{:beacon_heading, 1}, {:beacon_distance, 1}], motives: [], intents: []},
+					focus: %{senses: [:beacon_heading, :beacon_distance], motives: [], intents: []},
 					span: {10, :secs},
 					ttl: {30, :secs},
 					logic: scent()),
 				# A stuck perceptor
 				PerceptorConfig.new(
 					name: :stuck,
-					focus: %{senses: [ {:beacon_distance, 1}, :distance], motives: [], intents: [:go_forward, :go_backward]},
+					focus: %{senses: [:beacon_distance, :distance], motives: [], intents: [:go_forward, :go_backward]},
 					span: {10, :secs},
 					ttl: {10, :secs},
-					logic: stuck())
+					logic: stuck()),
+        # A "someone is panicking and I am not in danger" perceptor
+				PerceptorConfig.new(
+					name: :other_panicking,
+					focus: %{senses: [:heard, :danger], motives: [], intents: [:say_scared]},
+					span: {10, :secs},
+					ttl: {10, :secs},
+					logic: other_panicking()),
+        # A "someone is eating, I did not find food myself and I am hungry" perceptor
+				PerceptorConfig.new(
+					name: :other_eating,
+					focus: %{senses: [:heard, :food], motives: [], intents: []},
+					span: {10, :secs},
+					ttl: {10, :secs},
+					logic: other_eating())
+        
 		]
 	end
 
@@ -256,36 +273,74 @@ defmodule Ev3.Perception do
 		end
 	end
 
-	@doc "Where's the b(e)acon?"
+	@doc "Where's a beacon?"
 	def scent() do
 		fn
-		(%Percept{about: {:beacon_distance, 1}, value: value}, _memories) ->
+		(%Percept{about: {:beacon_distance, n}, value: value}, _memories) ->
 				cond do
 					value < 0 ->
-						Percept.new(about: :scent_strength, value: :unknown)
+						Percept.new(about: :scent_strength, value: {:unknown, n})
 					value == 100 ->
-						Percept.new(about: :scent_strength, value: :very_weak)
+						Percept.new(about: :scent_strength, value: {:very_weak, n})
 					value > 50 ->
-						Percept.new(about: :scent_strength, value: :weak)
+						Percept.new(about: :scent_strength, value: {:weak, n})
 					value > 10 ->
-						Percept.new(about: :scent_strength, value: :strong)
+						Percept.new(about: :scent_strength, value: {:strong, n})
 					true ->
-						Percept.new(about: :scent_strength, value: :very_strong)
+						Percept.new(about: :scent_strength, value: {:very_strong, n})
 				end
-		  (%Percept{about: {:beacon_heading, 1}, value: value}, %{percepts: percepts}) ->
+		  (%Percept{about: {:beacon_heading, channel}, value: {heading, channel}}, %{percepts: percepts}) ->
         latest_scent_strength = last_memory(
 							percepts,
 							:scent_strength)
 				cond do
-					value < -10 ->
-						Percept.new(about: :scent_direction, value: {:left, abs(value), latest_scent_strength})
-					value > 10 ->
-						Percept.new(about: :scent_direction, value: {:right, abs(value), latest_scent_strength})
+					heading < -10 ->
+						Percept.new(about: :scent_direction, value: {:left, abs(heading), latest_scent_strength, channel})
+					heading > 10 ->
+						Percept.new(about: :scent_direction, value: {:right, abs(heading), latest_scent_strength, channel})
 					true ->
-						Percept.new(about: :scent_direction, value: {:ahead, abs(value), latest_scent_strength})
+						Percept.new(about: :scent_direction, value: {:ahead, abs(heading), latest_scent_strength, channel})
 			  end
 	  (_,_) -> nil
 	  end
 	end
+
+  @doc "Heard panic from someone else (and I did not recently say danger)"
+  def other_panicking() do
+    fn
+      (%Percept{about: :heard, value: %{info: :panicking}}, %{intents: intents}) ->
+				if not any_memory?(
+							intents,
+							:say_scared,
+							3000,
+							fn(_value) -> true end) do
+					Percept.new(about: :danger, value: :high)
+				else
+					nil
+				end
+	    (_,_) -> nil
+      end
+  end
+
+  @doc "Heard someone else say food and I did not find food myself and I am motivated by hunger"
+  def other_eating() do
+    fn
+      (%Percept{about: :heard, value: %{info: :eating, beacon_channel: beacon_channel}}, %{percepts: percepts}) ->
+			if not any_memory?(
+						percepts,
+						:food,
+						2000,
+						fn(value) -> value in [:litte, :plenty] end) do
+         Percept.new(about: :other_eating,
+                    value: %{beacon_channel: beacon_channel, current: true})
+      else
+        nil
+      end
+		  (%Percept{about: :heard, value: %{info: _info, beacon_channel: beacon_channel}}, _) ->
+        Percept.new(about: :other_eating,
+                    value: %{beacon_channel: beacon_channel, current: false})
+	    (_,_) -> nil
+    end
+  end
 
 end

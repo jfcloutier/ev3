@@ -12,7 +12,6 @@ defmodule Ev3.Actuator do
 	alias Ev3.LegoLED
   alias Ev3.LegoSound
 	alias Ev3.LegoCommunication
-	alias Ev3.CommunicationSpec
 	alias Ev3.CNS
   alias Ev3.Intent
 

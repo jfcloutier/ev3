@@ -1,12 +1,9 @@
-module RobotDashboard where
+port module RobotDashboard exposing (..)
 
-import Effects exposing (Never)
-import StartApp
-import Task exposing (Task)
-import Html exposing (Html)
-import App.Model exposing (Model)
-import App.Update exposing (Action)
-import App.View
+import Html.App as App
+import Dashboard.Model exposing (Model)
+import Dashboard.Update exposing (Msg)
+import Dashboard.View
 import Status.Update
 import Perception.Update
 import Motivation.Update
@@ -18,52 +15,47 @@ import Motivation.Model
 import Comportment.Model
 import Actuation.Model
 
-app: StartApp.App Model
-app =
-  StartApp.start
-          {init = App.Update.init
-           , update = App.Update.update
-           , view = App.View.view
-           , inputs = inputs
+main : Program Never
+main =
+  App.program
+          {init = Dashboard.Update.init
+           , update = Dashboard.Update.update
+           , view = Dashboard.View.view
+           , subscriptions = subscriptions
           }
 
-main : Signal Html
-main =
-  app.html
+-- Subscriptions
 
-
--- INPUTS
-
-inputs: List (Signal Action)
-inputs =
-  [
-    Signal.map (App.Update.StatusAction << Status.Update.SetRuntimeStats) runtimeStatsPort
-  , Signal.map (App.Update.StatusAction << Status.Update.SetActive) activeStatePort
-  , Signal.map (App.Update.PerceptionAction << Perception.Update.AddPercept) perceptPort
-  , Signal.map (App.Update.MotivationAction << Motivation.Update.SetMotive) motivePort
-  , Signal.map (App.Update.ComportmentAction << Comportment.Update.SetBehavior) behaviorPort
-  , Signal.map (App.Update.ComportmentAction << Comportment.Update.ReviveAll) activeStatePort
-  , Signal.map (App.Update.ActuationAction << Actuation.Update.AddIntent) intentPort
-  ]
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  let
+    subs =
+      [
+       (Dashboard.Update.StatusMsg << Status.Update.SetRuntimeStats) |> runtimeStatsPort
+      , (Dashboard.Update.StatusMsg << Status.Update.SetActive) |> activeStatePort
+      , (Dashboard.Update.PerceptionMsg << Perception.Update.AddPercept) |> perceptPort
+      , (Dashboard.Update.MotivationMsg << Motivation.Update.SetMotive) |> motivePort
+      , (Dashboard.Update.ComportmentMsg << Comportment.Update.SetBehavior) |> behaviorPort
+      , (Dashboard.Update.ComportmentMsg << Comportment.Update.ReviveAll) |> activeStatePort
+      , (Dashboard.Update.ActuationMsg << Actuation.Update.AddIntent) |> intentPort
+      ]
+    in
+      Sub.batch subs
 
 -- PORTS
 
-port tasks : Signal (Task Never ()) 
-port tasks =
-  app.tasks -- From effects
-
 -- status
-port runtimeStatsPort: Signal Status.Model.RuntimeStats
-port activeStatePort: Signal Status.Model.ActiveState
+port runtimeStatsPort: (Status.Model.RuntimeStats -> msg) -> Sub msg
+port activeStatePort: (Status.Model.ActiveState -> msg) -> Sub msg
 
 -- perception
-port perceptPort: Signal Perception.Model.Percept
+port perceptPort: (Perception.Model.Percept -> msg) -> Sub msg
 
 -- motivation
-port motivePort: Signal Motivation.Model.Motive
+port motivePort: (Motivation.Model.Motive -> msg) -> Sub msg
 
 -- behavior
-port behaviorPort: Signal Comportment.Model.BehaviorData
+port behaviorPort: (Comportment.Model.BehaviorData -> msg) -> Sub msg
 
 -- intent
-port intentPort: Signal Actuation.Model.IntentData
+port intentPort: (Actuation.Model.IntentData -> msg) -> Sub msg

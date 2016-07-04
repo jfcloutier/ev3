@@ -61,8 +61,6 @@ defmodule Ev3.Device do
     end
   end
 
-
-
   def self_loading_on_brickpi?(device_type) do
     device_type == :touch
   end

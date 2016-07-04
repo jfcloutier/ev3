@@ -1,13 +1,13 @@
-module Motivation.View where
+module Motivation.View exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, attribute, classList)
 import Motivation.Model as Model exposing (Model)
-import Motivation.Update exposing (Action)
+import Motivation.Update exposing (Msg)
 import Dict exposing (Dict)
 
-view: Signal.Address Action -> Model -> Html
-view address model =
+view: Model -> Html Msg
+view model =
   let
     getMotive about motives =
       Dict.get about motives |> Maybe.withDefault Model.defaultMotive

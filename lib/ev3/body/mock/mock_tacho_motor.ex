@@ -114,12 +114,12 @@ defmodule Ev3.Mock.Tachomotor do
 	### PRIVATE
 
 	defp current_speed(motor) do
-		value = 2 - (:random.uniform() * :random.uniform(4)) # delta speed
+		value = 2 - (:rand.uniform() * :rand.uniform(4)) # delta speed
 		{value, motor}
 	end
 
   defp nudge_speed(_value, nil) do
-    :random.uniform() * :random.uniform(10)
+    :rand.uniform() * :rand.uniform(10)
   end
   
   defp nudge_speed(value, previous_value) do
@@ -127,7 +127,7 @@ defmodule Ev3.Mock.Tachomotor do
   end
 
 	defp current_position(motor) do
-		value = :random.uniform(20) - 10
+		value = :rand.uniform(20) - 10
 		{value, motor}
 	end
 
@@ -139,7 +139,7 @@ defmodule Ev3.Mock.Tachomotor do
   end
 
 	defp current_duty_cycle(motor) do
-		value = :random.uniform(30)
+		value = :rand.uniform(30)
 		{value, motor}
 	end
 
@@ -151,7 +151,7 @@ defmodule Ev3.Mock.Tachomotor do
   end
 
 	defp current_run_status(motor) do
-		value = case :random.uniform(10) do
+		value = case :rand.uniform(10) do
 							0 -> :stopped
 							1 -> :stalled
 							2 -> :holding

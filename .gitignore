@@ -18,6 +18,11 @@ erl_crash.dump
 /web/elm/elm-stuff/packages
 /web/elm/elm-stuff/build-artifacts
 /web/elm/elm.js
+/elm-stuff
+/lib/TAGS
+/lib/retag.sh
+/web/elm/src/elm-stuff/packages/elm-lang/core/3.0.0/documentation.json
+
 # Since we are building assets from web/static,
 # we ignore priv/static. You may want to comment
 # this depending on your deployment strategy.
