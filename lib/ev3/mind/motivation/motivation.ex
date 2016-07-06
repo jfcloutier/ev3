@@ -30,12 +30,12 @@ defmodule Ev3.Motivation do
 				span: nil, # for as long as we can remember
 				logic: fear()
 			),
-      # Tracking another robot
+      # Tracking another robot to steal its food
       MotivatorConfig.new(
-        name: :tracking,
+        name: :greed,
         focus: %{senses: [:heard_eating], motives: [:hunger], intents: []},
         span: nil,
-        logic: tracking()
+        logic: competition()
       )
 		]
 	end
@@ -90,8 +90,8 @@ defmodule Ev3.Motivation do
 		end
 	end
 
-  @doc "Tracking motivation"
-  def tracking() do
+  @doc "Motivation to compete for food"
+  def competition() do
     fn
       (%Percept{about: :other_eating, value: %{current: true, beacon_channel: beacon_channel}}, %{motives: motives}) ->
       if latest_memory?(

@@ -33,10 +33,10 @@ defmodule Ev3.Utils do
   @doc "Get typed personal setting passed in command line invocation"
   def get_personal(variable, type, default_value) do
     val = case System.get_env(@personal) do
-      nil ->
-        default_value
-      string ->
-        extract_personal(string, variable, default_value)
+            nil ->
+              default_value
+            string ->
+              extract_personal(string, variable, default_value)
           end
     case type do
       :string -> val

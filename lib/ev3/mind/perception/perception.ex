@@ -314,6 +314,7 @@ defmodule Ev3.Perception do
 							:say_scared,
 							3000,
 							fn(_value) -> true end) do
+          Logger.warn("@@@@ GROUP PANIC!!! @@@@")
 					Percept.new(about: :danger, value: :high)
 				else
 					nil
@@ -331,11 +332,12 @@ defmodule Ev3.Perception do
 						:food,
 						2000,
 						fn(value) -> value in [:litte, :plenty] end) do
+         Logger.warn("@@@@ SOMEONE'S EATING!!! @@@@")
          Percept.new(about: :other_eating,
                     value: %{beacon_channel: beacon_channel, current: true})
-      else
-        nil
-      end
+     else
+       nil
+     end
 		  (%Percept{about: :heard, value: %{info: _info, beacon_channel: beacon_channel}}, _) ->
         Percept.new(about: :other_eating,
                     value: %{beacon_channel: beacon_channel, current: false})
