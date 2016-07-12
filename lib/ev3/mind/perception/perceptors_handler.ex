@@ -4,7 +4,7 @@ defmodule Ev3.PerceptorsHandler do
 	use GenEvent
 	require Logger
 
-	alias Ev3.{Perceptor, CNS, Perception}
+	alias Ev3.{Perceptor, CNS, Perception, Percept}
 
 	### Callbacks
 
@@ -47,7 +47,7 @@ defmodule Ev3.PerceptorsHandler do
 
 	defp process_percept(percept, %{perceptor_configs: perceptor_configs}) do
 		perceptor_configs
-		|> Enum.filter(&(percept.about in &1.focus.senses))
+		|> Enum.filter(&(Percept.sense(percept) in &1.focus.senses))
 		|> Enum.each(
 			fn(perceptor_config) ->
 				Process.spawn( # allow parallelism

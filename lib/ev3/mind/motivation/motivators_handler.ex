@@ -7,6 +7,7 @@ defmodule Ev3.MotivatorsHandler do
 	alias Ev3.Motivation
 	alias Ev3.Motivator
 	alias Ev3.CNS
+	alias Ev3.Percept
 
 	def init(_) do
 		Logger.info("Starting #{__MODULE__}")
@@ -28,7 +29,7 @@ defmodule Ev3.MotivatorsHandler do
 
 	defp process_percept(percept, %{motivator_configs: motivator_configs}) do
 		motivator_configs
-		|> Enum.filter(&(percept.about in &1.focus.senses))
+		|> Enum.filter(&(Percept.sense(percept) in &1.focus.senses))
 		|> Enum.each(
 			fn(motivator_config) ->
 				Process.spawn( # allow parallelism

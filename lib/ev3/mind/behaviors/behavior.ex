@@ -171,7 +171,7 @@ defmodule Ev3.Behavior do
   defp find_transition(percept, %{fsm: fsm, reflex: true, motives: motives}) do
     fsm.transitions
 		|> Enum.find(fn(transition) ->
-      percept.about == transition.on
+      Percept.sense(percept) == transition.on # TODO account for qualified percept abouts
       and transition.condition == nil or transition.condition.(percept.value, motives)
     end)
   end
@@ -181,7 +181,7 @@ defmodule Ev3.Behavior do
 		|> Enum.find(fn(transition) ->
 			transition.from != nil # else initial transition
 			and fsm_state in transition.from
-			and percept.about == transition.on
+			and Percept.sense(percept) == transition.on # TODO account for qualified percept abouts
 			and (transition.condition == nil or transition.condition.(percept.value, motives))
 		end)
 	end

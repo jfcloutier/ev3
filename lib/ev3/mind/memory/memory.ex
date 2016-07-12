@@ -81,13 +81,8 @@ defmodule Ev3.Memory do
 	end
 
 	def handle_cast({:store, %Percept{} = percept}, state) do
-    key = case percept.about do
-            {about, _qualifier} ->
-              about
-            about when is_atom(about) ->
-              about
-          end
-		percepts = Map.get(state.percepts, key, [])
+    key = Percept.sense(percept)
+ 		percepts = Map.get(state.percepts, key, [])
 		new_percepts =  update_percepts(percept, percepts)
 		new_state = %{state | percepts: Map.put(state.percepts, key, new_percepts)}
 		{:noreply, new_state}

@@ -46,7 +46,7 @@ defmodule Ev3.Perceptor do
 	### Private
 
 	defp analysis(name, percept, %{perceptor_config: config, responsive: responsive}) do
-		if responsive and in_focus(percept.about, config.focus.senses) and check_freshness(name, percept) do
+		if responsive and (Percept.sense(percept) in config.focus.senses) and check_freshness(name, percept) do
 			memories = Memory.since(config.span,
                               senses: config.focus.senses,
                               motives: config.focus.motives,
@@ -57,15 +57,7 @@ defmodule Ev3.Perceptor do
 		  end
 	end
 
-  defp in_focus({about, _}, abouts) do
-    about in abouts
-  end
-
-  defp in_focus(about, abouts) when is_atom(about) do
-    about in abouts
-  end
-
-   defp check_freshness(name, percept) do
+  defp check_freshness(name, percept) do
     age = Percept.age(percept)
     if age > @max_percept_age do
       Logger.info("STALE percept #{inspect percept.about} #{age}")

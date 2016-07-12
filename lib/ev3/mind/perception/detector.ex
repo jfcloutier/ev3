@@ -57,7 +57,14 @@ defmodule Ev3.Detector do
 							        :sensor -> LegoSensor.senses(device)
 							        :motor -> LegoMotor.senses(device)
 		                end
-    Enum.filter(device_senses, &(&1 in used_senses))
+    Enum.filter(device_senses, &(unqualified_sense(&1) in used_senses))
+	end
+
+	defp unqualified_sense(full_sense) do
+		case full_sense do
+			{sense, _qualifier} -> sense
+			sense when is_atom(sense) -> sense
+		end
 	end
 
 	defp read(device, sense) do

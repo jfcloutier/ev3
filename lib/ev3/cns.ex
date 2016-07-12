@@ -142,10 +142,10 @@ defmodule Ev3.CNS do
 	end
 
 	def handle_cast({:notify_overwhelmed, component_type, name}, state) do
-    Logger.info("OVERWHELMED - #{component_type} #{name} at #{delta(state)}")
+    Logger.warn("OVERWHELMED - #{component_type} #{name} at #{delta(state)}")
     GenEvent.notify(@dispatcher, {:overwhelmed, component_type, name})
     if not state.overwhelmed and not state.paused do
-      Logger.info("FAINTING at #{delta(state)}")
+      Logger.warn("FAINTING at #{delta(state)}")
 		  GenEvent.notify(@dispatcher, :faint)
       set_alarm_clock(@faint_duration)
 		  {:noreply, %{state | overwhelmed: true}}
@@ -155,7 +155,7 @@ defmodule Ev3.CNS do
 	end
 
   def handle_cast({:notify_behavior_started, name, reflex?}, state) do
-    GenEvent.notify(@dispatcher, {:behavior_started, name, reflex?})
+   GenEvent.notify(@dispatcher, {:behavior_started, name, reflex?})
     {:noreply, state}
   end
 
@@ -180,7 +180,7 @@ defmodule Ev3.CNS do
   end
 
   def handle_cast(:notify_revive, state) do
-    Logger.info("REVIVING at #{delta(state)}")
+    Logger.warn("REVIVING at #{delta(state)}")
     if not state.paused, do: GenEvent.notify(@dispatcher, :revive)
     {:noreply, %{state | overwhelmed: false}}
   end

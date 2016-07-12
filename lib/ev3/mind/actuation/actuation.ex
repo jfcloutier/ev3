@@ -63,7 +63,7 @@ defmodule Ev3.Actuation do
       ActuatorConfig.new(name: :sounds,
                          type: :sound,
                          specs: [
-                           %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: get_personal("voice", "en")}}
+                           %SoundSpec{name: :loud_speech, type: :speech, props: %{volume: :loud, speed: :normal, voice: get_voice()}}
                          ],
                          activations: [
                            %Activation{intent: :say_hungry,

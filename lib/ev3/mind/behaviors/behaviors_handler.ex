@@ -5,6 +5,7 @@ defmodule Ev3.BehaviorsHandler do
 	use GenEvent
 	alias Ev3.Behavior
 	alias Ev3.Behaviors
+	alias Ev3.Percept
 
 	def init(_) do
 		Logger.info("Starting #{__MODULE__}")
@@ -31,7 +32,7 @@ defmodule Ev3.BehaviorsHandler do
 
 	defp process_percept(percept, %{behavior_configs: behavior_configs}) do # Can stimulate started behaviors
 		behavior_configs
-		|> Enum.filter(&(percept.about in &1.senses))
+		|> Enum.filter(&(Percept.sense(percept) in &1.senses))
 		|> Enum.each(
 			fn(behavior_config) ->
 				Process.spawn( # allow parallelism

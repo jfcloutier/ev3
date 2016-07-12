@@ -21,9 +21,11 @@ defmodule Ev3.Mixfile do
 		 env: [{:mock, true},
 					 {:platform, :dev}, # platform in [:brickpi, :ev3, :dev]
 					 {:nodes, [:"marvin@ukemi", :"rodney@ukemi"]}, # iex --sname marvin etc. for testing. Use --name for actual
-					 {:group, :lego}] 
-#		 env: [{:mock, false}, {:platform, :ev3}] # platform in [:brickpi, :ev3, :dev]
-#		 env: [{:mock, false}, {:platform, :brickpi}] # platform in [:brickpi, :ev3, :dev]
+					 {:group, :lego},
+					 {:robot, [beacon_channel: 2, voice: "en-sc"]}
+					] 
+		 #		 env: [{:mock, false}, {:platform, :ev3}] # platform in [:brickpi, :ev3, :dev]
+		 #		 env: [{:mock, false}, {:platform, :brickpi}] # platform in [:brickpi, :ev3, :dev]
 		]
   end
 

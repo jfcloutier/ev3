@@ -21,7 +21,7 @@ defmodule Ev3.Motivator do
 		  name,
 		  fn(state) ->
 			  config = state.motivator_config
-			  reaction = if percept.about in config.focus.senses and check_freshness(name, percept) do
+			  reaction = if Percept.sense(percept) in config.focus.senses and check_freshness(name, percept) do
  										 memories = Memory.since(config.span, senses: config.focus.senses, motives: config.focus.motives, intents: config.focus.intents)
 										 config.logic.(percept, memories)  # returns a motive or nil
 									 else

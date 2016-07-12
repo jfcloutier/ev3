@@ -144,7 +144,7 @@ defmodule Ev3.Behaviors do
 
 			BehaviorConfig.new( # Track another robot to compete for a food source
 				name: :tracking,
-				motivated_by: [:competition],
+				motivated_by: [:greed],
 				senses: [:food, :scent_strength, :scent_direction, :collision, :stuck],
 				fsm: %FSM{
 					initial_state: :started,
@@ -161,7 +161,7 @@ defmodule Ev3.Behaviors do
 												on: :scent_direction,
 												to: :on_track,
 												 condition: fn({orientation, _value, _former_strength, channel}, motives) ->
-                           case find_motive(motives, :competition) do
+                           case find_motive(motives, :greed) do
                              nil -> false
                              motive -> Map.get(motive.details, :beacon_channel) == channel
                                and orientation == :ahead
@@ -172,7 +172,7 @@ defmodule Ev3.Behaviors do
 												on: :scent_direction,
 												to: :off_track,
 												 condition: fn({orientation, _value, _former_strength, channel}, motives) ->
-                           case find_motive(motives, :competition) do
+                           case find_motive(motives, :greed) do
                              nil -> false
                              motive -> Map.get(motive.details, :beacon_channel) == channel
                                and orientation != :ahead
@@ -184,7 +184,7 @@ defmodule Ev3.Behaviors do
 												on: :scent_strength,
 												to: :off_scent,
 												 condition: fn({value, channel}, motives) ->
-                           case find_motive(motives, :competition) do
+                           case find_motive(motives, :greed) do
                              nil -> false
                              motive -> Map.get(motive.details, :beacon_channel) == channel
                                and value == :unknown
@@ -333,14 +333,14 @@ defmodule Ev3.Behaviors do
 	end
 
 	defp stay_the_course() do
-		fn(%Percept{about: :scent_strength, value: value} = percept, _state) ->
+		fn(%Percept{about: :scent_strength, value: {value, _channel}} = percept, _state) ->
 			Logger.info("STAYING THE COURSE from #{percept.about} = #{inspect percept.value}")
 			speed = case value do
-								:unknown -> :very_fast
+								:unknown-> :very_fast
 								:very_weak -> :very_fast
 								:weak -> :fast
 								:strong -> :slow
-								:very_strong -> :very_slow
+							  :very_strong -> :very_slow
 							end
 			generate_intent(:go_forward, %{speed: speed, time: 1})
 		end 
@@ -348,7 +348,7 @@ defmodule Ev3.Behaviors do
 
 	defp change_course() do
 		fn
-			(%Percept{about: :scent_direction, value: {orientation, value, strength}} = percept, _state) ->
+			(%Percept{about: :scent_direction, value: {orientation, value, strength, _channel}} = percept, _state) ->
 			  Logger.info("CHANGING COURSE from #{percept.about} = #{inspect percept.value}")
       factor = case strength do
                  nil -> 1

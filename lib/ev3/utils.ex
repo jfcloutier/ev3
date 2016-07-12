@@ -25,33 +25,20 @@ defmodule Ev3.Utils do
 		end
 	end
 
-  @doc "Get personal setting string passed in command line"
-  def get_personal(variable, default_value) do
-    get_personal(variable, :string, default_value)
+	def get_voice() do
+		get_robot_setting(:voice, "en")
+	end
+
+	def get_beacon_channel() do
+		get_robot_setting(:beacon_channel, 0)
   end
 
-  @doc "Get typed personal setting passed in command line invocation"
-  def get_personal(variable, type, default_value) do
-    val = case System.get_env(@personal) do
-            nil ->
-              default_value
-            string ->
-              extract_personal(string, variable, default_value)
-          end
-    case type do
-      :string -> val
-      :integer ->
-        case Integer.parse(val) do
-          {value, _} -> value
-          :error -> default_value
-        end
-      :float ->
-        case Float.parse(val) do
-          {value, _} -> value
-          :error -> default_value
-        end
-    end
+  @doc "Get personal setting "
+  def get_robot_setting(setting, default_value) do
+    settings = Application.get_env(:ev3, :robot)
+		Keyword.get(settings, setting, default_value)
   end
+
 
   ### PRIVATE
 

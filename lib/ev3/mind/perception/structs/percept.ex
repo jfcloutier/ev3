@@ -51,6 +51,17 @@ defmodule Ev3.Percept do
     now() - percept.until
   end
 
+	@doc "The sense of the percept"
+	def sense(percept) do
+		case percept.about do
+			{sense, _qualifier}
+				-> sense
+			sense when is_atom(sense)
+				-> sense
+		end
+	end
+
+
   # about, since and value are required for the percept to be memorable
 	
 end
