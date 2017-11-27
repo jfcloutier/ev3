@@ -1,5 +1,9 @@
 #Ev3: Lego Robotics in Elixir
 
+## THIS REPO IS NOW OBSOLETE
+
+Goto https://github.com/StarlitSoftware/marvin/tree/develop for the latest
+
 ## Licensing
 
 You can do whatever you want.
