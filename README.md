@@ -1,4 +1,4 @@
-#Ev3: Lego Robotics in Elixir
+# Ev3: Lego Robotics in Elixir
 
 ## THIS REPO IS NOW OBSOLETE
 
